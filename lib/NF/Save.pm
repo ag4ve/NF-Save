@@ -8,6 +8,12 @@ our $VERSION = '0.01';
 
 use Socket;
 
+=head1 NF::Save
+
+Module for storing, parsing, and restoring netfilter/iptables and ipset data
+
+=cut
+
 # Lookup table to make sure elements are in order
 my $raIPTLookup = [
   {
@@ -58,10 +64,19 @@ my $raIPTLookup = [
   },
 ];
 
+# TODO implement this
 # What --syn get expanded into - not implemented yet
 my $raSynFlags = [
   'FIN,SYN,RST,ACK SYN',
 ];
+
+=item new(%uids, @lookup, @synflags)
+
+C<%uids> contains a hash of {'username' => #id}
+C<@lookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
+c<@synflags> contains an array of flags to be used when --syn would have been used
+
+=cut
 
 sub new
 {
@@ -92,7 +107,12 @@ sub new
   return $self;
 }
 
-# Return NF data structure
+=item get($chain, $table)
+
+Return the internal data structure used to store iptables information
+
+=cut
+
 sub get
 {
   my ($self, $chain, $table) = @_;
@@ -112,15 +132,26 @@ sub get
   }
 }
 
-# Check if a chain is defined
+=item is_chain($chain, $table)
+
+Check if a chain is defined (the filter table is assumed if none is given)
+
+=cut
+
 sub is_chain
 {
   my ($self, $chain, $table) = @_;
+  $table //= 'filter';
 
   return (($self->is_table($table) and exists($self->{nf}{$table}{$chain})) ? 1 : 0);
 }
 
-# Check if a table is defined
+=item is_table
+
+Check if a table is defined
+
+=cut
+
 sub is_table
 {
   my ($self, $table) = @_;
@@ -128,6 +159,17 @@ sub is_table
   return (exists($self->{nf}{$table}) ? 1 : 0);
 }
 
+=item set($name, @list, $opts)
+
+Define an ipset list.
+
+C<$name> is the name of the set
+C<@list> is a list of addresses in the set
+C<%opts> parameters for the set
+
+=cut
+
+# TODO only hash:net is assumed in the list - other types should be allowed and looked for
 sub set
 {
   my ($self, $name, $list, $opts) = @_;
@@ -160,12 +202,17 @@ sub set
   return ($return ? -$return : 1);
 }
 
-# Return a set save array for a given set or all sets if no valid name is given
+=item get_set($name)
+
+Return an array of data appropriate for 'ipset restore'. Return only one set if a valid name was supplied or all sets if no set name was given.
+
+=cut
+
 sub get_set
 {
   my ($self, $name) = @_;
 
-  $name = ($self->is_set($name) ? $name : undef);
+  return undef if (not $self->is_set($name));
   my @iter = ($name // keys(%{$self->{set}}));
 
   my @return;
@@ -184,7 +231,12 @@ sub get_set
   return [@return];
 }
 
-# Check if a set exists
+=item is_set($name)
+
+Check if a set exists
+
+=cut
+
 sub is_set
 {
   my ($self, $name) = @_;
@@ -192,12 +244,21 @@ sub is_set
   return (exists($self->{set}{$name}) ? 1 : 0);
 }
 
-# Return data for a set
+=item get_set_data($name)
+
+Return internal data for a set or all sets if no name was given
+
+=cut
+
 sub get_set_data
 {
   my ($self, $name) = @_;
 
-  if ($self->is_set($name))
+  if (not defined($name))
+  {
+    return $self->{set};
+  }
+  elsif ($self->is_set($name))
   {
     return $self->{set}{$name};
   }
@@ -207,7 +268,12 @@ sub get_set_data
   }
 }
 
-# Return an array with iptables-save data
+=item save()
+
+Return an array that can pe passed to iptables-restore. This data should duplicate iptables-save so that data generated with this and restored into iptables would show no differece when compared to iptables-save output
+
+=cut
+
 sub save
 {
   my ($self) = @_;
@@ -221,7 +287,12 @@ sub save
   return @return;
 }
 
-# Return a list of tables
+=item get_tables()
+
+Return a list of tables
+
+=cut
+
 sub get_tables
 {
   my ($self) = @_;
@@ -229,7 +300,12 @@ sub get_tables
   return (keys %{$self->{nf}});
 }
 
-# Return an iptables-save array for a table
+=item save_table($table)
+
+Return an iptables-save array for all chains in a table (default to filter if no table is supplied)
+
+=cut
+
 sub save_table
 {
   my ($self, $table) = @_;
@@ -246,7 +322,12 @@ sub save_table
   return @return;
 }
 
-# Return a list of chains for a table
+=item get_chain($table)
+
+Return a list of chains for a table
+
+=cut
+
 sub get_chains
 {
   my ($self, $table) = @_;
@@ -255,7 +336,12 @@ sub get_chains
   return (keys %{$self->{nf}{$table}});
 }
 
-# Return an array with iptables-save data for one chain
+=item save_chain($chain, $table)
+
+Return an array with iptables-save data for one chain
+
+=cut
+
 sub save_chain
 {
   my ($self, $chain, $table) = @_;
@@ -272,7 +358,12 @@ sub save_chain
   return @return;
 }
 
-# Return data structure of rules in a chain
+=item get_rules($chain, $table)
+
+Return data structure of rules in a chain
+
+=cut
+
 sub get_rules
 {
   my ($self, $chain, $table) = @_;
@@ -282,7 +373,12 @@ sub get_rules
   return @{$self->{nf}{$table}{$chain}};
 }
 
-# Put an iptables rule for a data structure definition
+=item assemble(%params)
+
+Put an iptables rule for a data structure definition
+
+=cut
+
 sub assemble
 {
   my ($self, $hParams) = @_;
@@ -319,20 +415,25 @@ sub assemble
   return [join(' ', @iptparts)];
 }
 
-# An interface designed to look fairly similar to the iptables cli
-#
-# The tcp '--syn' and '! --syn' options add masks from individual from
-# the $raSynFlags arrayref
-#
-# The big difference is that the chain is seperate from the action
-# This:
-# iptables -I INPUT 5 -j ACCEPT
-# Turns into this:
-# ipt('INPUT', '-j ACCEPT', undef, 'I 5');
-# The default is to append to the filter table, which means the pattern is:
-# ipt('INPUT', '-j ACCEPT');
-# Delete and replace have been implemented for completeness - for replace:
-# ipt('OUTPUT', -j ACCEPT', 'filter', 'R 5');
+=item rule($chain, $rule, $table, $func)
+
+An interface designed to look fairly similar to the iptables cli
+
+The tcp '--syn' and '! --syn' options add masks from individual from
+the $raSynFlags arrayref
+
+The big difference is that the chain is seperate from the action
+This:
+C<iptables -I INPUT 5 -j ACCEPT>
+Turns into this:
+C<ipt('INPUT', '-j ACCEPT', undef, 'I 5');>
+The default is to append to the filter table, which means the pattern is:
+C<ipt('INPUT', '-j ACCEPT');>
+Delete and replace have been implemented for completeness - for replace:
+C<ipt('OUTPUT', -j ACCEPT', 'filter', 'R 5');>
+
+=cut
+
 sub rule
 {
   my ($self, $chain, $rule, $table, $func) = @_;
@@ -403,7 +504,12 @@ sub _ipt_do
   return $ret;
 }
 
-# Process a full iptables rule into the data structure
+=item raw_rule(@rules)
+
+Process a full iptables rule into the data structure
+
+=cut
+
 sub raw_rule
 {
   my ($self, $rules) = @_;

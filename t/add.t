@@ -57,9 +57,9 @@ my $tests = [
   [$ipt->_proto({'proto' => "UDP"}), ['-p udp'], "Protocol string"],
   [$ipt->_owner({'name' => "testuser"}), ['-m owner --uid-owner 359'], "Username"],
   [$ipt->_owner({'name' => 567}), ['-m owner --uid-owner 567'], "UserID"],
-  [$ipt->set('test', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048}), 1, "Save IPSET"],
+  [$ipt->ipset('test', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048}), 1, "Save IPSET"],
   [
-    $ipt->get_set(),
+    $ipt->get_ipset(),
     [
       'create test hash:net family inet hashsize 2048 maxelen 65536',
       'add test 1.2.3.4/32',
@@ -67,9 +67,9 @@ my $tests = [
     ],
     "IPSET return data"
   ],
-  [$ipt->is_set('test'), 1, "The queried IPSET exists"],
-  [$ipt->is_set('foo'), 0, "The queried IPSET does not exist"],
-  [$ipt->get_set_data('test'), {'list' => [qw(1.2.3.4/32 5.6.7.8/32)], 'hashsize' => 2048}, "IPSET data"],
+  [$ipt->is_ipset('test'), 1, "The queried IPSET exists"],
+  [$ipt->is_ipset('foo'), 0, "The queried IPSET does not exist"],
+  [$ipt->get_ipset_data('test'), {'list' => [qw(1.2.3.4/32 5.6.7.8/32)], 'hashsize' => 2048}, "IPSET data"],
   [
     $ipt->_list_set({
       'name' => "test",

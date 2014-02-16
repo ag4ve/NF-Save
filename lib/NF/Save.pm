@@ -74,7 +74,7 @@ my $raSynFlags = [
 
 C<%uids> contains a hash of {'username' => #id}
 C<@lookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
-c<@synflags> contains an array of flags to be used when --syn would have been used
+C<@synflags> contains an array of flags to be used when --syn would have been used
 
 =cut
 
@@ -159,7 +159,7 @@ sub is_table
   return (exists($self->{nf}{$table}) ? 1 : 0);
 }
 
-=item set($name, @list, $opts)
+=item ipset($name, @list, $opts)
 
 Define an ipset list.
 
@@ -170,7 +170,7 @@ C<%opts> parameters for the set
 =cut
 
 # TODO only hash:net is assumed in the list - other types should be allowed and looked for
-sub set
+sub ipset
 {
   my ($self, $name, $list, $opts) = @_;
 
@@ -182,20 +182,20 @@ sub set
 
   my $return = (scalar(@$list) - scalar(@$aIPs));
 
-  if (not $self->is_set($name))
+  if (not $self->is_ipset($name))
   {
-    $self->{set}{$name} = {'list' => $aIPs};
+    $self->{ipset}{$name} = {'list' => $aIPs};
   }
   else
   {
-    push @{$self->{set}{$name}{list}}, @$aIPs;
+    push @{$self->{ipset}{$name}{list}}, @$aIPs;
   }
 
   if (defined($opts) and ref($opts) eq 'HASH')
   {
     foreach my $key (keys %$opts)
     {
-      $self->{set}{$name}{$key} = $opts->{$key};
+      $self->{ipset}{$name}{$key} = $opts->{$key};
     }
   }
 
@@ -208,17 +208,17 @@ Return an array of data appropriate for 'ipset restore'. Return only one set if 
 
 =cut
 
-sub get_set
+sub get_ipset
 {
   my ($self, $name) = @_;
 
-  return undef if (not $self->is_set($name));
-  my @iter = ($name // keys(%{$self->{set}}));
+  return undef if (defined($name) and not $self->is_ipset($name));
+  my @iter = ($name // keys(%{$self->{ipset}}));
 
   my @return;
   foreach my $name (@iter)
   {
-    my $data = $self->{set}{$name};
+    my $data = $self->{ipset}{$name};
     my $type = $data->{type} // 'hash:net';
     my $family = $data->{family} // 'inet';
     my $hashsize = $data->{hashsize} // 1024;
@@ -231,36 +231,36 @@ sub get_set
   return [@return];
 }
 
-=item is_set($name)
+=item is_ipset($name)
 
-Check if a set exists
+Check if an ipset exists
 
 =cut
 
-sub is_set
+sub is_ipset
 {
   my ($self, $name) = @_;
 
-  return (exists($self->{set}{$name}) ? 1 : 0);
+  return (exists($self->{ipset}{$name}) ? 1 : 0);
 }
 
-=item get_set_data($name)
+=item get_ipset_data($name)
 
-Return internal data for a set or all sets if no name was given
+Return internal data for an ipset or all sets if no name was given
 
 =cut
 
-sub get_set_data
+sub get_ipset_data
 {
   my ($self, $name) = @_;
 
   if (not defined($name))
   {
-    return $self->{set};
+    return $self->{ipset};
   }
-  elsif ($self->is_set($name))
+  elsif ($self->is_ipset($name))
   {
-    return $self->{set}{$name};
+    return $self->{ipset}{$name};
   }
   else
   {
@@ -731,8 +731,8 @@ sub _list_set
 {
   my ($self, $hParams) = @_;
   my $name = $hParams->{name};
-  return undef unless (exists($self->{set}{$name}{list}) and
-    ref($self->{set}{$name}{list}) eq 'ARRAY');
+  return undef unless (exists($self->{ipset}{$name}{list}) and
+    ref($self->{ipset}{$name}{list}) eq 'ARRAY');
   my @return;
 
   my %hDirection;
@@ -755,12 +755,12 @@ sub _list_set
 
   if ($hParams->{useipset})
   {
-    warn "Set [$name] has not been defined\n" unless ($self->is_set($name));
+    warn "Set [$name] has not been defined\n" unless ($self->is_ipset($name));
     push @return, "-m set --match-set $name " . join(",", sort {$b cmp $a} keys(%hDirection));
   }
   else
   {
-    my @list = @{$self->{set}{$name}{list}}; 
+    my @list = @{$self->{ipset}{$name}{list}}; 
     if (exists($hDirection{src}))
     {
       push @return, map {"-s $_"} @list;

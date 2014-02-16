@@ -1,8 +1,10 @@
 use strict;
 use warnings;
 
+use lib 't';
+use Util;
+
 use Test::More;
-use Test::Differences;
 
 use NF::Save;
 
@@ -146,15 +148,11 @@ my $tests = [
   ],
 ];
 
-foreach my $test (@$tests)
-{
-  eq_or_diff(@$test);
-}
-
 
 
 # $t->save();
 # [-A OUTPUT -p UDP --sport 1024:65535 -d 192.168.15.1 --dport 53 -j ACCEPT -m comment --comment "nameserver"]
 
 
-done_testing(scalar(@$tests));
+test($tests);
+

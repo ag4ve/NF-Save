@@ -16,52 +16,21 @@ Module for storing, parsing, and restoring netfilter/iptables and ipset data
 
 # Lookup table to make sure elements are in order
 my $raIPTLookup = [
-  {
-    'key' => "src",
-    'comp' => "srcdst",
-  }, {
-    'key' => "dst",
-    'comp' => "srcdst",
-  }, {
-    'key' => "in",
-    'comp' => "io_if",
-  }, {
-    'key' => "out",
-    'comp' => "io_if",
-  }, {
-    'key' => "proto",
-    'comp' => "proto",
-  }, {
-    'key' => 'owner',
-    'comp' => "owner",
-  }, {
-    'key' => "mod",
-    'comp' => "nf_module",
-  }, {
-#    'key' => [qw/list set/],
-#    'comp' => 'list_set',
-#  }, {
-#    'key' => [qw/match tcp/],
-#    'comp' => 'tcp_udp',
-#  }, {
-#    'key' => [qw/match udp/],
-#    'comp' => 'tcp_udp',
-#  }, {
-#    'key' => [qw/match icmp/],
-#    'comp' => 'icmp',
-#  }, {
-    'key' => 'conntrack',
-    'comp' => "ct",
-  }, {
-    'key' => "limit",
-    'comp' => "limit",
-  }, {
-    'key' => "comment",
-    'comp' => "comment",
-  }, {
-    'key' => "jump",
-    'comp' => "jump",
-  },
+  'src' => 'srcdst',
+  'dst' => 'srcdst',
+  'in' => 'io_if',
+  'out' => 'io_if',
+  'proto' => 'proto',
+  'owner' => 'owner',
+  'match' => 'match',
+  'list set' => 'list_set',
+  [qw/match tcp/] => 'tcp_udp',
+  [qw/match udp/] => 'tcp_udp',
+  [qw/match icmp/] => 'icmp',
+  'conntrack' => 'ct',
+  'limit' => 'limit',
+  'comment' => 'comment',
+  'jump' => 'jump',
 ];
 
 # TODO implement this
@@ -384,10 +353,10 @@ sub assemble
   my ($self, $hParams) = @_;
 
   my @iptparts;
-  for my $part (@{$self->{lookup}})
+  $self->_each_kv($self->{lookup});
+  while (my ($pkey, $pcomp) = $self->_each_kv())
   {
-    my $pkey = $part->{key};
-    my $pcomp = '_' . $part->{comp};
+    $pcomp = '_' . $pcomp;
     my $pval = $hParams->{$pkey};
 
     # Next if the part isn't defined in the rule
@@ -656,7 +625,10 @@ sub _srcdst
   if (not defined($hParams->{ip}) or not defined($hParams->{direction}) or
     not $self->_valid_cidr($hParams->{ip}))
   {
-    warn "No direction or IP address defined - nothing done";
+    warn "No direction or IP address defined - nothing done [" .
+    (defined($hParams->{ip}) ? $hParams->{ip} : '') . "] [" .
+    (defined($hParams->{direction}) ? $hParams->{direction} : '') .
+    "]\n";
     return undef;
   }
 
@@ -802,7 +774,6 @@ sub _icmp
   return [join(" ", @str)];
 }
 
-
 # Return an array of conntrack strings
 sub _ct
 {
@@ -869,7 +840,7 @@ sub _comment
 sub _jump
 {
   my ($self, $hParams) = @_;
-  return undef unless (defined($hParams->{name}));
+  return if (not defined($hParams->{name}));
   my $jump = $hParams->{name};
   warn "Assuming wrong case for [$jump] - matching against [" . uc($jump) . "]\n"
     if ($jump =~ /[a-z]/ and $jump =~ /^(LOG|REJECT|CT|SNAT|DNAT)$/i);
@@ -896,7 +867,7 @@ sub _jump
   {
     if ($hParams->{src})
     {
-      my $ip = $self->_valid_ip($hParams->{src});
+      my $ip = $self->_cidr_ip($hParams->{src});
       push @pstr, "--to-source $ip" if ($ip);
     }
   }
@@ -904,7 +875,7 @@ sub _jump
   {
     if ($hParams->{dst})
     {
-      my $ip = $self->_valid_ip($hParams->{dst});
+      my $ip = $self->_cidr_ip($hParams->{dst});
       push @pstr, "--to-destination $ip";
     }
   }
@@ -919,22 +890,19 @@ sub _jump
 sub _valid_ip
 {
   my ($self, $ip) = @_;
+  $ip =~ s|/[0-9]+||;
 
-  return undef if (grep {$_ > 255} split(/\./, [split('/', $ip)]->[0]));
-
-  $ip = $self->_cidr_ip($ip);
-
-  return ($self->_valid_cidr($ip) ? $ip : undef);
+  return (defined($ip) and inet_aton($ip) ? 1 : 0);
 }
 
 # Check that a base address is in the bounds of a subnet
 sub _valid_cidr
 {
   my ($self, $cidr) = @_;
+  return 0 if (not defined($cidr));
 
   my ($network, $subnet) = split("/", $cidr);
-
-  return 1 unless $subnet;
+  return 0 if (not defined($network) or not defined($subnet));
 
   my $inet = unpack('N', inet_aton($network));
   my $mask = (2**32) - (2**(32-$subnet));
@@ -949,11 +917,48 @@ sub _cidr_ip
 {
   my ($self, $ip) = @_;
 
-  return $ip if (scalar(split('/', $ip)) == 2);
-
-  return "$ip/32";
+  if (not $self->_valid_ip($ip))
+  {
+    return;
+  }
+  elsif ($self->_valid_cidr($ip))
+  {
+    return $ip;
+  }
+  else
+  {
+    return "$ip/32";
+  }
 }
 
+sub _each_kv
+{
+  my ($self, $array) = @_;
+
+  if (defined($array) and ref($array) eq 'ARRAY')
+  {
+    if (scalar(@$array) % 2)
+    {
+      warn "Uneven array - nothing done\n";
+    }
+    else
+    {
+      $self->{each_kv} = $array;
+    }
+    return;
+  }
+
+  if (not scalar(@{$self->{each_kv}}) or scalar(@{$self->{each_kv}}) % 2)
+  {
+    $self->{each_kv} = undef;
+    return;
+  }
+
+  my $k = shift @{$self->{each_kv}};
+  my $v = shift @{$self->{each_kv}};
+
+  return $k, $v;
+}
 
 
 1;

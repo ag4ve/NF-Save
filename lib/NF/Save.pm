@@ -147,7 +147,7 @@ sub ipset
     defined($list) and ref($list) eq 'ARRAY');
 
   my $aIPs;
-  @$aIPs = grep {defined($_)} map {$self->_valid_ip($_)} @$list;
+  @$aIPs = grep {defined($_)} map {$self->_cidr_ip($_)} @$list;
 
   my $return = (scalar(@$list) - scalar(@$aIPs));
 
@@ -622,8 +622,8 @@ sub _srcdst
 {
   my ($self, $hParams) = @_;
 
-  if (not defined($hParams->{ip}) or not defined($hParams->{direction}) or
-    not $self->_valid_cidr($hParams->{ip}))
+  if (scalar(grep {/ip|direction/} keys %$hParams) != 2 or
+    not $self->_valid_ip($hParams->{ip}))
   {
     warn "No direction or IP address defined - nothing done [" .
     (defined($hParams->{ip}) ? $hParams->{ip} : '') . "] [" .
@@ -632,12 +632,13 @@ sub _srcdst
     return undef;
   }
 
-  my @str;
-  push @str, '!' if ($hParams->{not});
-  push @str, ($hParams->{direction} =~ /src/i ? '-s' : '-d');
-  push @str, $hParams->{ip};
-
-  return [join(" ", @str)];
+  return [$self->_str_map($hParams, [
+    'direction' => {
+      'src' => "-s",
+      'dst' => "-d",
+    },
+    'ip ip' => "",
+  ])];
 }
 
 # Return an array of input/output interface strings
@@ -651,12 +652,13 @@ sub _io_if
     return undef;
   }
 
-  my @str;
-  push @str, '!' if ($hParams->{not});
-  push @str, ($hParams->{direction} =~ /in/i ? '-i' : '-o');
-  push @str, $hParams->{if};
-
-  return [join(" ", @str)];
+  return [$self->_str_map($hParams, [
+    'direction' => {
+      'in' => "-i",
+      'out' => "-o",
+    },
+    'if' => "",
+  ])];
 }
 
 # Return an array of protocol strings
@@ -666,12 +668,9 @@ sub _proto
 
   return undef unless (defined($hParams->{proto}));
 
-  $hParams->{proto} = lc($hParams->{proto});
-
-  my @str;
-  push @str, "-p " . $hParams->{proto};
-  push @str, "-m " . $hParams->{match} if (defined($hParams->{match}));
-  return [join (" ", @str)]
+  return [$self->_str_map($hParams, [
+    'proto lc' => "-p",
+  ])];
 }
 
 # Return an array of owner strings
@@ -692,10 +691,7 @@ sub _owner
     }
   }
 
-  my @str;
-  push @str, "-m owner";
-  push @str, "--uid-owner $uid" if(defined($uid));
-  return [join(" ", @str)];
+  return "-m owner" . (defined($uid) ? " --uid-owner $uid" : "");
 }
 
 # Return an array of IP address match strings or a set name
@@ -751,14 +747,13 @@ sub _tcp_udp
 {
   my ($self, $hParams) = @_;
 
-  my @str;
-  push @str, '!' if ($hParams->{not});
-  push @str, '-p ' . lc($hParams->{name}) . ' -m ' . lc($hParams->{name});
-  push @str, '--sport ' . $hParams->{sport} if (defined($hParams->{sport}));
-  push @str, '--dport ' . $hParams->{dport} if (defined($hParams->{dport}));
-  push @str, '--tcp-flags ' . $hParams->{flags} if (defined($hParams->{flags}));
-
-  return [join(" ", @str)];
+  return [$self->_str_map($hParams, [
+    'name lc' => "-p",
+    'name lc' => "-m",
+    'sport' => "--sport",
+    'dport' => "--dport",
+    'flags' => "--tcp-flags",
+  ])];
 }
 
 # Return an array of ICMP protocol match strings
@@ -766,12 +761,11 @@ sub _icmp
 {
   my ($self, $hParams) = @_;
 
-  my @str;
-  push @str, '!' if ($hParams->{not});
-  push @str, '-p ' . lc($hParams->{name}) . ' -m ' . lc($hParams->{name});
-  push @str, '--icmp-type ' . $hParams->{type} if (defined($hParams->{type}));
-
-  return [join(" ", @str)];
+  return [$self->_str_map($hParams, [
+    'name lc' => "-p",
+    'name lc' => "-m",
+    'type' => '--icmp-type',
+  ])];
 }
 
 # Return an array of conntrack strings
@@ -845,45 +839,124 @@ sub _jump
   warn "Assuming wrong case for [$jump] - matching against [" . uc($jump) . "]\n"
     if ($jump =~ /[a-z]/ and $jump =~ /^(LOG|REJECT|CT|SNAT|DNAT)$/i);
 
-  my @pstr;
   if (uc($jump) eq 'LOG')
   {
-    (push @pstr, "--log-prefix \"" . $hParams->{prefix} . "\"")
-      if (defined($hParams->{prefix}));
-    push @pstr, "--log-tcp-options" if ($hParams->{tcp});
-    push @pstr, "--log-ip-options" if ($hParams->{ip});
-    push @pstr, "--log-uid" if ($hParams->{uid});
+    return [$self->_str_map($hParams, [
+      'name uc' => "-j",
+      'prefix qq' => "--log-prefix",
+      'tcp bool' => "--log-tcp-options",
+      'ip bool' => "--log-ip-options",
+      'uid bool' => "--log-uid",
+    ])];
   }
   elsif (uc($jump) eq 'REJECT')
   {
-    push @pstr, "--reject-with icmp-port-unreachable"
-      if ($hParams->{with});
+    return [$self->_str_map($hParams, [
+      'name uc' => "-j",
+      'with bool' => "--reject-with icmp-port-unreachable",
+    ])];
   }
   elsif (uc($jump) eq 'CT')
   {
-    push @pstr, "--notrack" if ($hParams->{notrack});
+    return [$self->_str_map($hParams, [
+      'name uc' => "-j",
+      'notrack bool' => "--notrack",
+    ])];
   }
   elsif (uc($jump) eq 'SNAT')
   {
-    if ($hParams->{src})
-    {
-      my $ip = $self->_cidr_ip($hParams->{src});
-      push @pstr, "--to-source $ip" if ($ip);
-    }
+    return [$self->_str_map($hParams, [
+      'name uc' => "-j",
+      'src ip' => "--to-source",
+    ])];
   }
   elsif (uc($jump) eq 'DNAT')
   {
-    if ($hParams->{dst})
+    return [$self->_str_map($hParams, [
+      'name uc' => "-j",
+      'dst ip' => "--to-destination",
+    ])];
+  }
+  else
+  {
+    return [$self->_str_map($hParams, [
+      'name' => "-j",
+    ])];
+  }
+}
+
+# Return a string from a definition
+# Input is a hashref of the input datastructure and a definition
+# The definition is a balanced array of:
+# <key of input data structure [function]> => <value>
+# Or
+# <key of input data structure> => {<value of input data structure> => <value to use>}
+# The later form is used to yield different outputs depending on the input value
+
+sub _str_map
+{
+  my ($self, $hParams, $map) = @_;
+
+  my (@ret, @done);
+  $self->_each_kv($map, 'str_map');
+  while (my ($mapkey, $mapval) = $self->_each_kv(undef, 'str_map'))
+  {
+    # mapped string and function. Eg 'name' and 'lc'
+    my ($mapstr, undef, $mapfunc) = $mapkey =~ /^([^ ]+)?( )?(.*)$/;
+    # Actual key of parameter. Eg '!destination'
+    my @key = grep {/$mapstr/} keys %$hParams;
+    my $pkey = $key[0] if (scalar(@key) and defined($key[0]));
+    if (defined($pkey))
     {
-      my $ip = $self->_cidr_ip($hParams->{dst});
-      push @pstr, "--to-destination $ip";
+      my ($not, $str) = $pkey =~ /^(!)?(.*)$/;
+      push @ret, "!" if (defined($not) and not grep {$str} @done);
+      push @done, $str;
+      if (ref($mapval) eq 'HASH')
+      {
+        # orkey - possible hParam value
+        foreach my $orkey (keys %$mapval)
+        {
+          if ($orkey =~ /$hParams->{$pkey}/)
+          {
+            push @ret, $mapval->{$orkey};
+          }
+        }
+      }
+      elsif (ref(\$mapval) eq 'SCALAR')
+      {
+        next if(defined($mapfunc) and $mapfunc eq 'bool' and not defined($hParams->{$pkey}));
+        push @ret, $mapval if (defined($mapval) and length($mapval));
+        if (defined($mapfunc) and length($mapfunc))
+        {
+          if ($mapfunc eq 'lc')
+          {
+            push @ret, lc($hParams->{$pkey});
+          }
+          elsif ($mapfunc eq 'uc')
+          {
+            push @ret, uc($hParams->{$pkey});
+          }
+          elsif ($mapfunc eq 'qq')
+          {
+            push @ret, "\"" . $hParams->{$pkey} . "\"";
+          }
+          elsif ($mapfunc eq 'bool')
+          {
+            # Do nothing
+          }
+          elsif ($mapfunc eq 'ip')
+          {
+            push @ret, $self->_cidr_ip($hParams->{$pkey});
+          }
+        }
+        else
+        {
+          push @ret, $hParams->{$pkey};
+        }
+      }
     }
   }
-
-  my $str = "-j $jump";
-  $str .= " " . join(" ", @pstr) if (@pstr);
-
-  return [$str];
+  return join(' ', @ret);
 }
 
 # Return a valid CIDR IP address if possible or undef
@@ -933,29 +1006,28 @@ sub _cidr_ip
 
 sub _each_kv
 {
-  my ($self, $array) = @_;
+  my ($self, $array, $name) = @_;
+
+  $name = (defined($name) ? $name : 'each_kv');
 
   if (defined($array) and ref($array) eq 'ARRAY')
   {
     if (scalar(@$array) % 2)
     {
       warn "Uneven array - nothing done\n";
+      return 0;
     }
     else
     {
-      $self->{each_kv} = $array;
+      $self->{$name} = $array;
+      return 1;
     }
-    return;
   }
 
-  if (not scalar(@{$self->{each_kv}}) or scalar(@{$self->{each_kv}}) % 2)
-  {
-    $self->{each_kv} = undef;
-    return;
-  }
+  return if (not scalar(@{$self->{$name}}));
 
-  my $k = shift @{$self->{each_kv}};
-  my $v = shift @{$self->{each_kv}};
+  my $k = shift @{$self->{$name}};
+  my $v = shift @{$self->{$name}};
 
   return $k, $v;
 }

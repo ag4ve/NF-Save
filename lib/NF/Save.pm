@@ -24,9 +24,9 @@ my $raIPTLookup = [
   'owner' => 'owner',
   'match' => 'match',
   'list set' => 'list_set',
-  [qw/match tcp/] => 'tcp_udp',
-  [qw/match udp/] => 'tcp_udp',
-  [qw/match icmp/] => 'icmp',
+  'tcp' => 'tcp_udp',
+  'udp' => 'tcp_udp',
+  'icmp' => 'icmp',
   'conntrack' => 'ct',
   'limit' => 'limit',
   'comment' => 'comment',
@@ -354,34 +354,55 @@ sub assemble
 
   my @iptparts;
   $self->_each_kv($self->{lookup});
-  while (my ($pkey, $pcomp) = $self->_each_kv())
+  my $splitkey = [
+    map {[split(' ', $_)]}
+      @{$self->_each_kv('keys')}
+  ];
+
+  while (my ($listkey, $comp) = $self->_each_kv())
   {
-    $pcomp = '_' . $pcomp;
-    my $pval = $hParams->{$pkey};
+    $comp = '_' . $comp;
 
-    # Next if the part isn't defined in the rule
-    next unless (defined($pval));
-
-    if (not $self->can($pcomp))
+    my @key = grep {/^!?$listkey$/i} keys %$hParams;
+    if (scalar(@key) > 1)
     {
-      warn "No method [$pcomp] - skipping\n";
+      warn "Multiple keys with similar names [" . 
+        join("] [", @key) . "] - Moving on\n";
+      next;
+    }
+    elsif (scalar(@key) == 0)
+    {
       next;
     }
 
+    if (not $self->can($comp))
+    {
+      warn "No method [$comp] - skipping\n";
+      next;
+    }
+
+    my $pval = $hParams->{$key[0]};
+
     my $data;
-    if (ref(\$pval) eq 'SCALAR' or ref($pval) eq 'ARRAY')
+    if (ref(\$pval) eq 'SCALAR')
     {
       $data = {'name' => $pval};
     }
-    else
+    elsif (ref($pval) eq 'ARRAY')
+    {
+      $data = {'name' => join(' ', @$pval)};
+    }
+    elsif (ref($pval) eq 'HASH')
     {
       $data = $pval;
     }
+    $data->{key} = $key[0] if (not defined($data->{key}));
 
-    push @iptparts, $self->$pcomp($data);
+    my $ret = $self->$comp($data);
+    push @iptparts, $ret if (defined($ret) and ref($ret) eq 'ARRAY');
   }
 
-  return [join(' ', @iptparts)];
+  return [@iptparts];
 }
 
 =item rule($chain, $rule, $table, $func)
@@ -622,6 +643,9 @@ sub _srcdst
 {
   my ($self, $hParams) = @_;
 
+  $hParams->{ip} = $hParams->{name} if (not defined($hParams->{ip}));
+  $hParams->{direction} = $hParams->{key} if (not defined($hParams->{direction}));
+
   if (scalar(grep {/ip|direction/} keys %$hParams) != 2 or
     not $self->_valid_ip($hParams->{ip}))
   {
@@ -646,6 +670,9 @@ sub _io_if
 {
   my ($self, $hParams) = @_;
 
+  $hParams->{if} = $hParams->{name} if (not defined($hParams->{if}));
+  $hParams->{direction} = $hParams->{key} if (not defined($hParams->{direction}));
+
   if (not defined($hParams->{direction}) or not defined($hParams->{if}))
   {
     warn "No direction or interface defined - nothing done";
@@ -665,6 +692,8 @@ sub _io_if
 sub _proto
 {
   my ($self, $hParams) = @_;
+
+  $hParams->{proto} = $hParams->{name} if (not defined($hParams->{proto}));
 
   return undef unless (defined($hParams->{proto}));
 
@@ -698,6 +727,7 @@ sub _owner
 sub _list_set
 {
   my ($self, $hParams) = @_;
+
   my $name = $hParams->{name};
   return undef unless (exists($self->{ipset}{$name}{list}) and
     ref($self->{ipset}{$name}{list}) eq 'ARRAY');
@@ -742,10 +772,22 @@ sub _list_set
   return [@return];
 }
 
+# Return an array of match strings
+sub _match
+{
+  my ($self, $hParams) = @_;
+
+  return [$self->_str_map($hParams, [
+    'name lc' => "-m",
+  ])];
+}
+
 # Return an array of TCP or UDP protocol match strings
 sub _tcp_udp
 {
   my ($self, $hParams) = @_;
+
+  $hParams->{name} = $hParams->{key} if (not defined($hParams->{name}));
 
   return [$self->_str_map($hParams, [
     'name lc' => "-p",
@@ -1006,25 +1048,58 @@ sub _cidr_ip
 
 sub _each_kv
 {
-  my ($self, $array, $name) = @_;
+  my ($self, $data, $name) = @_;
 
   $name = (defined($name) ? $name : 'each_kv');
 
-  if (defined($array) and ref($array) eq 'ARRAY')
+  if (defined($data))
   {
-    if (scalar(@$array) % 2)
+    if (ref($data) eq 'ARRAY')
     {
-      warn "Uneven array - nothing done\n";
-      return 0;
+      if (scalar(@$data) % 2)
+      {
+        warn "Uneven array - nothing done\n";
+        return 0;
+      }
+      else
+      {
+        $self->{$name} = $data;
+        $self->{$name . 'orig'} = $data;
+        return 1;
+      }
     }
-    else
+    elsif (ref(\$data) eq 'SCALAR' and $self->{$name . 'orig'})
     {
-      $self->{$name} = $array;
-      return 1;
+      my $bool;
+      if ($data =~ /key/)
+      {
+        $bool = 0;
+      }
+      elsif ($data =~ /val/)
+      {
+        $bool = 1;
+      }
+      else
+      {
+        return;
+      }
+  
+      my @ret;
+      for my $num (0 .. $#{$self->{$name . 'orig'}})
+      {
+        push @ret, $self->{$name . 'orig'}[$num] if ($num % 2 == $bool);
+      }
+  
+      return \@ret;
     }
   }
 
-  return if (not scalar(@{$self->{$name}}));
+  if (not scalar(@{$self->{$name}}))
+  {
+    delete $self->{$name} if (exists($self->{name}));
+    delete $self->{$name . 'orig'} if (exists($self->{$name . 'orig'}));
+    return;
+  }
 
   my $k = shift @{$self->{$name}};
   my $v = shift @{$self->{$name}};

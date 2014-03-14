@@ -11,9 +11,7 @@ use NF::Save;
 my $ipt = NF::Save->new({'testuser' => 359});
 
 my $struct = {
-  'proto' => "UDP",
-  'module' => {
-    'name' => "UDP",
+  'udp' => {
     'sport' => "1024:65535",
     'dport' => "53",
   }, 
@@ -62,7 +60,12 @@ my $tests = [
   [$ipt->_list_set({'name' => "foo"}), undef, "Non-existent list"],
   [
     $ipt->assemble($struct),
-    ['-A OUTPUT -p UDP --sport 1024:65535 -d 192.168.15.1 --dport 53 -j ACCEPT -m comment --comment "nameserver"'],
+    [
+      ['-d 192.168.15.1/32'],
+      ['-p udp -m udp --sport 1024:65535 --dport 53'],
+      ['-m comment --comment "nameserver"'],
+      ['-j ACCEPT'],
+    ],
     "Assemble rule",
   ],
 ];

@@ -66,7 +66,7 @@ my $tests = [
       ['-m comment --comment "nameserver"'],
       ['-j ACCEPT'],
     ],
-    "Assemble rule",
+    "Assemble rule (#2)",
   ],
   [
     $ipt->assemble($struct),
@@ -76,12 +76,17 @@ my $tests = [
       ['-m comment --comment "nameserver"'],
       ['-j ACCEPT'],
     ],
-    "Assemble rule",
+    "Assemble rule (#2)",
   ],
   [
     $ipt->save_chain('OUTPUT'), 
     ['-A OUTPUT -d 192.168.15.1/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT'],
-    "Get full rule.",
+    "Get full chain rule set.",
+  ],
+  [
+    $ipt->save_table(), 
+    ['-A OUTPUT -d 192.168.15.1/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT'],
+    "Get full table rule set.",
   ],
 ];
 

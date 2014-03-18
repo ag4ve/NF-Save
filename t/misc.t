@@ -68,6 +68,21 @@ my $tests = [
     ],
     "Assemble rule",
   ],
+  [
+    $ipt->assemble($struct),
+    [
+      ['-d 192.168.15.1/32'],
+      ['-p udp -m udp --sport 1024:65535 --dport 53'],
+      ['-m comment --comment "nameserver"'],
+      ['-j ACCEPT'],
+    ],
+    "Assemble rule",
+  ],
+  [
+    $ipt->save_chain('OUTPUT'), 
+    ['-A OUTPUT -d 192.168.15.1/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT'],
+    "Get full rule.",
+  ],
 ];
 
 

@@ -316,15 +316,17 @@ sub save_chain
   my ($self, $chain, $table) = @_;
   $table //= 'filter';
 
-  return undef unless (defined($chain) and $self->is_chain($chain, $table));
+  return if (not defined($chain) and not $self->is_chain($chain, $table));
 
   my @return;
   foreach my $rule ($self->get_rules($chain, $table))
   {
-    push @return, $self->assemble($rule);
+    my @assembled = $self->assemble($rule);
+    return if (not scalar(@assembled));
+    push @return, "-A $chain " . join(" ", map {@$_} @{$self->_expand(@assembled)});
   }
 
-  return @return;
+  return [@return];
 }
 
 =item get_rules($chain, $table)
@@ -356,7 +358,7 @@ sub assemble
   $self->_each_kv($self->{lookup});
   my $splitkey = [
     map {[split(' ', $_)]}
-      @{$self->_each_kv('keys')}
+      $self->_each_kv('keys', 'lookup')
   ];
 
   while (my ($listkey, $comp) = $self->_each_kv())
@@ -399,7 +401,15 @@ sub assemble
     $data->{key} = $key[0] if (not defined($data->{key}));
 
     my $ret = $self->$comp($data);
-    push @iptparts, $ret if (defined($ret) and ref($ret) eq 'ARRAY');
+
+    if (defined($ret) and ref($ret) eq 'ARRAY')
+    {
+      push @iptparts, $ret;
+    }
+    else
+    {
+      warn "No data or invalid data type returned.\n";
+    }
   }
 
   return [@iptparts];
@@ -431,10 +441,10 @@ sub rule
   $table //= 'filter';
   $func //= 'A';
   my $do;
-  $do = uc substr($1, 0, 1)
+  $do = uc(substr($1, 0, 1))
     if ($func =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)\b/i);
 
-  return if ($func and not $do);
+  return if (not defined($do));
 
   my $num = (($func =~ /\S+ ([0-9]+)/) ? $1 : '1');
 
@@ -934,7 +944,6 @@ sub _jump
 # Or
 # <key of input data structure> => {<value of input data structure> => <value to use>}
 # The later form is used to yield different outputs depending on the input value
-
 sub _str_map
 {
   my ($self, $hParams, $map) = @_;
@@ -1050,6 +1059,8 @@ sub _each_kv
 {
   my ($self, $data, $name) = @_;
 
+  $self->{nf} = {} if (not defined($self->{nf}) and not ref($self->{nf}) eq 'HASH');
+
   $name = (defined($name) ? $name : 'each_kv');
 
   if (defined($data))
@@ -1063,12 +1074,12 @@ sub _each_kv
       }
       else
       {
-        $self->{$name} = $data;
-        $self->{$name . 'orig'} = $data;
+        $self->{kv}{$name} = [@$data];
+        $self->{kv}{$name . 'orig'} = [@$data];
         return 1;
       }
     }
-    elsif (ref(\$data) eq 'SCALAR' and $self->{$name . 'orig'})
+    elsif (ref(\$data) eq 'SCALAR' and defined($self->{kv}{$name . 'orig'}))
     {
       my $bool;
       if ($data =~ /key/)
@@ -1085,26 +1096,48 @@ sub _each_kv
       }
   
       my @ret;
-      for my $num (0 .. $#{$self->{$name . 'orig'}})
+      for my $num (0 .. $#{$self->{kv}{$name . 'orig'}})
       {
-        push @ret, $self->{$name . 'orig'}[$num] if ($num % 2 == $bool);
+        push @ret, $self->{kv}{$name . 'orig'}[$num] if ($num % 2 == $bool);
       }
   
-      return \@ret;
+      return @ret;
     }
   }
 
-  if (not scalar(@{$self->{$name}}))
+  if (ref($self->{kv}{$name}) ne 'ARRAY' or not scalar(@{$self->{kv}{$name}}))
   {
-    delete $self->{$name} if (exists($self->{name}));
-    delete $self->{$name . 'orig'} if (exists($self->{$name . 'orig'}));
+    delete $self->{kv}{$name};
+    delete $self->{kv}{$name . 'orig'};
     return;
   }
 
-  my $k = shift @{$self->{$name}};
-  my $v = shift @{$self->{$name}};
+  my $k = shift @{$self->{kv}{$name}};
+  my $v = shift @{$self->{kv}{$name}};
 
   return $k, $v;
+}
+
+sub _expand
+{
+  my ($self, $sets) = @_;
+
+  if (! @$sets)
+  {
+    return [ [] ];
+  }
+  else
+  {
+    my $first_set = $sets->[0];
+    my $cross = $self->_expand([ @$sets[1 .. $#$sets] ]);
+
+    return [
+      map {
+        my $item = $_; 
+        map { [$item, @$_] } @$cross 
+      } @$first_set
+    ];
+  }
 }
 
 

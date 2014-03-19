@@ -8,13 +8,20 @@ our $VERSION = '0.01';
 
 use Socket;
 
-=head1 NF::Save
+=head1 NAME
 
-Module for storing, parsing, and restoring netfilter/iptables and ipset data
+NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ipset data
+
+=head1 SYNOPSIS
+
+  use NF::Save;
+
+=head1 DESCRIPTION
+
+Milla::BP is
 
 =cut
 
-# Lookup table to make sure elements are in order
 my $raIPTLookup = [
   'src' => 'srcdst',
   'dst' => 'srcdst',
@@ -1142,4 +1149,20 @@ sub _expand
 
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Shawn Wilson E<lt>swilson@korelogic.comE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2014- Shawn Wilson
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+# Lookup table to make sure elements are in order
 

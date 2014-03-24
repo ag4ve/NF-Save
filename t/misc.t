@@ -57,7 +57,7 @@ my $tests = [
     ],
     "Source list (no IPSET)",
   ],
-  [$ipt->_list_set({'name' => "foo"}), undef, "Non-existent list"],
+  [[$ipt->_list_set({'name' => "foo"})], [], "Non-existent list"],
   [
     $ipt->assemble($struct),
     [

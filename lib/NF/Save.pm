@@ -737,8 +737,8 @@ sub _list_set
   my ($self, $hParams) = @_;
 
   my $name = $hParams->{name};
-  return undef unless (exists($self->{ipset}{$name}{list}) and
-    ref($self->{ipset}{$name}{list}) eq 'ARRAY');
+  return if (not exists($self->{ipset}{$name}{list}) and
+    ref($self->{ipset}{$name}{list}) ne 'ARRAY');
   my @return;
 
   my %hDirection;

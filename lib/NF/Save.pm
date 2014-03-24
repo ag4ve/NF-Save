@@ -46,41 +46,44 @@ my $raSynFlags = [
   'FIN,SYN,RST,ACK SYN',
 ];
 
-=item new(%uids, @lookup, @synflags)
+=item new({%uids, @IPTLookup, @SynFlags})
 
 C<%uids> contains a hash of {'username' => #id}
-C<@lookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
-C<@synflags> contains an array of flags to be used when --syn would have been used
+C<@IPTLookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
+C<@SynFlags> contains an array of flags to be used when --syn would have been used
 
 =cut
 
 sub new
 {
-  my ($class, $uids, $IPTLookup, $SynFlags) = @_;
+  my ($class, $hParams) = @_;
 
-  $uids = (defined($uids) and ref($uids) eq 'HASH' ? $uids : {});
-
-  if (defined($IPTLookup) and ref($IPTLookup) eq 'ARRAY' and
-    scalar($IPTLookup) > 0)
-  {
-    for my $i (@$IPTLookup)
-    {
-      $raIPTLookup->[$i] = $IPTLookup->[$i]
-        if (scalar($IPTLookup->[$i]));
-    }
-  }
-
-  $raSynFlags = $SynFlags // $raSynFlags;
-
-  my $self = bless {
+  my $useParams = {
     'nf' => {},
     'set' => {},
-    'uids' => $uids,
-    'lookup' => $raIPTLookup,
-    'synflags' => $raSynFlags,
-  }, $class;
+  };
+  $useParams->{uids} = (
+    (exists($hParams->{uids}) and ref($hParams->{uids}) eq 'HASH') ?
+    $hParams->{uids} : {}
+  );
 
-  return $self;
+  if (exists($hParams->{IPTLookup}) and ref($hParams->{IPTLookup}) eq 'ARRAY' and
+    scalar($hParams->{IPTLookup}) > 0)
+  {
+    for my $i (@{$hParams->{IPTLookup}})
+    {
+      $raIPTLookup->[$i] = $hParams->{IPTLookup}[$i]
+        if (scalar($hParams->{IPTLookup}[$i]));
+    }
+  }
+  $useParams->{lookup} = $raIPTLookup;
+
+  $useParams->{synflags} = (
+    (exists($hParams->{SynFlags}) and ref($hParams->{SynFlags}) eq 'ARRAY') ?
+    $hParams->{SynFlags} : $raSynFlags
+  );
+
+  return bless $useParams, $class;
 }
 
 =item get($chain, $table)
@@ -1032,6 +1035,7 @@ sub _str_map
       }
     }
   }
+
   if (not grep {$_ == 0} values(%hRequire))
   {
     return join(' ', @ret) if (scalar(@ret));
@@ -1040,6 +1044,7 @@ sub _str_map
   {
     warn "Required fields not defined: [" . 
       join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "]\n";
+    return;
   }
 }
 

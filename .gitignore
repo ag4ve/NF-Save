@@ -1,3 +1,4 @@
 /NF-Save*
 /.build
 !META.json
+_build_params

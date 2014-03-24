@@ -1,0 +1,28 @@
+---
+abstract: 'Module for storing, parsing, and restoring netfilter/iptables and ipset data'
+author:
+  - 'Shawn Wilson <swilson@korelogic.com>'
+build_requires:
+  Test::Differences: '0'
+  Test::More: '0.96'
+configure_requires:
+  Module::Build::Tiny: '0.035'
+dynamic_config: 0
+generated_by: 'Dist::Milla version v1.0.4, Dist::Zilla version 5.014, CPAN::Meta::Converter version 2.140640'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: NF-Save
+no_index:
+  directory:
+    - t
+    - xt
+    - inc
+    - share
+    - eg
+    - examples
+requires:
+  Socket: '0'
+  perl: '5.010000'
+version: '0.01'

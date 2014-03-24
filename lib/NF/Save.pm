@@ -83,6 +83,8 @@ sub new
     $hParams->{SynFlags} : $raSynFlags
   );
 
+  $useParams->{useipset} = $hParams->{useipset} // 0;
+
   return bless $useParams, $class;
 }
 
@@ -762,9 +764,9 @@ sub _list_set
     );
   }
 
-  if ($hParams->{useipset})
+  if ($hParams->{useipset} or ($self->{useipset} and $hParams->{useipset} != 0))
   {
-    warn "Set [$name] has not been defined\n" unless ($self->is_ipset($name));
+    warn "Set [$name] has not been defined\n" if (not $self->is_ipset($name));
     push @return, "-m set --match-set $name " . join(",", sort {$b cmp $a} keys(%hDirection));
   }
   else

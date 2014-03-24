@@ -20,8 +20,8 @@ my $tests = [
     'Source IP string.',
   ],
   [
-    $ipt->_srcdst({'not' => 1}),
-    undef,
+    $ipt->_srcdst({'ip' => "1.2.3.4"}),
+    [''],
     "Not enough parameters",
   ],
   [

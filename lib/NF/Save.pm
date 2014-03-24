@@ -669,7 +669,7 @@ sub _srcdst
     ], {
       'ip' => "name",
       'direction' => 'key',
-    },
+    }, [qw/direction ip/],
   )];
 }
 
@@ -693,7 +693,7 @@ sub _io_if
     ], {
       'if' => "name",
       'direction' => "key",
-    },
+    }, [qw/direction if/],
   )];
 }
 
@@ -803,7 +803,7 @@ sub _tcp_udp
       'flags' => "--tcp-flags",
     ], {
       'name' => "key"
-    }
+    }, [qw/name/],
   )];
 }
 
@@ -813,10 +813,11 @@ sub _icmp
   my ($self, $hParams) = @_;
 
   return [$self->_str_map($hParams, [
-    'name lc' => "-p",
-    'name lc' => "-m",
-    'type' => '--icmp-type',
-  ])];
+      'name lc' => "-p",
+      'name lc' => "-m",
+      'type' => '--icmp-type',
+    ], undef, [qw/name/],
+  )];
 }
 
 # Return an array of conntrack strings
@@ -893,52 +894,58 @@ sub _jump
   if (uc($jump) eq 'LOG')
   {
     return [$self->_str_map($hParams, [
-      'name uc' => "-j",
-      'prefix qq' => "--log-prefix",
-      'tcp bool' => "--log-tcp-options",
-      'ip bool' => "--log-ip-options",
-      'uid bool' => "--log-uid",
-    ])];
+        'name uc' => "-j",
+        'prefix qq' => "--log-prefix",
+        'tcp bool' => "--log-tcp-options",
+        'ip bool' => "--log-ip-options",
+        'uid bool' => "--log-uid",
+      ], undef, [qw/name/],
+    )];
   }
   elsif (uc($jump) eq 'REJECT')
   {
     return [$self->_str_map($hParams, [
-      'name uc' => "-j",
-      'with bool' => "--reject-with icmp-port-unreachable",
-    ])];
+        'name uc' => "-j",
+        'with bool' => "--reject-with icmp-port-unreachable",
+      ], undef, [qw/name/],
+    )];
   }
   elsif (uc($jump) eq 'CT')
   {
     return [$self->_str_map($hParams, [
-      'name uc' => "-j",
-      'notrack bool' => "--notrack",
-    ])];
+        'name uc' => "-j",
+        'notrack bool' => "--notrack",
+      ], undef, [qw/name/],
+    )];
   }
   elsif (uc($jump) eq 'SNAT')
   {
     return [$self->_str_map($hParams, [
-      'name uc' => "-j",
-      'src ip' => "--to-source",
-    ])];
+        'name uc' => "-j",
+        'src ip' => "--to-source",
+      ], undef, [qw/name/],
+    )];
   }
   elsif (uc($jump) eq 'DNAT')
   {
     return [$self->_str_map($hParams, [
-      'name uc' => "-j",
-      'dst ip' => "--to-destination",
-    ])];
+        'name uc' => "-j",
+        'dst ip' => "--to-destination",
+      ], undef, [qw/name/],
+    )];
   }
   else
   {
     return [$self->_str_map($hParams, [
-      'name' => "-j",
-    ])];
+        'name' => "-j",
+      ], undef, [qw/name/]
+    )];
   }
 }
 
 # Return a string from a definition
-# Input is a hashref of the input datastructure and a definition and optionally 
-# a third hash with alternate keys to try.
+# Input is a hashref of the input datastructure, a definition, optionally 
+# a third hash with alternate keys to try, and required fields.
 # The definition is a balanced array of:
 # <key of input data structure [function]> => <value>
 # Or
@@ -946,7 +953,9 @@ sub _jump
 # The later form is used to yield different outputs depending on the input value
 sub _str_map
 {
-  my ($self, $hParams, $map, $alt) = @_;
+  my ($self, $hParams, $map, $alt, $require) = @_;
+
+  my %hRequire = map {$_ => 0} @$require;
 
   my (@ret, @done);
   $self->_each_kv($map, 'str_map');
@@ -966,7 +975,11 @@ sub _str_map
     {
       my @key = grep {/$whichkey/} keys %$hParams;
       $pkey = $key[0] if (scalar(@key) and defined($key[0]));
-      last if (defined($pkey));
+      if (defined($pkey))
+      {
+        $hRequire{$PossibleKeys[0]} = 1;
+        last;
+      }
     }
 
     if (defined($pkey))
@@ -1019,7 +1032,15 @@ sub _str_map
       }
     }
   }
-  return join(' ', @ret) if (scalar(@ret));
+  if (not grep {$_ == 0} values(%hRequire))
+  {
+    return join(' ', @ret) if (scalar(@ret));
+  }
+  else
+  {
+    warn "Required fields not defined: [" . 
+      join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "]\n";
+  }
 }
 
 # Return a valid CIDR IP address if possible or undef

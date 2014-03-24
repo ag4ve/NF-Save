@@ -61,6 +61,8 @@ sub new
   my $useParams = {
     'nf' => {},
     'set' => {},
+    'nf comment' => [],
+    'set comment' => [],
   };
   $useParams->{uids} = (
     (exists($hParams->{uids}) and ref($hParams->{uids}) eq 'HASH') ?
@@ -193,10 +195,10 @@ sub get_ipset
 {
   my ($self, $name) = @_;
 
-  return undef if (defined($name) and not $self->is_ipset($name));
+  return if (defined($name) and not $self->is_ipset($name));
   my @iter = ($name // keys(%{$self->{ipset}}));
 
-  my @return;
+  my @ret;
   foreach my $name (@iter)
   {
     my $data = $self->{ipset}{$name};
@@ -205,11 +207,13 @@ sub get_ipset
     my $hashsize = $data->{hashsize} // 1024;
     my $maxelen = $data->{maxelen} // 65536;
 
-    push @return, "create $name $type family $family hashsize $hashsize maxelen $maxelen";
-    push @return, map {"add $name $_"} @{$data->{list}};
+    push @ret, "create $name $type family $family hashsize $hashsize maxelen $maxelen";
+    push @ret, map {"add $name $_"} @{$data->{list}};
   }
 
-  return [@return];
+  push @ret, @{$self->{'set comment'}};
+
+  return [@ret];
 }
 
 =item is_ipset($name)
@@ -259,13 +263,16 @@ sub save
 {
   my ($self) = @_;
 
-  my @return;
+  my @ret;
 
   foreach my $table ($self->get_tables())
   {
-    push @return, @{$self->save_table($table)};
+    push @ret, @{$self->save_table($table)};
   }
-  return @return;
+
+  push @ret, $self->{'nf comment'};
+
+  return @ret;
 }
 
 =item get_tables()
@@ -470,6 +477,34 @@ sub rule
   $self->{nf}{$table}{$chain} = () unless (ref($self->{nf}{$table}{$chain}) eq 'ARRAY');
 
   return $self->_ipt_do($rule, $table, $chain, $do, $num);
+}
+
+=item comment($str, $where)
+
+Add a comment that will be displayed in iptables/ipset output
+
+=cut
+
+sub comment
+{
+  my ($self, $str, $where) = @_;
+  $where //= "nf";
+
+  $str = "# $str";
+
+  if ($where =~ /^(ipt|nf)/)
+  {
+    push @{$self->{'nf comment'}}, $str;
+  }
+  elsif ($where =~ /^(ips|set)/)
+  {
+    push @{$self->{'set comment'}}, $str;
+  }
+  else
+  {
+    push @{$self->{'nf comment'}}, $str;
+    push @{$self->{'set comment'}}, $str;
+  }
 }
 
 # Actually write the rule from ipt

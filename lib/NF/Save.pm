@@ -660,35 +660,23 @@ sub _srcdst
 {
   my ($self, $hParams) = @_;
 
-  $hParams->{ip} = $hParams->{name} if (not defined($hParams->{ip}));
-  $hParams->{direction} = $hParams->{key} if (not defined($hParams->{direction}));
-
-  if (scalar(grep {/ip|direction/} keys %$hParams) != 2 or
-    not $self->_valid_ip($hParams->{ip}))
-  {
-    warn "No direction or IP address defined - nothing done [" .
-    (defined($hParams->{ip}) ? $hParams->{ip} : '') . "] [" .
-    (defined($hParams->{direction}) ? $hParams->{direction} : '') .
-    "]\n";
-    return undef;
-  }
-
   return [$self->_str_map($hParams, [
-    'direction' => {
-      'src' => "-s",
-      'dst' => "-d",
+      'direction' => {
+        'src' => "-s",
+        'dst' => "-d",
+      },
+      'ip ip' => "",
+    ], {
+      'ip' => "name",
+      'direction' => 'key',
     },
-    'ip ip' => "",
-  ])];
+  )];
 }
 
 # Return an array of input/output interface strings
 sub _io_if
 {
   my ($self, $hParams) = @_;
-
-  $hParams->{if} = $hParams->{name} if (not defined($hParams->{if}));
-  $hParams->{direction} = $hParams->{key} if (not defined($hParams->{direction}));
 
   if (not defined($hParams->{direction}) or not defined($hParams->{if}))
   {
@@ -697,12 +685,16 @@ sub _io_if
   }
 
   return [$self->_str_map($hParams, [
-    'direction' => {
-      'in' => "-i",
-      'out' => "-o",
+      'direction' => {
+        'in' => "-i",
+        'out' => "-o",
+      },
+      'if' => "",
+    ], {
+      'if' => "name",
+      'direction' => "key",
     },
-    'if' => "",
-  ])];
+  )];
 }
 
 # Return an array of protocol strings
@@ -710,13 +702,12 @@ sub _proto
 {
   my ($self, $hParams) = @_;
 
-  $hParams->{proto} = $hParams->{name} if (not defined($hParams->{proto}));
-
-  return undef unless (defined($hParams->{proto}));
-
   return [$self->_str_map($hParams, [
-    'proto lc' => "-p",
-  ])];
+      'proto lc' => "-p",
+    ], {
+      'proto' => "name",
+    }
+  )];
 }
 
 # Return an array of owner strings
@@ -804,15 +795,16 @@ sub _tcp_udp
 {
   my ($self, $hParams) = @_;
 
-  $hParams->{name} = $hParams->{key} if (not defined($hParams->{name}));
-
   return [$self->_str_map($hParams, [
-    'name lc' => "-p",
-    'name lc' => "-m",
-    'sport' => "--sport",
-    'dport' => "--dport",
-    'flags' => "--tcp-flags",
-  ])];
+      'name lc' => "-p",
+      'name lc' => "-m",
+      'sport' => "--sport",
+      'dport' => "--dport",
+      'flags' => "--tcp-flags",
+    ], {
+      'name' => "key"
+    }
+  )];
 }
 
 # Return an array of ICMP protocol match strings
@@ -945,7 +937,8 @@ sub _jump
 }
 
 # Return a string from a definition
-# Input is a hashref of the input datastructure and a definition
+# Input is a hashref of the input datastructure and a definition and optionally 
+# a third hash with alternate keys to try.
 # The definition is a balanced array of:
 # <key of input data structure [function]> => <value>
 # Or
@@ -953,17 +946,29 @@ sub _jump
 # The later form is used to yield different outputs depending on the input value
 sub _str_map
 {
-  my ($self, $hParams, $map) = @_;
+  my ($self, $hParams, $map, $alt) = @_;
 
   my (@ret, @done);
   $self->_each_kv($map, 'str_map');
   while (my ($mapkey, $mapval) = $self->_each_kv(undef, 'str_map'))
   {
+    my ($testkey) = $mapkey =~ /^([^ ]+)/;
+    my @PossibleKeys;
+    push @PossibleKeys, $testkey if (defined($testkey) and length($testkey));
+    push @PossibleKeys, $alt->{$testkey} 
+      if (defined($alt) and ref($alt) eq 'HASH' and defined($alt->{$testkey}));
     # mapped string and function. Eg 'name' and 'lc'
     my ($mapstr, undef, $mapfunc) = $mapkey =~ /^([^ ]+)?( )?(.*)$/;
     # Actual key of parameter. Eg '!destination'
-    my @key = grep {/$mapstr/} keys %$hParams;
-    my $pkey = $key[0] if (scalar(@key) and defined($key[0]));
+    my $pkey;
+
+    for my $whichkey (@PossibleKeys)
+    {
+      my @key = grep {/$whichkey/} keys %$hParams;
+      $pkey = $key[0] if (scalar(@key) and defined($key[0]));
+      last if (defined($pkey));
+    }
+
     if (defined($pkey))
     {
       my ($not, $str) = $pkey =~ /^(!)?(.*)$/;
@@ -1014,7 +1019,7 @@ sub _str_map
       }
     }
   }
-  return join(' ', @ret);
+  return join(' ', @ret) if (scalar(@ret));
 }
 
 # Return a valid CIDR IP address if possible or undef

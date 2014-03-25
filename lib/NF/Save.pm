@@ -142,6 +142,26 @@ sub is_table
   return (exists($self->{nf}{$table}) ? 1 : 0);
 }
 
+=item useipset($bool)
+
+Change whether ipset is used bu default.
+
+=cut
+
+sub useipset
+{
+  my ($self, $bool) = @_;
+
+  if (defined($bool))
+  {
+    $self->{useipset} = $bool;
+  }
+  else
+  {
+    return $self->{useipset};
+  }
+}
+
 =item ipset($name, @list, $opts)
 
 Define an ipset list.

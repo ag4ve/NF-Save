@@ -40,6 +40,33 @@ my $raIPTLookup = [
   'jump' => 'jump',
 ];
 
+# Policy map for standard table chains
+my $rhPolicy = {
+  'filter'  => {
+    'INPUT'       => 'DROP',
+    'OUTPUT'      => 'DROP',
+    'FORWARD'     => 'DROP',
+  },
+  'mangle'  => {
+    'PREROUTING'  => 'ACCEPT',
+    'INPUT'       => 'ACCEPT',
+    'FORWARD'     => 'ACCEPT',
+    'OUTPUT'      => 'ACCEPT',
+    'POSTROUTING' => 'ACCEPT',
+  },
+  'nat'     => {
+    'PREROUTING'  => 'ACCEPT',
+    'INPUT'       => 'ACCEPT',
+    'FORWARD'     => 'ACCEPT',
+    'POSTROUTING' => 'ACCEPT',
+  },
+  'raw'     => {
+    'OUTPUT'      => 'ACCEPT',
+    'POSTROUTING' => 'ACCEPT',
+    'PREROUTING'  => 'ACCEPT',
+  },
+};
+
 # TODO implement this
 # What --syn get expanded into - not implemented yet
 my $raSynFlags = [
@@ -51,6 +78,8 @@ my $raSynFlags = [
 C<%uids> contains a hash of {'username' => #id}
 C<@IPTLookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
 C<@SynFlags> contains an array of flags to be used when --syn would have been used
+C<$useipset> boolean - whether or not to default lists as ipset
+C<%Policy> default policy to use
 
 =cut
 
@@ -79,6 +108,10 @@ sub new
     }
   }
   $useParams->{lookup} = $raIPTLookup;
+
+  # Overright default
+  $hParams->{Policy} //= {};
+  $useParams->{Policy} = {%$rhPolicy, %{$hParams->{Policy}}};
 
   $useParams->{synflags} = (
     (exists($hParams->{SynFlags}) and ref($hParams->{SynFlags}) eq 'ARRAY') ?
@@ -159,6 +192,50 @@ sub useipset
   else
   {
     return $self->{useipset};
+  }
+}
+
+=item get_policy($chain, $table)
+
+Get the policy for a chain
+
+=cut
+
+sub get_policy
+{
+  my ($self, $chain, $table) = @_;
+
+  $table //= "filter";
+
+  if (exists($self->{Policy}{$table}{$chain}))
+  {
+    return $self->{Policy}{$table}{$chain};
+  }
+  else
+  {
+    return;
+  }
+}
+
+=item get_header($chain, $table)
+
+Get header policies for iptable-save
+
+=cut
+
+sub get_header
+{
+  my ($self, $chain, $table) = @_;
+
+  $table //= "filter";
+
+  if ($self->get_policy($chain, $table))
+  {
+    return ":$chain " . $self->get_policy($chain, $table) . " [0:0]";
+  }
+  else
+  {
+    return ":$chain - [0:0]";
   }
 }
 
@@ -284,10 +361,9 @@ sub save
   my ($self) = @_;
 
   my @ret;
-
   foreach my $table ($self->get_tables())
   {
-    push @ret, @{$self->save_table($table)};
+    push @ret, "*$table", @{$self->save_table($table)};
   }
 
   push @ret, $self->{'nf comment'};
@@ -321,13 +397,18 @@ sub save_table
 
   return undef if (not $self->is_table($table));
 
-  my @return;
+  my (@head, @chains);
   foreach my $chain ($self->get_chains($table))
   {
-    push @return, @{$self->save_chain($chain, $table)};
+    push @head, $self->get_header($chain, $table);
+    push @chains, @{$self->save_chain($chain, $table)};
   }
 
-  return @return;
+  my @ret;
+
+  push @ret, @head, @chains;
+
+  return @ret;
 }
 
 =item get_chain($table)
@@ -1163,6 +1244,8 @@ sub _cidr_ip
   }
 }
 
+# Use an array of pairs like a hash
+# Can take a 'name' for a data structure and data can either be the data or 'keys' or 'values' to return all keys/values
 sub _each_kv
 {
   my ($self, $data, $name) = @_;

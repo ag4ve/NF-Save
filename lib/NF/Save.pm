@@ -499,6 +499,19 @@ sub rule
   return $self->_ipt_do($rule, $table, $chain, $do, $num);
 }
 
+=item is_user($username)
+
+Return true if user has been defined.
+
+=cut
+
+sub is_user
+{
+  my ($self, $user) = @_;
+
+  return (exists($self->{uids}{$user}) ? 1 : 0);
+}
+
 =item comment($str, $where)
 
 Add a comment that will be displayed in iptables/ipset output

@@ -422,7 +422,12 @@ sub get_chains
   my ($self, $table) = @_;
 
   return undef if (not $self->is_table($table));
-  return (keys %{$self->{nf}{$table}});
+  return (
+    $self->_sortpre(
+      [keys(%{$self->{nf}{$table}})], 
+      [qw/PREROUTING INPUT FORWARD OUTPUT POSTROUTING/],
+    )
+  );
 }
 
 =item save_chain($chain, $table)
@@ -1309,6 +1314,7 @@ sub _each_kv
   return $k, $v;
 }
 
+# Expand arrays of arrays into an array of strings for each possibility
 sub _expand
 {
   my ($self, $sets) = @_;
@@ -1329,6 +1335,27 @@ sub _expand
       } @$first_set
     ];
   }
+}
+
+# Precede sort with possible presorted values from an array.
+sub _sortpre
+{
+  my ($self, $data, $prevals) = @_;
+  $prevals //= ();
+
+  my $i = 1;
+  my $pre = (ref($prevals) eq 'ARRAY' and scalar(@$prevals) ?
+    {map {$_ => $i++} @$prevals} : {}
+  );
+
+  return
+    sort {
+      return $pre->{$a} <=> $pre->{$b}
+        if $pre->{$a} && $pre->{$b};
+      return -1 if $pre->{$a};
+      return +1 if $pre->{$b};
+      return $a cmp $b;
+    } @$data;
 }
 
 

@@ -381,7 +381,10 @@ sub get_tables
 {
   my ($self) = @_;
 
-  return (keys %{$self->{nf}});
+  return ($self->_sortpre(
+    [keys %{$self->{nf}}],
+    [qw/raw net mangle fliter/]
+  ));
 }
 
 =item save_table($table)
@@ -1348,14 +1351,15 @@ sub _sortpre
     {map {$_ => $i++} @$prevals} : {}
   );
 
-  return
+  return (
     sort {
       return $pre->{$a} <=> $pre->{$b}
         if $pre->{$a} && $pre->{$b};
       return -1 if $pre->{$a};
       return +1 if $pre->{$b};
       return $a cmp $b;
-    } @$data;
+    } @$data
+  );
 }
 
 

@@ -7,6 +7,7 @@ use 5.010;
 our $VERSION = '0.01';
 
 use Socket;
+use Storable qw(dclone);
 
 =head1 NAME
 
@@ -30,7 +31,7 @@ my $raIPTLookup = [
   'proto' => 'proto',
   'owner' => 'owner',
   'match' => 'match',
-  'list set' => 'list_set',
+  'list' => 'list_set',
   'tcp' => 'tcp_udp',
   'udp' => 'tcp_udp',
   'icmp' => 'icmp',
@@ -575,6 +576,9 @@ sub rule
   return if (not defined($do));
 
   my $num = (($func =~ /\S+ ([0-9]+)/) ? $1 : '1');
+
+  # Make sure the hash is immutable
+  $rule = dclone($rule);
 
   # Filter syn mask
   if (exists($rule->{proto}) and ref($rule->{proto}) eq 'ARRAY')

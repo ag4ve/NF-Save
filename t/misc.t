@@ -11,6 +11,7 @@ use NF::Save;
 my $ipt = NF::Save->new({'uids' => {'testuser' => 359}});
 
 my $struct = {
+  'in' => "eth0",
   'udp' => {
     'sport' => "1024:65535",
     'dport' => "53",
@@ -62,6 +63,7 @@ my $tests = [
     $ipt->assemble($struct),
     [
       ['-d 192.168.15.1/32'],
+      ['-i eth0'],
       ['-p udp -m udp --sport 1024:65535 --dport 53'],
       ['-m comment --comment "nameserver"'],
       ['-j ACCEPT'],

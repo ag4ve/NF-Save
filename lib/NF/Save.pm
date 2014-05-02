@@ -1373,6 +1373,18 @@ sub _sortpre
 
 __END__
 
+=head1 TODO
+
+- Some tests fail (prove -lbv t/*.t)
+  - mist.t:
+    - 10 - Assemble rule (1)
+    - 13
+- Need more tests and use cases
+  - Need to handle more modules (and probably separate that namespace out)
+  - code is kinda brittle
+- Might want to look at naming in the API (->save saves a iptables rule and 
+    ->ipset saves a set for ipset)
+
 =head1 AUTHOR
 
 Shawn Wilson E<lt>swilson@korelogic.comE<gt>

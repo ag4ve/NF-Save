@@ -8,11 +8,15 @@ NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ips
 
 # DESCRIPTION
 
-- new(%uids, @lookup, @synflags)
+Milla::BP is
+
+- new({%uids, @IPTLookup, @SynFlags})
 
     `%uids` contains a hash of {'username' => #id}
-    `@lookup` contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
-    `@synflags` contains an array of flags to be used when --syn would have been used
+    `@IPTLookup` contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
+    `@SynFlags` contains an array of flags to be used when --syn would have been used
+    `$useipset` boolean - whether or not to default lists as ipset
+    `%Policy` default policy to use
 
 - get($chain, $table)
 
@@ -25,6 +29,18 @@ NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ips
 - is\_table
 
     Check if a table is defined
+
+- useipset($bool)
+
+    Change whether ipset is used bu default.
+
+- get\_policy($chain, $table)
+
+    Get the policy for a chain
+
+- get\_header($chain, $table)
+
+    Get header policies for iptable-save
 
 - ipset($name, @list, $opts)
 
@@ -91,20 +107,28 @@ NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ips
     Delete and replace have been implemented for completeness - for replace:
     `ipt('OUTPUT', -j ACCEPT', 'filter', 'R 5');`
 
+- is\_user($username)
+
+    Return true if user has been defined.
+
+- comment($str, $where)
+
+    Add a comment that will be displayed in iptables/ipset output
+
 - raw\_rule(@rules)
 
     Process a full iptables rule into the data structure
 
 # TODO
 
-- Some tests fail (prove \-lbv t/\*\.t)
+\- Some tests fail (prove -lbv t/\*.t)
   - mist.t:
     - 10 - Assemble rule (1)
     - 13
-- Need more tests and use cases
+\- Need more tests and use cases
   - Need to handle more modules (and probably separate that namespace out)
   - code is kinda brittle
-- Might want to look at naming in the API (->save saves a iptables rule and 
+\- Might want to look at naming in the API (->save saves a iptables rule and 
     ->ipset saves a set for ipset)
 
 # AUTHOR
@@ -125,10 +149,10 @@ it under the same terms as Perl itself.
 
 Hey! __The above document had some coding errors, which are explained below:__
 
-- Around line 15:
+- Around line 17:
 
     '=item' outside of any '=over'
 
-- Around line 102:
+- Around line 126:
 
     You forgot a '=back' before '=head1'

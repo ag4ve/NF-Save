@@ -8,8 +8,8 @@
 #        FILES:  ---
 #         BUGS:  ---
 #        NOTES:  ---
-#       AUTHOR:  Dr. Fritz Mehner (mn), mehner@fh-swf.de
-#      COMPANY:  FH Südwestfalen, Iserlohn
+#       AUTHOR:  Shawn Wilson <swilson@korelogic.com>
+#      COMPANY:  Korelogic
 #      VERSION:  1.0
 #      CREATED:  02/16/2014 06:41:31 AM
 #     REVISION:  ---

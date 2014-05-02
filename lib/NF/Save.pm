@@ -9,6 +9,8 @@ our $VERSION = '0.01';
 use Socket;
 use Storable qw(dclone);
 
+=encoding utf8
+
 =head1 NAME
 
 NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ipset data

@@ -8,8 +8,6 @@ NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ips
 
 # DESCRIPTION
 
-Milla::BP is
-
 - new(%uids, @lookup, @synflags)
 
     `%uids` contains a hash of {'username' => #id}
@@ -96,6 +94,18 @@ Milla::BP is
 - raw\_rule(@rules)
 
     Process a full iptables rule into the data structure
+
+# TODO
+
+- Some tests fail (prove \-lbv t/\*\.t)
+  - mist.t:
+    - 10 - Assemble rule (1)
+    - 13
+- Need more tests and use cases
+  - Need to handle more modules (and probably separate that namespace out)
+  - code is kinda brittle
+- Might want to look at naming in the API (->save saves a iptables rule and 
+    ->ipset saves a set for ipset)
 
 # AUTHOR
 

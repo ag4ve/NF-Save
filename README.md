@@ -8,7 +8,14 @@ NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ips
 
 # DESCRIPTION
 
-Milla::BP is
+NF-Save is intended to let perl import/export firewall rules and ipsets
+in the exact syntax used by iptables-save / iptables-restore and ipset
+save / ipset restore: same order of arguments, same way of expanding
+tokens, same defaults when things weren't explicitly specified, etc.
+
+That way, existing policies can be imported easily and completely, and
+policies composed in perl code can be written out in a way that is 100%
+diff-compatible with iptables-save output.
 
 - new({%uids, @IPTLookup, @SynFlags})
 

@@ -76,6 +76,8 @@ my $raSynFlags = [
   'FIN,SYN,RST,ACK SYN',
 ];
 
+=over 4
+
 =item new({%uids, @IPTLookup, @SynFlags})
 
 C<%uids> contains a hash of {'username' => #id}
@@ -682,6 +684,8 @@ sub _ipt_do
 =item raw_rule(@rules)
 
 Process a full iptables rule into the data structure
+
+=back
 
 =cut
 

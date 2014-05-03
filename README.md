@@ -144,15 +144,3 @@ Copyright 2014- Shawn Wilson
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 \# Lookup table to make sure elements are in order
-
-# POD ERRORS
-
-Hey! __The above document had some coding errors, which are explained below:__
-
-- Around line 17:
-
-    '=item' outside of any '=over'
-
-- Around line 126:
-
-    You forgot a '=back' before '=head1'

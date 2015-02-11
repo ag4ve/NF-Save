@@ -1281,6 +1281,7 @@ sub _each_kv
 
   if (defined($data))
   {
+    # Create named group
     if (ref($data) eq 'ARRAY')
     {
       if (scalar(@$data) % 2)
@@ -1295,6 +1296,7 @@ sub _each_kv
         return 1;
       }
     }
+    # Return named keys or values
     elsif (ref(\$data) eq 'SCALAR' and defined($self->{kv}{$name . 'orig'}))
     {
       my $bool;
@@ -1321,6 +1323,7 @@ sub _each_kv
     }
   }
 
+  # Cleanup
   if (ref($self->{kv}{$name}) ne 'ARRAY' or not scalar(@{$self->{kv}{$name}}))
   {
     delete $self->{kv}{$name};
@@ -1328,6 +1331,7 @@ sub _each_kv
     return;
   }
 
+  # Return key/value pair
   my $k = shift @{$self->{kv}{$name}};
   my $v = shift @{$self->{kv}{$name}};
 

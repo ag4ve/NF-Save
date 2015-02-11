@@ -501,6 +501,7 @@ sub assemble
   {
     $comp = '_' . $comp;
 
+    # If a key has been used in the data correctly
     my @key = grep {/^!?$listkey$/i} keys %$hParams;
     if (scalar(@key) > 1)
     {
@@ -853,7 +854,8 @@ sub _io_if
 {
   my ($self, $hParams) = @_;
 
-  if (not defined($hParams->{direction}) or not defined($hParams->{if}))
+  # key = direction, name = if
+  if (not defined($hParams->{key}) or not defined($hParams->{name}))
   {
     warn "No direction or interface defined - nothing done";
     return undef;

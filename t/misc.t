@@ -24,6 +24,12 @@ my $struct = {
 $ipt->rule('OUTPUT', $struct);
 
 my $tests = [
+  [$ipt->is_table('filter'), [1], "Table filter exists."],
+  [$ipt->is_table('foobar'), [0], "Table foobar does not exist."],
+  [$ipt->is_chain('OUTPUT'), [1], "Chain OUTPUT exists."],
+  [$ipt->is_chain('OUTPUT', 'filter'), [1], "Chain OUTPUT in table filter exists."],
+  [$ipt->is_chain('OUTPUT', 'foobar'), [0], "Chain OUTPUT in table foobar does not exist."],
+  [$ipt->is_chain('foobar', 'filter'), [0], "Chain foobar in table filter exists."],
   [$ipt->get(), {'filter' => {'OUTPUT' => [$struct]}}, "Same structures"],
   [
     $ipt->assemble($struct),

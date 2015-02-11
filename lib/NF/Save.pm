@@ -495,13 +495,9 @@ sub assemble
   my ($self, $hParams) = @_;
 
   my @iptparts;
-  $self->_each_kv($self->{lookup});
-  my $splitkey = [
-    map {[split(' ', $_)]}
-      $self->_each_kv('keys', 'lookup')
-  ];
+  $self->_each_kv($self->{lookup}, 'lookup');
 
-  while (my ($listkey, $comp) = $self->_each_kv())
+  while (my ($listkey, $comp) = $self->_each_kv(undef, 'lookup'))
   {
     $comp = '_' . $comp;
 

@@ -41,10 +41,14 @@ my $tests = [
   [$ipt->get_rules('OUTPUT'), $struct, "Get stored rules from OUTPUT."],
   [$ipt->get_rules('OUTPUT', 'filter'), $struct, "Get stored rules from OUTPUT chain in filter table."],
   [$ipt->get_rules('INPUT', 'filter'), undef, "Get stored rules from INPUT chain in filter table (undef)."],
-  [$ipt->get_policy('INPUT'), 'DROP', "Policy for INPUT in (unspecified) filter table."],
-  [$ipt->get_policy('OUTPUT', 'filter'), 'DROP', "Policy for OUTPUT in filter table."],
-  [$ipt->get_policy('OUTPUT', 'mangle'), 'ACCEPT', "Policy for OUTPUT in mangle table."],
-  [$ipt->get_policy('foobar', 'mangle'), undef, undef, "Policy for foobar in mangle table (undef)."],
+  [$ipt->get_policy('INPUT'), 'DROP', "Policy for INPUT in an (unspecified) filter table."],
+  [$ipt->get_policy('OUTPUT', 'filter'), 'DROP', "Policy for OUTPUT in the filter table."],
+  [$ipt->get_policy('OUTPUT', 'mangle'), 'ACCEPT', "Policy for OUTPUT in the mangle table."],
+  [$ipt->get_policy('foobar', 'mangle'), undef, undef, "Policy for foobar in the mangle table (undef)."],
+  [$ipt->get_header('OUTPUT'), ':OUTPUT DROP [0:0]', "Header for OUTPUT in an (unspecified) filter table."],
+  [$ipt->get_header('OUTPUT', 'filter'), ':OUTPUT DROP [0:0]', "Header for OUTPUT in the filter table."],
+  [$ipt->get_header('OUTPUT', 'mangle'), ':OUTPUT ACCEPT [0:0]', "Header for OUTPUT in the mangle table."],
+  [$ipt->get_header('foobar'), ':foobar - [0:0]', "Header for the foobar chain."],
   [$ipt->get(), {'filter' => {'OUTPUT' => [$struct]}}, "Same structures."],
   [$ipt->assemble($struct), $assembled, "Assemble rule."],
   [
@@ -54,7 +58,11 @@ my $tests = [
   ],
   [
     $ipt->save_table(), 
-    ['-A OUTPUT -d 192.168.15.1/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT'],
+    [
+      '*filter',
+      ':OUTPUT DROP [0:0]',
+      '-A OUTPUT -d 192.168.15.1/32 -i eth0 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT',
+    ],
     "Get full table rule set.",
   ],
 ];

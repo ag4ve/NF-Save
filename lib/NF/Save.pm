@@ -421,9 +421,9 @@ sub save_table
 
   my @ret;
 
-  push @ret, @head, @chains;
+  push @ret, "*$table", @head, @chains;
 
-  return @ret;
+  return [@ret];
 }
 
 =item get_chain($table)

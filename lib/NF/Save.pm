@@ -421,7 +421,7 @@ sub save_table
 
   my @ret;
 
-  push @ret, "*$table", @head, @chains;
+  push @ret, "*$table", @head, @chains, 'COMMIT';
 
   return [@ret];
 }
@@ -594,7 +594,8 @@ sub rule
     push @{$rule->{proto}}, $self->{synflags};
   }
 
-  $self->{nf}{$table} = {} unless (ref($self->{nf}{$table}) eq 'HASH');
+  $self->{nf}{$table} = {map {$_ => []} keys %{$rhPolicy->{$table}}} 
+    unless (ref($self->{nf}{$table}) eq 'HASH');
   $self->{nf}{$table}{$chain} = () unless (ref($self->{nf}{$table}{$chain}) eq 'ARRAY');
 
   return $self->_ipt_do($rule, $table, $chain, $do, $num);

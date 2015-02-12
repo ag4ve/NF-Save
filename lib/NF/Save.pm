@@ -846,7 +846,10 @@ sub _srcdst
     ], {
       'ip' => "name",
       'direction' => 'key',
-    }, [qw/direction ip/],
+    }, [qw/
+      direction
+      ip
+    /],
   )];
 }
 
@@ -854,13 +857,6 @@ sub _srcdst
 sub _io_if
 {
   my ($self, $hParams) = @_;
-
-  # key = direction, name = if
-  if (not defined($hParams->{key}) or not defined($hParams->{name}))
-  {
-    warn "No direction or interface defined - nothing done";
-    return undef;
-  }
 
   return [$self->_str_map($hParams, [
       'direction' => {
@@ -871,7 +867,10 @@ sub _io_if
     ], {
       'if' => "name",
       'direction' => "key",
-    }, [qw/direction if/],
+    }, [qw/
+      direction 
+      if
+    /],
   )];
 }
 
@@ -1123,7 +1122,7 @@ sub _jump
 
 # Return a string from a definition
 # Input is a hashref of the input datastructure, a definition, optionally 
-# a third hash with alternate keys to try, and required fields.
+# a third hash with alternate key map, and required fields.
 # The definition is a balanced array of:
 # <key of input data structure [function]> => <value>
 # Or

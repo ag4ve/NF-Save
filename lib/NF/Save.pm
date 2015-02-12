@@ -936,7 +936,8 @@ sub _list_set
     );
   }
 
-  if ($hParams->{useipset} or ($self->{useipset} and $hParams->{useipset} != 0))
+  if (($hParams->{useipset} and $hParams->{useipset} != 0) or 
+    ($self->{useipset} and $self->{useipset} != 0))
   {
     warn "Set [$name] has not been defined\n" if (not $self->is_ipset($name));
     push @return, "-m set --match-set $name " . join(",", sort {$b cmp $a} keys(%hDirection));

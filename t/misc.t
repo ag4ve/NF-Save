@@ -32,6 +32,14 @@ my $assembled = [
 $ipt->rule('OUTPUT', $struct);
 
 my $tests = [
+  [
+    [$ipt->_sortpre(
+      [qw/x a d/],
+      [qw/d a z x/]
+    )],
+    [qw/d a x/],
+    "Sort list in with a rule."
+  ],
   [$ipt->is_table('filter'), [1], "Table filter exists."],
   [$ipt->is_table('foobar'), [0], "Table foobar does not exist."],
   [$ipt->is_chain('OUTPUT'), [1], "Chain OUTPUT exists."],

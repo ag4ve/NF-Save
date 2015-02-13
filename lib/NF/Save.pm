@@ -100,7 +100,13 @@ sub new
   my ($class, $hParams) = @_;
 
   my $useParams = {
-    'nf' => {},
+    'nf' => {
+      'filter' => {
+        'INPUT' => [],
+        'OUTPUT' => [],
+        'FORWARD' => [],
+      },
+    },
     'set' => {},
     'nf comment' => [],
     'set comment' => [],
@@ -421,7 +427,7 @@ sub save_table
 
   my @ret;
 
-  push @ret, "*$table", @head, @chains, 'COMMIT';
+  push @ret, @head, @chains, 'COMMIT';
 
   return [@ret];
 }

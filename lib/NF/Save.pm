@@ -67,7 +67,7 @@ my $rhPolicy = {
   'nat'     => {
     'PREROUTING'  => 'ACCEPT',
     'INPUT'       => 'ACCEPT',
-    'FORWARD'     => 'ACCEPT',
+    'OUTPUT'      => 'ACCEPT',
     'POSTROUTING' => 'ACCEPT',
   },
   'raw'     => {

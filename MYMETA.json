@@ -4,7 +4,7 @@
       "Shawn Wilson <swilson@korelogic.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Milla version v1.0.4, Dist::Zilla version 5.014, CPAN::Meta::Converter version 2.140640",
+   "generated_by" : "Dist::Milla version v1.0.4, Dist::Zilla version 5.014, CPAN::Meta::Converter version 2.140640, CPAN::Meta::Converter version 2.141520",
    "license" : [
       "perl_5"
    ],
@@ -48,5 +48,8 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.01"
+   "version" : "0.01",
+   "x_contributors" : [
+      "Hank Leininger <hlein@korelogic.com>"
+   ]
 }

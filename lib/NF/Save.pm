@@ -381,7 +381,7 @@ sub save
   my @ret;
   foreach my $table ($self->get_tables())
   {
-    push @ret, "*$table", @{$self->save_table($table)};
+    push @ret, "*$table", @{$self->save_table($table)}, "COMMIT";
   }
 
   push @ret, @{$self->{'nf comment'}};
@@ -427,7 +427,7 @@ sub save_table
 
   my @ret;
 
-  push @ret, @head, @chains, 'COMMIT';
+  push @ret, @head, @chains;
 
   return [@ret];
 }

@@ -1390,14 +1390,18 @@ __END__
 =head1 TODO
 
 - Some tests fail (prove -lbv t/*.t)
-  - mist.t:
-    - 10 - Assemble rule (1)
-    - 13
+  - mist.t: all tests now pass
+  - ipt_do.t: does not pass
 - Need more tests and use cases
   - Need to handle more modules (and probably separate that namespace out)
   - code is kinda brittle
+- Split find places to split this into submodules
 - Might want to look at naming in the API (->save saves a iptables rule and 
-    ->ipset saves a set for ipset)
+    ->ipset saves a set for ipset - seems off)
+- Integration with libiptc using FFI or similar instead of using IPC
+  - Consider making a different module since the purpose of this is just to 
+    dump information
+- Make a debug option
 
 =head1 AUTHOR
 

@@ -80,9 +80,8 @@ $ipt->ipset('scan_targets', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048});
 
 my $tests = [
   [
-    $ipt->save(),
+    [$ipt->save()],
     [
-      '# Some comment',
       '*raw',
       ':PREROUTING ACCEPT [0:0]',
       ':OUTPUT ACCEPT [0:0]',
@@ -109,9 +108,10 @@ my $tests = [
       '-A OUTPUT -m set --match-set scan_targets src -m tcp -p tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
       '-A FORWARD -i eth0 -o eth1 -m ! tcp -m comment --comment "VM data" -j RETURN',
       'COMMIT',
+      '# Some comment',
     ],
     "Retrieve full iptables-save output",
-  ]
+  ],
 ];
 
 test($tests);

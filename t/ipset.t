@@ -28,7 +28,7 @@ my $ipt = NF::Save->new({'uids' => {'testuser' => 359}});
 my $tests = [
   [$ipt->ipset('test', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048}), 1, "Save IPSET"],
   [
-    $ipt->get_ipset(),
+    [$ipt->get_ipset()],
     [
       'create test hash:net family inet hashsize 2048 maxelen 65536',
       'add test 1.2.3.4/32',

@@ -328,7 +328,7 @@ sub get_ipset
 
   push @ret, @{$self->{'set comment'}};
 
-  return [@ret];
+  return @ret;
 }
 
 =item is_ipset($name)

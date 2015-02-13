@@ -86,12 +86,10 @@ my $tests = [
   [
     $ipt->save_table(), 
     [
-      '*filter',
       ':INPUT DROP [0:0]',
       ':FORWARD DROP [0:0]',
       ':OUTPUT DROP [0:0]',
       '-A OUTPUT -d 192.168.15.1/32 -i eth0 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT',
-      'COMMIT',
     ],
     "Get full table rule set.",
   ],

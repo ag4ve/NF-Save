@@ -401,7 +401,7 @@ sub get_tables
 
   return ($self->_sortpre(
     [keys %{$self->{nf}}],
-    [qw/raw net mangle fliter/]
+    [qw/raw nat mangle filter/]
   ));
 }
 
@@ -1370,7 +1370,7 @@ sub _expand
 sub _sortpre
 {
   my ($self, $data, $prevals) = @_;
-  $prevals //= ();
+  $prevals //= [];
 
   my $i = 1;
   my $pre = (ref($prevals) eq 'ARRAY' and scalar(@$prevals) ?

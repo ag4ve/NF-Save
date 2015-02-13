@@ -378,7 +378,7 @@ sub save
     push @ret, "*$table", @{$self->save_table($table)};
   }
 
-  push @ret, $self->{'nf comment'};
+  push @ret, @{$self->{'nf comment'}};
 
   return @ret;
 }

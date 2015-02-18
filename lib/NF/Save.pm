@@ -6,6 +6,10 @@ use 5.010;
 
 our $VERSION = '0.01';
 
+use subs 'warn';
+
+use Carp qw(cluck);
+use Data::Dumper;
 use Socket;
 use Storable qw(dclone);
 
@@ -92,12 +96,15 @@ C<@IPTLookup> contains replacement data to be used to handle the data structure 
 C<@SynFlags> contains an array of flags to be used when --syn would have been used
 C<$useipset> boolean - whether or not to default lists as ipset
 C<%Policy> default policy to use
+C<$trace> boolean - whether or not to print a stack trace with warnings
 
 =cut
 
 sub new
 {
   my ($class, $hParams) = @_;
+
+  *warn = \&cluck if (exists($hParams->{trace}) and $hParams->{trace} == 1);
 
   my $useParams = {
     'nf' => {
@@ -1224,7 +1231,8 @@ sub _str_map
   else
   {
     warn "Required fields not defined: [" . 
-      join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "]\n";
+      join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "] " .
+      Dumper($hParams) . "\n";
     return;
   }
 }

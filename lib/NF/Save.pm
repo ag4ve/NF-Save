@@ -1296,7 +1296,7 @@ sub _each_kv
 {
   my ($self, $data, $name) = @_;
 
-  $self->{nf} = {} if (not defined($self->{nf}) and not ref($self->{nf}) eq 'HASH');
+  $self->{kv} = {} if (not defined($self->{kv}) or ref($self->{kv}) ne 'HASH');
 
   $name = (defined($name) ? $name : 'each_kv');
 
@@ -1320,14 +1320,16 @@ sub _each_kv
     # Return named keys or values
     elsif (ref(\$data) eq 'SCALAR' and defined($self->{kv}{$name . 'orig'}))
     {
-      my $bool;
-      if ($data =~ /key/)
+      my ($bool, $match);
+      if ($data =~ /^key[^ ]* ?(.*)/)
       {
         $bool = 0;
+        $match = $1;
       }
-      elsif ($data =~ /val/)
+      elsif ($data =~ /^val[^ ]* ?(.*)/)
       {
         $bool = 1;
+        $match = $1;
       }
       else
       {
@@ -1335,9 +1337,18 @@ sub _each_kv
       }
   
       my @ret;
-      for my $num (0 .. $#{$self->{kv}{$name . 'orig'}})
+      my $raOrig = $self->{kv}{$name . 'orig'};
+      for my $num (0 .. $#{$raOrig})
       {
-        push @ret, $self->{kv}{$name . 'orig'}[$num] if ($num % 2 == $bool);
+        if ($num % 2 == $bool)
+        {
+          if (length($match) > 0)
+          {
+            my $cmp_num = ($bool ? $num - 1 : $num + 1);
+            next if ($raOrig->[$cmp_num] !~ /$match/);
+          }
+          push @ret, $raOrig->[$num];
+        }
       }
   
       return @ret;

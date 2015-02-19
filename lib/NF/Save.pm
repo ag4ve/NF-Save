@@ -6,7 +6,8 @@ use 5.010;
 
 our $VERSION = '0.01';
 
-use subs 'warn';
+use subs qw(warn);
+sub warn :prototype(@);
 
 use Carp qw(cluck);
 use Data::Dumper;
@@ -104,7 +105,14 @@ sub new
 {
   my ($class, $hParams) = @_;
 
-  *warn = \&cluck if (exists($hParams->{trace}) and $hParams->{trace} == 1);
+  if (exists($hParams->{trace}) and $hParams->{trace} == 1)
+  {
+    *warn = \&cluck;
+  }
+  else
+  {
+    *warn = \&CORE::warn;
+  }
 
   my $useParams = {
     'nf' => {

@@ -6,9 +6,6 @@ use 5.010;
 
 our $VERSION = '0.01';
 
-use subs qw(warn);
-sub warn :prototype(@);
-
 use Carp qw(cluck);
 use Data::Dumper;
 use Socket;
@@ -108,11 +105,8 @@ sub new
 
   if (exists($hParams->{trace}) and $hParams->{trace} == 1)
   {
+    use subs qw(warn);
     *warn = \&cluck;
-  }
-  else
-  {
-    *warn = \&CORE::warn;
   }
 
   my $useParams = {
@@ -535,7 +529,8 @@ sub assemble
     }
     else
     {
-      warn "No data or invalid data type returned.\n";
+      warn "No data or invalid data type returned for" . Dumper($data) .
+        "listkey [$listkey] key [$key] comp [$comp]\n";
     }
   }
 

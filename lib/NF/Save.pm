@@ -98,6 +98,7 @@ C<@SynFlags> contains an array of flags to be used when --syn would have been us
 C<$useipset> boolean - whether or not to default lists as ipset
 C<%Policy> default policy to use
 C<$trace> boolean - whether or not to print a stack trace with warnings
+C<$precheck> boolean - whether or not to pre-check the structure passed to rule().
 
 =cut
 
@@ -152,6 +153,8 @@ sub new
   );
 
   $useParams->{useipset} = $hParams->{useipset} // 0;
+
+  $useParams->{precheck} = $hParams->{precheck} // 0;
 
   return bless $useParams, $class;
 }
@@ -642,11 +645,32 @@ sub rule
     push @{$rule->{proto}}, $self->{synflags};
   }
 
+  if ($self->{precheck} and not $self->check_rule($rule))
+  {
+    warn "Invalid rule " . Dumper($rule) . "\n";
+    return;
+  }
+
   $self->{nf}{$table} = {map {$_ => []} keys %{$rhPolicy->{$table}}} 
     unless (ref($self->{nf}{$table}) eq 'HASH');
   $self->{nf}{$table}{$chain} = () unless (ref($self->{nf}{$table}{$chain}) eq 'ARRAY');
 
   return $self->_ipt_do($rule, $table, $chain, $do, $num);
+}
+
+=item check_rule
+
+Return true if the parameters in the rule structure make up a valid rule.
+
+=cut
+
+sub check_rule
+{
+  my ($self, $data) = @_;
+
+  my $ret = $self->assemble($data);
+
+  return (ref($ret) eq 'ARRAY' and scalar(@$ret) ? 1 : 0);
 }
 
 =item is_user($username)

@@ -611,11 +611,11 @@ The big difference is that the chain is seperate from the action
 This:
 C<iptables -I INPUT 5 -j ACCEPT>
 Turns into this:
-C<ipt('INPUT', '-j ACCEPT', undef, 'I 5');>
-The default is to append to the filter table, which means the pattern is:
-C<ipt('INPUT', '-j ACCEPT');>
+C<$ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5');>
+The default is to APPEND to the filter table, which means the pattern is:
+C<$ipt->rule('INPUT', {jump => 'ACCEPT'});>
 Delete and replace have been implemented for completeness - for replace:
-C<ipt('OUTPUT', -j ACCEPT', 'filter', 'R 5');>
+C<$ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');>
 
 =cut
 

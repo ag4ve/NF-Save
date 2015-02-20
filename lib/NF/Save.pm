@@ -520,45 +520,11 @@ sub assemble
 
   while (my ($listkey, $comp) = $self->_each_kv(undef, 'lookup'))
   {
-    $comp = '_' . $comp;
+    my $key = $self->_return_valid_param($listkey, $hParams);
+    next if (not defined($key));
 
-    # If a key has been used in the data correctly
-    my @key = grep {/^!?$listkey$/i} keys %$hParams;
-    if (scalar(@key) > 1)
-    {
-      warn "Multiple keys with similar names [" . 
-        join("] [", @key) . "] - Moving on\n";
-      next;
-    }
-    elsif (scalar(@key) == 0)
-    {
-      next;
-    }
-
-    if (not $self->can($comp))
-    {
-      warn "No method [$comp] - skipping\n";
-      next;
-    }
-
-    my $pval = $hParams->{$key[0]};
-
-    my $data;
-    if (ref(\$pval) eq 'SCALAR')
-    {
-      $data = {'name' => $pval};
-    }
-    elsif (ref($pval) eq 'ARRAY')
-    {
-      $data = {'name' => join(' ', @$pval)};
-    }
-    elsif (ref($pval) eq 'HASH')
-    {
-      $data = $pval;
-    }
-    $data->{key} = $key[0] if (not defined($data->{key}));
-
-    my $ret = $self->$comp($data);
+    my $data = $self->_param_str($key, $hParams->{$key});
+    my $ret = $self->_comp($comp, $data);
 
     if (defined($ret) and ref($ret) eq 'ARRAY')
     {
@@ -571,6 +537,67 @@ sub assemble
   }
 
   return [@iptparts];
+}
+
+# Confirm the value of the listkey is a base of a key of the hash
+sub _return_valid_param
+{
+  my ($self, $listkey, $hParams) = @_;
+
+  # If a key has been used in the data correctly
+  my @key = grep {/^!?$listkey$/i} keys %$hParams;
+  if (scalar(@key) > 1)
+  {
+    warn "Multiple keys with similar names [" . 
+      join("] [", @key) . "] - Moving on\n";
+    return;
+  }
+  elsif (scalar(@key) == 0)
+  {
+    return;
+  }
+  else
+  {
+    return $key[0];
+  }
+}
+
+# Return part of the rule when passed the name of the private method and a hash.
+sub _param_str
+{
+  my ($self, $key, $val) = @_;
+
+  my $data;
+  if (ref(\$val) eq 'SCALAR')
+  {
+    $data = {'name' => $val};
+  }
+  elsif (ref($val) eq 'ARRAY')
+  {
+    $data = {'name' => join(' ', @$val)};
+  }
+  elsif (ref($val) eq 'HASH')
+  {
+    $data = $val;
+  }
+  $data->{key} = $key if (not defined($data->{key}));
+
+  return $data;
+}
+
+sub _comp
+{
+  my ($self, $comp, $data) = @_;
+
+  $comp = '_' . $comp;
+
+  if (not $self->can($comp))
+  {
+    warn "No method [$comp] - skipping\n";
+    return;
+  }
+
+  return $self->$comp($data);
 }
 
 =item rule($chain, $rule, $table, $func)

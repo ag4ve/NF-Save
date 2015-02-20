@@ -14,6 +14,8 @@ my $tests = [
   [[$ipt->_each_kv([qw/a b c d/])], 1, "Add array to iterator"],
   [[$ipt->_each_kv('keys')], [qw/a c/], "All keys"],
   [[$ipt->_each_kv('values')], [qw/b d/], "All values"],
+  [[$ipt->_each_kv('keys b')], [qw/a/], "Keys for value search"],
+  [[$ipt->_each_kv('values c')], [qw/d/], "Values for key search"],
   [[$ipt->_each_kv()], [qw/a b/], "Retured first two in list"],
   [[$ipt->_each_kv([qw/e f g/])], 0, "Add invalid array"],
   [[$ipt->_each_kv()], [qw/c d/], "Returned last two in list"],

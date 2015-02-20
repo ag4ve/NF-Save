@@ -529,7 +529,7 @@ sub assemble
     }
     else
     {
-      warn "No data or invalid data type returned for" . Dumper($data) .
+      warn "No data or invalid data type returned for " . Dumper($data) .
         "listkey [$listkey] key [$key] comp [$comp]\n";
     }
   }

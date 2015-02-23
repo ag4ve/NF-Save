@@ -11,16 +11,19 @@ use NF::Save;
 my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}});
 
 my $tests = [
-  [$ipt->_str_map({
-      'direction' => "src",
-      'if' => "eth*",
-    }, [
-      'direction' => {
-        'src' => "-s",
-        'dst' => "-d",
-     },
-     'if' => "",,
-  ]), '-s eth*', "Basic str_map"],
+  [
+    [$ipt->_str_map({
+        'direction' => "src",
+        'if' => "eth*",
+      }, [
+        'direction' => {
+          'src' => "-s",
+          'dst' => "-d",
+       },
+       'if' => "",,
+    ])], 
+    ['-s eth*'], 
+    "Basic str_map"],
 ];
 
 test($tests);

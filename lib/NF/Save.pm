@@ -82,22 +82,22 @@ my $rhPolicy = {
 };
 
 # TODO implement this
-# What --syn get expanded into - not implemented yet
-my $raSynFlags = [
-  'FIN,SYN,RST,ACK SYN',
-];
+# What --syn etc get expanded into - not implemented yet
+my $rhFlags = {
+  'syn'   => 'FIN,SYN,RST,ACK SYN',
+};
 
 =over 4
 
-=item new({%uids, @IPTLookup, @SynFlags})
+=item new({%UIDs, @IPTLookup, @Flags})
 
-C<%uids> contains a hash of {'username' => #id}
+C<%UIDs> contains a hash of {'username' => #id}
 C<@IPTLookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
-C<@SynFlags> contains an array of flags to be used when --syn would have been used
-C<$useipset> boolean - whether or not to default lists as ipset
+C<@Flags> contains a hash of flags to be used when --syn/mss/etc would have been used - (arbitrary names can be defined)
+C<$UseIPSET> boolean - whether or not to default lists as ipset
 C<%Policy> default policy to use
-C<$trace> boolean - whether or not to print a stack trace with warnings
-C<$precheck> boolean - whether or not to pre-check the structure passed to rule().
+C<$Trace> boolean - whether or not to print a stack trace with warnings
+C<$PreCheck> boolean - whether or not to pre-check the structure passed to rule().
 
 =cut
 
@@ -105,7 +105,7 @@ sub new
 {
   my ($class, $hParams) = @_;
 
-  if (exists($hParams->{trace}) and $hParams->{trace} == 1)
+  if (exists($hParams->{Trace}) and $hParams->{Trace} == 1)
   {
     *warn = \&cluck;
   }
@@ -127,8 +127,8 @@ sub new
     'set comment' => [],
   };
   $useParams->{uids} = (
-    (exists($hParams->{uids}) and ref($hParams->{uids}) eq 'HASH') ?
-    $hParams->{uids} : {}
+    (exists($hParams->{UIDs}) and ref($hParams->{UIDs}) eq 'HASH') ?
+    $hParams->{UIDs} : {}
   );
 
   if (exists($hParams->{IPTLookup}) and ref($hParams->{IPTLookup}) eq 'ARRAY' and
@@ -146,14 +146,14 @@ sub new
   $hParams->{Policy} //= {};
   $useParams->{Policy} = {%$rhPolicy, %{$hParams->{Policy}}};
 
-  $useParams->{synflags} = (
-    (exists($hParams->{SynFlags}) and ref($hParams->{SynFlags}) eq 'ARRAY') ?
-    $hParams->{SynFlags} : $raSynFlags
+  $useParams->{flags} = (
+    (exists($hParams->{Flags}) and ref($hParams->{Flags}) eq 'ARRAY') ?
+    $hParams->{flags} : $rhFlags
   );
 
-  $useParams->{useipset} = $hParams->{useipset} // 0;
+  $useParams->{useipset} = $hParams->{UseIPSET} // 0;
 
-  $useParams->{precheck} = $hParams->{precheck} // 0;
+  $useParams->{precheck} = $hParams->{PreCheck} // 0;
 
   return bless $useParams, $class;
 }
@@ -608,7 +608,7 @@ sub _comp
 An interface designed to look fairly similar to the iptables cli
 
 The tcp '--syn' and '! --syn' options add masks from individual from
-the $raSynFlags arrayref
+the $raFlags hashref
 
 The big difference is that the chain is seperate from the action
 This:

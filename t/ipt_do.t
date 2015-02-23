@@ -24,7 +24,7 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new({'uids' => {'testuser' => 359}, 'useipset' => 1});
+my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}, 'UseIPSET' => 1});
 
 $ipt->rule('OUTPUT', {
   'udp' => {

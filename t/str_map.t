@@ -8,7 +8,7 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new({'uids' => {'testuser' => 359}});
+my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}});
 
 my $tests = [
   [$ipt->_str_map({

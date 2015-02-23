@@ -956,20 +956,17 @@ sub _owner
 {
   my ($self, $hParams) = @_;
 
-  my $uid = $hParams->{name};
-  if ($uid =~ /[a-z]+/i)
-  {
-    if (exists($self->{uids}{$uid}))
-    {
-      $uid = $self->{uids}{$uid};
+  return [$self->_str_map($hParams, [
+      'name bool'        => "-m owner",
+      'owner %owner' => "--uid-owner",
+    ], {
+      'owner' => "name",
+    }, [qw/
+      owner
+    /], {
+      "owner" => $self->{uids}
     }
-    else
-    {
-      warn "User not found. Passing [$uid] along.";
-    }
-  }
-
-  return "-m owner" . (defined($uid) ? " --uid-owner $uid" : "");
+  )];
 }
 
 # Return an array of IP address match strings or a set name
@@ -1045,8 +1042,9 @@ sub _tcp_udp
       'flags %flags' => "--tcp-flags",
     ], {
       'name' => "key"
-    }, [qw/name/],
-    {
+    }, [qw/
+      name
+    /], {
       'flags' => $self->{flags}
     }
   )];
@@ -1121,7 +1119,7 @@ sub _comment
   }
   else
   {
-    return undef;
+    return;
   }
 
   return ["-m comment --comment \"" . join(" ", grep {defined($_)} @parts) . "\""];
@@ -1261,12 +1259,9 @@ sub _str_map
 
       # Modify the key based on each map option
       my $tret = $hParams->{$pkey};
-      my $tlookup = (defined($lookup) and exists($lookup->{$mapstr}) ? 
-        $lookup->{$mapstr} : {}
-      );
       foreach my $tmap (@maps[1 .. $#maps])
       {
-        $tret = $self->_str_map_transform($tret, $tmap, $tlookup);
+        $tret = $self->_str_map_transform($tret, $tmap, $lookup);
       }
       push @ret, $tret;
     }
@@ -1274,7 +1269,7 @@ sub _str_map
 
   if (not grep {$_ == 0} values(%hRequire))
   {
-    return join(' ', grep {length($_) > 0} @ret) if (scalar(@ret));
+    return join(' ', grep {defined($_) and length($_) > 0} @ret) if (scalar(@ret));
   }
   else
   {
@@ -1321,13 +1316,16 @@ sub _str_map_transform
         warn "A lookup hash was wanted but not defined.\n";
         return;
       }
-      if (not exists($lookup->{$data}) or not defined($lookup->{$data}))
-      {
-        warn "[$data] does not exist in lookup.\n";
-        return;
-      }
 
-      return $lookup->{$data};
+      if (exists($lookup->{$key}{$data}) and defined($lookup->{$key}{$data}))
+      {
+        return $lookup->{$key}{$data};
+      }
+      else
+      {
+        warn "[$data] does not exist in lookup.\n" if (defined($self->{trace}));
+        return $data;
+      }
     }
   }
   else

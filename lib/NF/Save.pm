@@ -1048,9 +1048,10 @@ sub _tcp_udp
     ], {
       'name' => "key"
     }, [qw/name/],
-  ), {
-    'flags' => $self->{flags}
-  }];
+    {
+      'flags' => $self->{flags}
+    }
+  )];
 }
 
 # Return an array of ICMP protocol match strings
@@ -1275,7 +1276,7 @@ sub _str_map
 
   if (not grep {$_ == 0} values(%hRequire))
   {
-    return join(' ', @ret) if (scalar(@ret));
+    return join(' ', grep {length($_) > 0} @ret) if (scalar(@ret));
   }
   else
   {

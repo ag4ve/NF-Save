@@ -1205,6 +1205,7 @@ sub _str_map
 {
   my ($self, $hParams, $map, $alt, $require) = @_;
 
+  # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$require;
 
   my (@ret, @done);
@@ -1216,8 +1217,10 @@ sub _str_map
     push @PossibleKeys, $testkey if (defined($testkey) and length($testkey));
     push @PossibleKeys, $alt->{$testkey} 
       if (defined($alt) and ref($alt) eq 'HASH' and defined($alt->{$testkey}));
+
     # mapped string and function. Eg 'name' and 'lc'
     my ($mapstr, undef, $mapfunc) = $mapkey =~ /^([^ ]+)?( )?(.*)$/;
+
     # Actual key of parameter. Eg '!destination'
     my $pkey;
 
@@ -1252,33 +1255,8 @@ sub _str_map
       {
         next if(defined($mapfunc) and $mapfunc eq 'bool' and not defined($hParams->{$pkey}));
         push @ret, $mapval if (defined($mapval) and length($mapval));
-        if (defined($mapfunc) and length($mapfunc))
-        {
-          if ($mapfunc eq 'lc')
-          {
-            push @ret, lc($hParams->{$pkey});
-          }
-          elsif ($mapfunc eq 'uc')
-          {
-            push @ret, uc($hParams->{$pkey});
-          }
-          elsif ($mapfunc eq 'qq')
-          {
-            push @ret, "\"" . $hParams->{$pkey} . "\"";
-          }
-          elsif ($mapfunc eq 'bool')
-          {
-            # Do nothing
-          }
-          elsif ($mapfunc eq 'ip')
-          {
-            push @ret, $self->_cidr_ip($hParams->{$pkey});
-          }
-        }
-        else
-        {
-          push @ret, $hParams->{$pkey};
-        }
+
+        push @ret, $self->_map_str_transform($hParams->{$pkey}, $mapfunc);
       }
     }
   }
@@ -1293,6 +1271,40 @@ sub _str_map
       join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "] " .
       Dumper($hParams) . "\n";
     return;
+  }
+}
+
+# Transform data based on mapfunc
+sub _map_str_transform
+{
+  my ($self, $data, $mapfunc) = @_;
+
+  if (defined($mapfunc) and length($mapfunc))
+  {
+    if ($mapfunc eq 'lc')
+    {
+      return lc($data);
+    }
+    elsif ($mapfunc eq 'uc')
+    {
+      return uc($data);
+    }
+    elsif ($mapfunc eq 'qq')
+    {
+      return "\"" . $data . "\"";
+    }
+    elsif ($mapfunc eq 'bool')
+    {
+      # Do nothing
+    }
+    elsif ($mapfunc eq 'ip')
+    {
+      return $self->_cidr_ip($data);
+    }
+  }
+  else
+  {
+    return $data;
   }
 }
 

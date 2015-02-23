@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use 5.010;
 
+use subs qw(warn);
+
 our $VERSION = '0.01';
 
 use Carp qw(cluck);
@@ -105,8 +107,11 @@ sub new
 
   if (exists($hParams->{trace}) and $hParams->{trace} == 1)
   {
-    use subs qw(warn);
     *warn = \&cluck;
+  }
+  else
+  {
+    *warn = sub { &CORE::warn };
   }
 
   my $useParams = {

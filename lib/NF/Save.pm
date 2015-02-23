@@ -1273,7 +1273,7 @@ sub _str_map
 # Transform data based on mapfunc
 sub _str_map_transform
 {
-  my ($self, $data, $mapfunc) = @_;
+  my ($self, $data, $mapfunc, $lookup) = @_;
 
   if (defined($mapfunc) and length($mapfunc))
   {
@@ -1296,6 +1296,23 @@ sub _str_map_transform
     elsif ($mapfunc eq 'ip')
     {
       return $self->_cidr_ip($data);
+    }
+    # Key to lookup from
+    if ($mapfunc =~ /^%(.*)/)
+    {
+      my $key = $1;
+      if (not defined($lookup))
+      {
+        warn "A lookup hash was wanted but not defined.\n";
+        return;
+      }
+      if (not exists($lookup->{$data}) or not defined($lookup->{$data}))
+      {
+        warn "[$data] does not exist in lookup.\n";
+        return;
+      }
+
+      return $lookup->{$data};
     }
   }
   else

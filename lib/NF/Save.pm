@@ -1196,7 +1196,7 @@ sub _jump
 # Return a string from a definition
 # Input is a hashref of the input datastructure, a definition, optionally 
 # a third hash with alternate key map, and required fields.
-# The definition is a balanced array of:
+# The definition of "map" is a balanced array of:
 # <key of input data structure [function]> => <value>
 # Or
 # <key of input data structure> => {<value of input data structure> => <value to use>}
@@ -1208,18 +1208,19 @@ sub _str_map
   # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$require;
 
-  my (@ret, @done);
+  # Make sure results are oldered from the even map array
   $self->_each_kv($map, 'str_map');
+
+  my (@ret, @done);
   while (my ($mapkey, $mapval) = $self->_each_kv(undef, 'str_map'))
   {
-    my ($testkey) = $mapkey =~ /^([^ ]+)/;
-    my @PossibleKeys;
-    push @PossibleKeys, $testkey if (defined($testkey) and length($testkey));
-    push @PossibleKeys, $alt->{$testkey} 
-      if (defined($alt) and ref($alt) eq 'HASH' and defined($alt->{$testkey}));
-
     # mapped string and function. Eg 'name' and 'lc'
-    my ($mapstr, undef, $mapfunc) = $mapkey =~ /^([^ ]+)?( )?(.*)$/;
+    my ($mapstr, $mapfunc) = $mapkey =~ /^([^ ]+) ?(.*)$/;
+
+    my @PossibleKeys;
+    push @PossibleKeys, $mapstr if (defined($mapstr) and length($mapstr));
+    push @PossibleKeys, $alt->{$mapstr} 
+      if (defined($alt) and ref($alt) eq 'HASH' and defined($alt->{$mapstr}));
 
     # Actual key of parameter. Eg '!destination'
     my $pkey;
@@ -1256,7 +1257,7 @@ sub _str_map
         next if(defined($mapfunc) and $mapfunc eq 'bool' and not defined($hParams->{$pkey}));
         push @ret, $mapval if (defined($mapval) and length($mapval));
 
-        push @ret, $self->_map_str_transform($hParams->{$pkey}, $mapfunc);
+        push @ret, $self->_str_map_transform($hParams->{$pkey}, $mapfunc);
       }
     }
   }
@@ -1275,7 +1276,7 @@ sub _str_map
 }
 
 # Transform data based on mapfunc
-sub _map_str_transform
+sub _str_map_transform
 {
   my ($self, $data, $mapfunc) = @_;
 

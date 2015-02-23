@@ -81,8 +81,6 @@ my $rhPolicy = {
   },
 };
 
-# TODO implement this
-# What --syn etc get expanded into - not implemented yet
 my $rhFlags = {
   'syn'   => 'FIN,SYN,RST,ACK SYN',
 };

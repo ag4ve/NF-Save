@@ -1321,6 +1321,49 @@ sub _str_map_transform
   }
 }
 
+# Check a list of types against an array of data
+# Second option is whether there can be more data than types (>) or 
+# types than data (<)
+sub _check_type
+{
+  my ($self, $types, $which_more, $warn, $undef, @data) = @_;
+
+  if (ref($types) ne 'ARRAY')
+  {
+    warn "Type must be an arrayref [" . ref($types) . "].\n";
+    return;
+  }
+
+  $which_more //= '=';
+  if ($which_more eq '<' and scalar(@$types) > scalar(@data))
+  {
+    warn "More parameters than data\n" if ($warn);
+    return;
+  }
+  elsif ($which_more eq '>' and scalar(@$types) < scalar(@data))
+  {
+    warn "More data than parameters\n" if ($warn);
+    return;
+  }
+  elsif ($which_more eq '=' and scalar(@$types) != scalar(@data))
+  {
+    warn "Number of data not equal to the number of parameters\n" if ($warn);
+    return;
+  }
+
+  for my $i (0 .. $#{$types})
+  {
+    return 1 if (not defined($data[$i]));
+    if (ref($data[$i]) ne $types->[$i] or ($undef and not defined(($data[$i]))))
+    {
+      warn ref($data[$i]) . " not equal to " . $types->[$i] . "\n"
+        if ($warn);
+      return;
+    }
+  }
+  return 1;
+}
+
 # Return a valid CIDR IP address if possible or undef
 sub _valid_ip
 {

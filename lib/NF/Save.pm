@@ -639,12 +639,6 @@ sub rule
   # Make sure the hash is immutable
   $rule = dclone($rule);
 
-  # Filter syn mask
-  if (exists($rule->{proto}) and ref($rule->{proto}) eq 'ARRAY')
-  {
-    push @{$rule->{proto}}, $self->{synflags};
-  }
-
   if ($self->{precheck} and not $self->check_rule($rule))
   {
     warn "Invalid rule " . Dumper($rule) . "\n";
@@ -1214,6 +1208,7 @@ sub _str_map
   my (@ret, @done);
   while (my ($mapkey, $mapval) = $self->_each_kv(undef, 'str_map'))
   {
+    # TODO Make mapfunc an array so that multiple things can be done
     # mapped string and function. Eg 'name' and 'lc'
     my ($mapstr, $mapfunc) = $mapkey =~ /^([^ ]+) ?(.*)$/;
 

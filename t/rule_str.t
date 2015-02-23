@@ -55,6 +55,13 @@ my $tests = [
     ['! -p tcp -m tcp --sport 1024:65536 --dport 80'],
     "TCP options",
   ],
+  [ $ipt->_tcp_udp({
+      'name' => "TCP",
+      'flags' => "syn",
+    }),
+    ['-p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN'],
+    "TCP flags",
+  ],
   [
     $ipt->_icmp({
       '!name' => "ICMP", 

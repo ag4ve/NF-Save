@@ -608,7 +608,7 @@ sub _comp
 An interface designed to look fairly similar to the iptables cli
 
 The tcp '--syn' and '! --syn' options add masks from individual from
-the $raFlags hashref
+the $rhFlags hashref
 
 The big difference is that the chain is seperate from the action
 This:

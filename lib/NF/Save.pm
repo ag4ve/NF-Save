@@ -1203,7 +1203,7 @@ sub _str_map
 {
   my ($self, $hParams, $map, $alt, $require, $lookup) = @_;
 
-  return if (not $self->_check_type([qw/HASH HASH HASH ARRAY HASH/], '>', 1, 1, @_));
+  return if (not $self->_check_type([qw/HASH ARRAY HASH ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
 
   # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$require;
@@ -1262,9 +1262,12 @@ sub _str_map
 
       # Modify the key based on each map option
       my $tret = $hParams->{$pkey};
+      my $tlookup = (defined($lookup) and exists($lookup->{$mapstr}) ? 
+        $lookup->{$mapstr} : {}
+      );
       foreach my $tmap (@maps[1 .. $#maps])
       {
-        $tret = $self->_str_map_transform($tret, $tmap, $lookup->{$mapstr});
+        $tret = $self->_str_map_transform($tret, $tmap, $tlookup);
       }
       push @ret, $tret;
     }
@@ -1369,8 +1372,8 @@ sub _check_type
     return 1 if (not defined($data[$i]));
     if (ref($data[$i]) ne $types->[$i] or ($undef and not defined(($data[$i]))))
     {
-      warn ref($data[$i]) . " not equal to " . $types->[$i] . "\n"
-        if ($warn);
+      warn "[$i] " . ref($data[$i]) . " not equal to " . $types->[$i] . " " . 
+        Dumper($data[$i]) . "\n" if ($warn);
       return;
     }
   }

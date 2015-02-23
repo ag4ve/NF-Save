@@ -91,7 +91,8 @@ my $tests = [
       'name' => "LOG", 
       'prefix' => "foo", 
       'tcp' => 1, 
-      'ip' => 1, 'uid' => 1
+      'ip' => 1, 
+      'uid' => 1
     }),
     ['-j LOG --log-prefix "foo" --log-tcp-options --log-ip-options --log-uid'],
     "LOG jump with options",

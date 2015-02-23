@@ -1044,11 +1044,13 @@ sub _tcp_udp
       'name lc' => "-m",
       'sport' => "--sport",
       'dport' => "--dport",
-      'flags' => "--tcp-flags",
+      'flags %flags' => "--tcp-flags",
     ], {
       'name' => "key"
     }, [qw/name/],
-  )];
+  ), {
+    'flags' => $self->{flags}
+  }];
 }
 
 # Return an array of ICMP protocol match strings
@@ -1189,15 +1191,19 @@ sub _jump
 
 # Return a string from a definition
 # Input is a hashref of the input datastructure, a definition, optionally 
-# a third hash with alternate key map, and required fields.
+# a third hash with alternate key map, required fields, and a lookup hash.
 # The definition of "map" is a balanced array of:
 # <key of input data structure [function]> => <value>
 # Or
 # <key of input data structure> => {<value of input data structure> => <value to use>}
 # The later form is used to yield different outputs depending on the input value
+# Lookup is a hashref of hashes whose value (string) can be substituted for the value 
+# of params if the key of lookup says to use it.
 sub _str_map
 {
-  my ($self, $hParams, $map, $alt, $require) = @_;
+  my ($self, $hParams, $map, $alt, $require, $lookup) = @_;
+
+  return if (not $self->_check_type([qw/HASH HASH HASH ARRAY HASH/], '>', 1, 1, @_));
 
   # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$require;
@@ -1208,18 +1214,17 @@ sub _str_map
   my (@ret, @done);
   while (my ($mapkey, $mapval) = $self->_each_kv(undef, 'str_map'))
   {
-    # TODO Make mapfunc an array so that multiple things can be done
-    # mapped string and function. Eg 'name' and 'lc'
-    my ($mapstr, $mapfunc) = $mapkey =~ /^([^ ]+) ?(.*)$/;
+    my @maps = split(' ', $mapkey);
+    next if (not exists($maps[0]));
+    my $mapstr = $maps[0];
 
     my @PossibleKeys;
     push @PossibleKeys, $mapstr if (defined($mapstr) and length($mapstr));
     push @PossibleKeys, $alt->{$mapstr} 
-      if (defined($alt) and ref($alt) eq 'HASH' and defined($alt->{$mapstr}));
+      if (defined($alt) and defined($alt->{$mapstr}));
 
-    # Actual key of parameter. Eg '!destination'
+    # Get the actual key from the params. Eg '!destination'
     my $pkey;
-
     for my $whichkey (@PossibleKeys)
     {
       my @key = grep {/$whichkey/} keys %$hParams;
@@ -1231,29 +1236,37 @@ sub _str_map
       }
     }
 
-    if (defined($pkey))
+    next if (not defined($pkey));
+
+    my ($not, $str) = $pkey =~ /^(!)?(.*)$/;
+    # TODO Not sure why we're checking @done here.
+    push @ret, "!" if (defined($not) and not grep {$str} @done);
+    # An index of keys that have already been processed.
+    push @done, $str;
+    if (ref($mapval) eq 'HASH')
     {
-      my ($not, $str) = $pkey =~ /^(!)?(.*)$/;
-      push @ret, "!" if (defined($not) and not grep {$str} @done);
-      push @done, $str;
-      if (ref($mapval) eq 'HASH')
+      # orkey - possible hParam value
+      foreach my $orkey (keys %$mapval)
       {
-        # orkey - possible hParam value
-        foreach my $orkey (keys %$mapval)
+        if ($orkey =~ /$hParams->{$pkey}/)
         {
-          if ($orkey =~ /$hParams->{$pkey}/)
-          {
-            push @ret, $mapval->{$orkey};
-          }
+          push @ret, $mapval->{$orkey};
         }
       }
-      elsif (ref(\$mapval) eq 'SCALAR')
-      {
-        next if(defined($mapfunc) and $mapfunc eq 'bool' and not defined($hParams->{$pkey}));
-        push @ret, $mapval if (defined($mapval) and length($mapval));
+    }
+    elsif (ref(\$mapval) eq 'SCALAR')
+    {
+      next if (defined($maps[1]) and $maps[1] eq 'bool' and 
+        not defined($hParams->{$pkey}));
+      push @ret, $mapval if (defined($mapval) and length($mapval));
 
-        push @ret, $self->_str_map_transform($hParams->{$pkey}, $mapfunc);
+      # Modify the key based on each map option
+      my $tret = $hParams->{$pkey};
+      foreach my $tmap (@maps[1 .. $#maps])
+      {
+        $tret = $self->_str_map_transform($tret, $tmap, $lookup->{$mapstr});
       }
+      push @ret, $tret;
     }
   }
 

@@ -975,8 +975,6 @@ sub _list_set
   my ($self, $hParams) = @_;
 
   my $name = $hParams->{name};
-  return if (not exists($self->{ipset}{$name}{list}) and
-    ref($self->{ipset}{$name}{list}) ne 'ARRAY');
   my @return;
 
   my %hDirection;
@@ -1005,6 +1003,12 @@ sub _list_set
   }
   else
   {
+    if (not exists($self->{ipset}{$name}{list}) and
+      ref($self->{ipset}{$name}{list}) ne 'ARRAY')
+    {
+      warn "No list of name [$name]\n";
+      return;
+    }
     my @list = @{$self->{ipset}{$name}{list}}; 
     if (exists($hDirection{src}))
     {

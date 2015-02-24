@@ -288,8 +288,7 @@ sub add_list
 {
   my ($self, $name, $list, $opts) = @_;
 
-  return if (not $self->_check_type([qw/SCALAR ARRAY HASH/], '<', 1, 1, @_[1 .. $#_]));
-warn "HERE\n";
+  return if (not $self->_check_type([qw/SCALAR ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
   return if (not defined($name) and 
     not defined($list) and ref($list) ne 'ARRAY');
 

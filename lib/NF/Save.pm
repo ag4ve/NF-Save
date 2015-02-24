@@ -54,6 +54,7 @@ my $raIPTLookup = [
   'jump' => 'jump',
 ];
 
+# TODO filter policies should all be ACCEPT since that is the default
 # Policy map for standard table chains
 my $rhPolicy = {
   'filter'  => {
@@ -272,7 +273,7 @@ sub get_header
   }
 }
 
-=item ipset($name, @list, $opts)
+=item add_list($name, @list, $opts)
 
 Define an ipset list.
 
@@ -283,10 +284,12 @@ C<%opts> parameters for the set
 =cut
 
 # TODO only hash:net is assumed in the list - other types should be allowed and looked for
-sub ipset
+sub add_list
 {
   my ($self, $name, $list, $opts) = @_;
 
+  return if (not $self->_check_type([qw/SCALAR ARRAY HASH/], '<', 1, 1, @_[1 .. $#_]));
+warn "HERE\n";
   return if (not defined($name) and 
     not defined($list) and ref($list) ne 'ARRAY');
 
@@ -299,12 +302,12 @@ sub ipset
   {
     $self->{ipset}{$name} = {'list' => $aIPs};
   }
-  else
+  else 
   {
     push @{$self->{ipset}{$name}{list}}, @$aIPs;
   }
 
-  if (defined($opts) and ref($opts) eq 'HASH')
+  if (defined($opts))
   {
     foreach my $key (keys %$opts)
     {
@@ -1377,7 +1380,9 @@ sub _check_type
   for my $i (0 .. $#{$types})
   {
     return 1 if (not defined($data[$i]));
-    if (ref($data[$i]) ne $types->[$i] or ($undef and not defined(($data[$i]))))
+    if (($types->[$i] =~ /^(ARRAY|HASH|CODE)$/ and ref($data[$i]) ne $types->[$i]) or 
+      ($types->[$i] eq 'SCALAR' and ref(\$data[$i]) ne $types->[$i]) or
+      ($undef and not defined(($data[$i]))))
     {
       warn "[$i] " . ref($data[$i]) . " not equal to " . $types->[$i] . " " . 
         Dumper($data[$i]) . "\n" if ($warn);
@@ -1573,6 +1578,7 @@ __END__
 - Split find places to split this into submodules
 - Might want to look at naming in the API (->save saves a iptables rule and 
     ->ipset saves a set for ipset - seems off)
+  - Renamed ->ipset to ->add_list
 - Integration with libiptc using FFI or similar instead of using IPC
   - Consider making a different module since the purpose of this is just to 
     dump information

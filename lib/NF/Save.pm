@@ -287,8 +287,8 @@ sub ipset
 {
   my ($self, $name, $list, $opts) = @_;
 
-  return undef unless (defined($name) and 
-    defined($list) and ref($list) eq 'ARRAY');
+  return if (not defined($name) and 
+    not defined($list) and ref($list) ne 'ARRAY');
 
   my $aIPs;
   @$aIPs = grep {defined($_)} map {$self->_cidr_ip($_)} @$list;
@@ -1220,7 +1220,7 @@ sub _str_map
     push @PossibleKeys, $alt->{$mapstr} 
       if (defined($alt) and defined($alt->{$mapstr}));
 
-    # Get the actual key from the params. Eg '!destination'
+    # [Param Key] Get the actual key from the params. Eg '!destination'
     my $pkey;
     for my $whichkey (@PossibleKeys)
     {
@@ -1284,6 +1284,8 @@ sub _str_map
 sub _str_map_transform
 {
   my ($self, $data, $mapfunc, $lookup) = @_;
+
+  return if (not defined($data));
 
   if (defined($mapfunc) and length($mapfunc))
   {

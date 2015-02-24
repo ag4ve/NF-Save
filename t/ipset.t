@@ -26,7 +26,11 @@ use NF::Save;
 my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}});
 
 my $tests = [
-  [$ipt->ipset('test', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048}), 1, "Save IPSET"],
+  [
+    [$ipt->add_list('test', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048})], 
+    [1], 
+    "Save IPSET (add_list)"
+  ],
   [
     [$ipt->get_ipset()],
     [

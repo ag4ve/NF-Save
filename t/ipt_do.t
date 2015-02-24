@@ -56,7 +56,7 @@ $ipt->rule('OUTPUT', {
   'list' => {
     'name' => "scan_targets",
     'direction' => ['src'],
-    'ipset' => 1,
+    'useipset' => 1,
   },
   'comment' => ["scan_targets_add"],
   'jump' => "ACCEPT",
@@ -76,7 +76,7 @@ $ipt->rule('FORWARD', {
 
 $ipt->comment("Some comment");
 
-$ipt->ipset('scan_targets', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048});
+$ipt->add_list('scan_targets', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048});
 
 my $tests = [
   [[$ipt->get_tables()], [qw/nat filter/], "Tables returned in the correct order."],

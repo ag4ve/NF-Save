@@ -1253,17 +1253,17 @@ sub _str_map
     }
     elsif (ref(\$mapval) eq 'SCALAR')
     {
-      next if (defined($maps[1]) and $maps[1] eq 'bool' and 
-        not defined($hParams->{$pkey}));
-      push @ret, $mapval if (defined($mapval) and length($mapval));
-
       # Modify the key based on each map option
       my $tret = $hParams->{$pkey};
       foreach my $tmap (@maps[1 .. $#maps])
       {
         $tret = $self->_str_map_transform($tret, $tmap, $lookup);
       }
-      push @ret, $tret;
+      if (defined($tret))
+      {
+        push @ret, $mapval if (defined($mapval));
+        push @ret, $tret;
+      }
     }
   }
 
@@ -1303,7 +1303,7 @@ sub _str_map_transform
     }
     elsif ($mapfunc eq 'bool')
     {
-      # Do nothing
+      return if (not defined($data));
     }
     elsif ($mapfunc eq 'ip')
     {

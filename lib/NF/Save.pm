@@ -1059,7 +1059,11 @@ sub _icmp
       'name lc' => "-p",
       'name lc' => "-m",
       'type' => '--icmp-type',
-    ], undef, [qw/name/],
+    ], {
+      'name' => "key"
+    }, [qw/
+      name
+    /],
   )];
 }
 

@@ -381,7 +381,7 @@ sub get_ipset_data
   }
   else
   {
-    return undef;
+    return;
   }
 }
 
@@ -433,7 +433,7 @@ sub save_table
   my ($self, $table) = @_;
   $table //= 'filter';
 
-  return undef if (not $self->is_table($table));
+  return if (not $self->is_table($table));
 
   my (@head, @chains);
   foreach my $chain ($self->get_chains($table))
@@ -459,7 +459,7 @@ sub get_chains
 {
   my ($self, $table) = @_;
 
-  return undef if (not $self->is_table($table));
+  return if (not $self->is_table($table));
   return (
     $self->_sortpre(
       [keys(%{$self->{nf}{$table}})], 
@@ -503,7 +503,7 @@ sub get_rules
   my ($self, $chain, $table) = @_;
   $table //= 'filter';
 
-  return undef if (not $self->is_chain($chain, $table));
+  return if (not $self->is_chain($chain, $table));
   return @{$self->{nf}{$table}{$chain}};
 }
 

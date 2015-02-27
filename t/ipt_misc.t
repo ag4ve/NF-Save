@@ -35,10 +35,7 @@ my $phStruct =
     'dport' => "53",
   }, 
   'dst' => "192.168.15.1",
-  'comment' => 
-  [qw/
-    nameserver
-  /],
+  'comment' => [qw/nameserver/],
   'jump' => "ACCEPT",
 };
 
@@ -67,50 +64,36 @@ my $paTests =
 [
   [
     $oIPT->is_table('filter'), 
-    [
-      1
-    ], 
+    [1], 
     "Table filter exists."
   ],
   [
     $oIPT->is_table('foobar'), 
-    [
-      0
-    ], 
+    [0], 
     "Table foobar does not exist."
   ],
   [
     $oIPT->is_chain('OUTPUT'), 
-    [
-      1
-    ], 
+    [1], 
     "Chain OUTPUT exists."
   ],
   [
     $oIPT->is_chain('OUTPUT', 'filter'), 
-    [
-      1
-    ], 
+    [1], 
     "Chain OUTPUT in table filter exists."
   ],
   [
     $oIPT->is_chain('OUTPUT', 'foobar'), 
-    [
-      0
-    ], 
+    [0], 
     "Chain OUTPUT in table foobar does not exist."
   ],
   [
     $oIPT->is_chain('foobar', 'filter'), 
-    [
-      0
-    ], 
+    [0], 
     "Chain foobar in table filter exists."
   ],
   [
-    [
-      $oIPT->get_chains('filter')
-    ], 
+    [$oIPT->get_chains('filter')], 
     [
       'INPUT',
       'FORWARD',
@@ -129,9 +112,7 @@ my $paTests =
     "Get stored rules from OUTPUT chain in filter table."
   ],
   [
-    [
-      $oIPT->get_rules('INPUT', 'filter')
-    ], 
+    [$oIPT->get_rules('INPUT', 'filter')], 
     [], 
     "Get stored rules from INPUT chain in filter table (undef)."
   ],
@@ -151,9 +132,7 @@ my $paTests =
     "Policy for OUTPUT in the mangle table."
   ],
   [
-    [
-      $oIPT->get_policy('foobar', 'mangle')
-    ], 
+    [$oIPT->get_policy('foobar', 'mangle')], 
     [], 
     "Policy for foobar in the mangle table (undef)."
   ],
@@ -184,10 +163,7 @@ my $paTests =
       {
         'INPUT' => [], 
         'FORWARD' => [], 
-        'OUTPUT' => 
-        [
-          $phStruct
-        ],
+        'OUTPUT' => [$phStruct],
       }
     }, 
     "Same structures.",

@@ -52,10 +52,7 @@ $oIPT->rule(
       'dport' => "53",
     }, 
     'dst' => "5.6.7.8",
-    'comment' => 
-    [qw/
-      nameserver
-    /],
+    'comment' => [qw/nameserver/],
     'jump' => "ACCEPT",
   }
 );
@@ -66,10 +63,7 @@ $oIPT->rule(
   {
     'out' => "eth0",
     'src' => "172.31.0.0/24",
-    'comment' => 
-    [
-      "VM data"
-    ],
+    'comment' => ["VM data"],
     'jump' => 
     {
       'name' => "LOG",
@@ -91,16 +85,10 @@ $oIPT->rule(
     'list' => 
     {
       'name' => "scan_targets",
-      'direction' => 
-      [
-        'src'
-      ],
+      'direction' => ['src'],
       'useipset' => 1,
     },
-    'comment' => 
-    [
-      "scan_targets_add"
-    ],
+    'comment' => ["scan_targets_add"],
     'jump' => "ACCEPT",
   }
 );
@@ -115,10 +103,7 @@ $oIPT->rule(
     {
       '!name' => 'TCP',
     },
-    'comment' => 
-    [
-      "VM data"
-    ],
+    'comment' => ["VM data"],
     'jump' => 'RETURN',
   }
 );

@@ -8,14 +8,7 @@ use Util;
 
 use NF::Save;
 
-my $oIPT = NF::Save->new(
-  {
-    'UIDs' => 
-    {
-      'testuser' => 359
-    }
-  }
-);
+my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}}
 
 my $paTests = 
 [
@@ -32,11 +25,7 @@ my $paTests =
     'Source IP string.',
   ],
   [
-    $oIPT->_srcdst(
-      {
-        'ip' => "1.2.3.4"
-      }
-    ),
+    $oIPT->_srcdst({'ip' => "1.2.3.4"}),
     [],
     "Not enough parameters",
   ],
@@ -54,40 +43,29 @@ my $paTests =
     "Source IF string",
   ],
   [
-    $oIPT->_proto(
-      {
-        'proto' => "UDP"
-      }
-    ), 
+    $oIPT->_proto({'proto' => "UDP"}), 
     [
       '-p udp'
     ], 
     "Protocol string"
   ],
   [
-    $oIPT->_owner(
-      {
-        'name' => "testuser"
-      }
-    ), 
+    $oIPT->_owner({'name' => "testuser"}), 
     [
       '-m owner --uid-owner 359'
     ], 
     "Username"
   ],
   [
-    $oIPT->_owner(
-      {
-        'name' => 567
-      }
-    ), 
+    $oIPT->_owner({'name' => 567}), 
     [
       '-m owner --uid-owner 567'
     ], 
     "UserID"
   ],
   [
-    $oIPT->add_list('test', 
+    $oIPT->add_list(
+      'test', 
       [qw/
         1.2.3.4 
         5.6.7.8
@@ -100,9 +78,7 @@ my $paTests =
     "Save IPSET"
   ],
   [
-    [
-      $oIPT->get_ipset()
-    ],
+    [$oIPT->get_ipset()],
     [
       'create test hash:net family inet hashsize 2048 maxelen 65536',
       'add test 1.2.3.4/32',
@@ -148,11 +124,7 @@ my $paTests =
     "ICMP options",
   ],
   [
-    $oIPT->_ct(
-      {
-        'name' => "established related"
-      }
-    ),
+    $oIPT->_ct({'name' => "established related"}),
     [
       "-m conntrack --ctstate RELATED,ESTABLISHED"
     ],
@@ -183,22 +155,14 @@ my $paTests =
     "Rate limit (Invalid limit and no burst).",
   ],
   [
-    $oIPT->_comment(
-      {
-        'name' => "foo bar baz"
-      }
-    ), 
+    $oIPT->_comment({'name' => "foo bar baz"}), 
     [
       '-m comment --comment "foo bar baz"'
     ], 
     "Comment"
   ],
   [
-    $oIPT->_jump(
-      {
-        'name' => "test"
-      }
-    ), 
+    $oIPT->_jump({'name' => "test"}), 
     [
       '-j test'
     ], 
@@ -234,7 +198,8 @@ my $paTests =
   [
     $oIPT->_jump(
       {
-        'name' => "CT", 'notrack' => 1
+        'name' => "CT", 
+        'notrack' => 1
       }
     ), 
     [

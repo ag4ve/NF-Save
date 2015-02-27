@@ -8,7 +8,7 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new(
+my $oIPT = NF::Save->new(
   {
     'UIDs'    => 
     {
@@ -193,7 +193,7 @@ my $paTests =
     "Same structures.",
   ],
   [
-    $oIPT->assemble($struct), 
+    $oIPT->assemble($phStruct), 
     $paAssembled, 
     "Assemble rule."
   ],

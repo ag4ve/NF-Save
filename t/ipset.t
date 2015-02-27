@@ -70,10 +70,10 @@ my $paTests =
     $oIPT->get_ipset_data('test'), 
     {
       'list' => 
-      [qw/
-        1.2.3.4/32 
-        5.6.7.8/32
-      /], 
+      [
+        "1.2.3.4/32",
+        "5.6.7.8/32"
+      ], 
       'hashsize' => 2048
     }, 
     "IPSET data"

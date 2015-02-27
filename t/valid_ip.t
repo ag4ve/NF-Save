@@ -46,13 +46,13 @@ my $paTests =
   ],
   [
     $oIPT->_cidr_ip('1.2.3.4/32'), 
-    '1
-    .2.3.4/32', "Valid IP with mask"
+    '1.2.3.4/32', 
+    "Valid IP with mask"
   ],
   [
     $oIPT->_cidr_ip('1.2.3.4'), 
-    '1
-    .2.3.4/32', "Valid IP without a mask"
+    '1.2.3.4/32', 
+    "Valid IP without a mask"
   ],
 ];
 

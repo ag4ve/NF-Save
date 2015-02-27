@@ -24,64 +24,135 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}, 'UseIPSET' => 1});
+my $ipt = NF::Save->new(
+  {
+    'UIDs'      => 
+    {
+      'testuser'  => 359,
+    },
+    'UseIPSET'  => 1,
+    'Policy'    =>
+    {
+      'filter'    =>
+      {
+        'INPUT'       => 'DROP',
+        'OUTPUT'      => 'DROP',
+        'FORWARD'     => 'DROP',
+      },
+    }
+  }
+);
 
-$ipt->rule('OUTPUT', {
-  'udp' => {
-    'sport' => "1024:65535",
-    'dport' => "53",
-  }, 
-  'dst' => "5.6.7.8",
-  'comment' => [qw/nameserver/],
-  'jump' => "ACCEPT",
-});
+$ipt->rule(
+  'OUTPUT', 
+  {
+    'udp' => 
+    {
+      'sport' => "1024:65535",
+      'dport' => "53",
+    }, 
+    'dst' => "5.6.7.8",
+    'comment' => 
+    [qw/
+      nameserver
+    /],
+    'jump' => "ACCEPT",
+  }
+);
 # -A OUTPUT -d 127.0.0.1/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT
 
-$ipt->rule('POSTROUTING', {
-  'out' => "eth0",
-  'src' => "172.31.0.0/24",
-  'comment' => ["VM data"],
-  'jump' => {
-    'name' => "LOG",
-    'prefix' => "FW: masq ACCEPT ",
-  },
-}, 'nat');
+$ipt->rule(
+  'POSTROUTING', 
+  {
+    'out' => "eth0",
+    'src' => "172.31.0.0/24",
+    'comment' => 
+    [
+      "VM data"
+    ],
+    'jump' => 
+    {
+      'name' => "LOG",
+      'prefix' => "FW: masq ACCEPT ",
+    },
+  }, 
+  'nat'
+);
 # -A POSTROUTING -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "
 
-$ipt->rule('OUTPUT', {
-  'tcp' => {
-    'sport' => 20,
-    'dport' => "1024:65535",,
-  },
-  'list' => {
-    'name' => "scan_targets",
-    'direction' => ['src'],
-    'useipset' => 1,
-  },
-  'comment' => ["scan_targets_add"],
-  'jump' => "ACCEPT",
-});
+$ipt->rule(
+  'OUTPUT', 
+  {
+    'tcp' => 
+    {
+      'sport' => 20,
+      'dport' => "1024:65535",,
+    },
+    'list' => 
+    {
+      'name' => "scan_targets",
+      'direction' => 
+      [
+        'src'
+      ],
+      'useipset' => 1,
+    },
+    'comment' => 
+    [
+      "scan_targets_add"
+    ],
+    'jump' => "ACCEPT",
+  }
+);
 # -A OUTPUT -m set --match-set scan_targets src -m tcp -p tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT
 
-$ipt->rule('FORWARD', {
-  'in' => "eth0",
-  'out' => "eth1",
-  'match' => {
-    '!name' => 'TCP',
-  },
-  'comment' => ["VM data"],
-  'jump' => 'RETURN',
-});
+$ipt->rule(
+  'FORWARD', 
+  {
+    'in' => "eth0",
+    'out' => "eth1",
+    'match' => 
+    {
+      '!name' => 'TCP',
+    },
+    'comment' => 
+    [
+      "VM data"
+    ],
+    'jump' => 'RETURN',
+  }
+);
 # -A FORWARD -i eth0 -o eth1 -m ! tcp -m comment --comment "VM data" -j RETURN
 
 $ipt->comment("Some comment");
 
-$ipt->add_list('scan_targets', [qw/1.2.3.4 5.6.7.8/], {'hashsize' => 2048});
+$ipt->add_list(
+  'scan_targets', 
+  [qw/
+    1.2.3.4 
+    5.6.7.8
+  /], 
+  {
+    'hashsize' => 2048
+  }
+);
 
-my $tests = [
-  [[$ipt->get_tables()], [qw/nat filter/], "Tables returned in the correct order."],
+my $tests = 
+[
   [
-    [$ipt->save()],
+    [
+      $ipt->get_tables()
+    ], 
+    [qw/
+      nat 
+      filter
+    /], 
+    "Tables returned in the correct order."
+  ],
+  [
+    [
+      $ipt->save()
+    ],
     [
       '*nat',
       ':PREROUTING ACCEPT [0:0]',

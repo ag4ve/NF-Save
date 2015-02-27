@@ -8,7 +8,7 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new(
+my $oIPT = NF::Save->new(
   {
     'UIDs' => 
     {
@@ -17,11 +17,11 @@ my $ipt = NF::Save->new(
   }
 );
 
-my $tests = 
+my $paTests = 
 [
   [
     [
-      $ipt->_str_map(
+      $oIPT->_str_map(
         {
           'direction' => "src",
           'if' => "eth*",
@@ -43,4 +43,4 @@ my $tests =
   ],
 ];
 
-test($tests);
+test($paTests);

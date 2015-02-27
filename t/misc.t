@@ -8,13 +8,20 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}});
+my $oIPT = NF::Save->new(
+  {
+    'UIDs' => 
+    {
+      'testuser' => 359
+    }
+  }
+);
 
-my $tests = 
+my $paTests = 
 [
   [
     [
-      $ipt->_sortpre(
+      $oIPT->_sortpre(
         [qw/
           x 
           a 
@@ -37,7 +44,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           HASH 
           ARRAY
@@ -57,7 +64,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           ARRAY 
           ARRAY
@@ -77,7 +84,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           HASH 
           ARRAY
@@ -97,7 +104,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           HASH 
           ARRAY
@@ -115,7 +122,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           HASH 
           ARRAY
@@ -133,7 +140,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           HASH 
           ARRAY
@@ -154,7 +161,7 @@ my $tests =
   ], 
   [
     [
-      $ipt->_check_type(
+      $oIPT->_check_type(
         [qw/
           HASH 
           ARRAY
@@ -176,5 +183,5 @@ my $tests =
 ];
 
 
-test($tests);
+test($paTests);
 

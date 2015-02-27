@@ -26,7 +26,7 @@ my $ipt = NF::Save->new(
   }
 );
 
-my $struct = 
+my $phStruct = 
 {
   'in' => "eth0",
   'udp' => 
@@ -42,7 +42,7 @@ my $struct =
   'jump' => "ACCEPT",
 };
 
-my $assembled = 
+my $paAssembled = 
 [
   [
     '-d 192.168.15.1/32'
@@ -61,43 +61,55 @@ my $assembled =
   ],
 ];
 
-$ipt->rule('OUTPUT', $struct);
+$oIPT->rule('OUTPUT', $phStruct);
 
-my $tests = 
+my $paTests = 
 [
   [
-    $ipt->is_table('filter'), 
-    [1], 
+    $oIPT->is_table('filter'), 
+    [
+      1
+    ], 
     "Table filter exists."
   ],
   [
-    $ipt->is_table('foobar'), 
-    [0], 
+    $oIPT->is_table('foobar'), 
+    [
+      0
+    ], 
     "Table foobar does not exist."
   ],
   [
-    $ipt->is_chain('OUTPUT'), 
-    [1], 
+    $oIPT->is_chain('OUTPUT'), 
+    [
+      1
+    ], 
     "Chain OUTPUT exists."
   ],
   [
-    $ipt->is_chain('OUTPUT', 'filter'), 
-    [1], 
+    $oIPT->is_chain('OUTPUT', 'filter'), 
+    [
+      1
+    ], 
     "Chain OUTPUT in table filter exists."
   ],
   [
-    $ipt->is_chain('OUTPUT', 'foobar'), 
-    [0], 
+    $oIPT->is_chain('OUTPUT', 'foobar'), 
+    [
+      0
+    ], 
     "Chain OUTPUT in table foobar does not exist."
   ],
   [
-    $ipt->is_chain('foobar', 'filter'), 
-    [0], 
+    $oIPT->is_chain('foobar', 'filter'), 
+    [
+      0
+    ], 
     "Chain foobar in table filter exists."
   ],
   [
     [
-      $ipt->get_chains('filter')
+      $oIPT->get_chains('filter')
     ], 
     [
       'INPUT',
@@ -107,66 +119,66 @@ my $tests =
     "Get chains from filter.",
   ],
   [
-    $ipt->get_rules('OUTPUT'), 
-    $struct, 
+    $oIPT->get_rules('OUTPUT'), 
+    $phStruct, 
     "Get stored rules from OUTPUT."
   ],
   [
-    $ipt->get_rules('OUTPUT', 'filter'), 
-    $struct, 
+    $oIPT->get_rules('OUTPUT', 'filter'), 
+    $phStruct, 
     "Get stored rules from OUTPUT chain in filter table."
   ],
   [
     [
-      $ipt->get_rules('INPUT', 'filter')
+      $oIPT->get_rules('INPUT', 'filter')
     ], 
     [], 
     "Get stored rules from INPUT chain in filter table (undef)."
   ],
   [
-    $ipt->get_policy('INPUT'), 
+    $oIPT->get_policy('INPUT'), 
     'DROP', 
     "Policy for INPUT in an (unspecified) filter table."
   ],
   [
-    $ipt->get_policy('OUTPUT', 'filter'), 
+    $oIPT->get_policy('OUTPUT', 'filter'), 
     'DROP', 
     "Policy for OUTPUT in the filter table."
   ],
   [
-    $ipt->get_policy('OUTPUT', 'mangle'), 
+    $oIPT->get_policy('OUTPUT', 'mangle'), 
     'ACCEPT', 
     "Policy for OUTPUT in the mangle table."
   ],
   [
     [
-      $ipt->get_policy('foobar', 'mangle')
+      $oIPT->get_policy('foobar', 'mangle')
     ], 
     [], 
     "Policy for foobar in the mangle table (undef)."
   ],
   [
-    $ipt->get_header('OUTPUT'), 
+    $oIPT->get_header('OUTPUT'), 
     ':OUTPUT DROP [0:0]', 
     "Header for OUTPUT in an (unspecified) filter table."
   ],
   [
-    $ipt->get_header('OUTPUT', 'filter'), 
+    $oIPT->get_header('OUTPUT', 'filter'), 
     ':OUTPUT DROP [0:0]', 
     "Header for OUTPUT in the filter table."
   ],
   [
-    $ipt->get_header('OUTPUT', 'mangle'), 
+    $oIPT->get_header('OUTPUT', 'mangle'), 
     ':OUTPUT ACCEPT [0:0]', 
     "Header for OUTPUT in the mangle table."
   ],
   [
-    $ipt->get_header('foobar'), 
+    $oIPT->get_header('foobar'), 
     ':foobar - [0:0]', 
     "Header for the foobar chain."
   ],
   [
-    $ipt->get(), 
+    $oIPT->get(), 
     {
       'filter' => 
       {
@@ -174,26 +186,26 @@ my $tests =
         'FORWARD' => [], 
         'OUTPUT' => 
         [
-          $struct
+          $phStruct
         ],
       }
     }, 
     "Same structures.",
   ],
   [
-    $ipt->assemble($struct), 
-    $assembled, 
+    $oIPT->assemble($struct), 
+    $paAssembled, 
     "Assemble rule."
   ],
   [
-    $ipt->save_chain('OUTPUT'), 
+    $oIPT->save_chain('OUTPUT'), 
     [
       '-A OUTPUT -d 192.168.15.1/32 -i eth0 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT'
     ],
     "Get full chain rule set.",
   ],
   [
-    $ipt->save_table(), 
+    $oIPT->save_table(), 
     [
       ':INPUT DROP [0:0]',
       ':FORWARD DROP [0:0]',
@@ -205,5 +217,5 @@ my $tests =
 ];
 
 
-test($tests);
+test($paTests);
 

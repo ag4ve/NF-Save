@@ -8,7 +8,7 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new(
+my $oIPT = NF::Save->new(
   {
     'UIDs' => 
     {
@@ -17,11 +17,11 @@ my $ipt = NF::Save->new(
   }
 );
 
-my $tests = 
+my $paTests = 
 [
   [
     [
-      $ipt->_each_kv(
+      $oIPT->_each_kv(
         [qw/
           a 
           b 
@@ -35,7 +35,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv('keys')
+      $oIPT->_each_kv('keys')
     ], 
     [qw/
       a 
@@ -45,7 +45,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv('values')
+      $oIPT->_each_kv('values')
     ], 
     [qw/
       b 
@@ -55,7 +55,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv('keys b')
+      $oIPT->_each_kv('keys b')
     ], 
     [qw/
       a
@@ -64,7 +64,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv('values c')
+      $oIPT->_each_kv('values c')
     ], 
     [qw/
       d
@@ -73,7 +73,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv()
+      $oIPT->_each_kv()
     ], 
     [qw/
       a 
@@ -83,7 +83,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv(
+      $oIPT->_each_kv(
         [qw/
           e 
           f 
@@ -96,7 +96,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv()
+      $oIPT->_each_kv()
     ], 
     [qw/
       c 
@@ -106,14 +106,14 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv()
+      $oIPT->_each_kv()
     ], 
     [], 
     "Nothing left in list"
   ],
   [
     [
-      $ipt->_each_kv(
+      $oIPT->_each_kv(
         [qw/
           a 
           b 
@@ -128,7 +128,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv('keys', 'foo')
+      $oIPT->_each_kv('keys', 'foo')
     ], 
     [qw/
       a 
@@ -138,7 +138,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv(undef, 'foo')
+      $oIPT->_each_kv(undef, 'foo')
     ], 
     [qw/
       a 
@@ -148,7 +148,7 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv(undef, 'foo')
+      $oIPT->_each_kv(undef, 'foo')
     ], 
     [qw/
       c 
@@ -158,11 +158,11 @@ my $tests =
   ],
   [
     [
-      $ipt->_each_kv(undef, 'foo')
+      $oIPT->_each_kv(undef, 'foo')
     ], 
     [], 
     "Nothing left in named list"
   ],
 ];
 
-test($tests);
+test($paTests);

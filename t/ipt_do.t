@@ -24,7 +24,7 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new(
+my $oIPT = NF::Save->new(
   {
     'UIDs'      => 
     {
@@ -43,7 +43,7 @@ my $ipt = NF::Save->new(
   }
 );
 
-$ipt->rule(
+$oIPT->rule(
   'OUTPUT', 
   {
     'udp' => 
@@ -61,7 +61,7 @@ $ipt->rule(
 );
 # -A OUTPUT -d 127.0.0.1/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT
 
-$ipt->rule(
+$oIPT->rule(
   'POSTROUTING', 
   {
     'out' => "eth0",
@@ -80,7 +80,7 @@ $ipt->rule(
 );
 # -A POSTROUTING -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "
 
-$ipt->rule(
+$oIPT->rule(
   'OUTPUT', 
   {
     'tcp' => 
@@ -106,7 +106,7 @@ $ipt->rule(
 );
 # -A OUTPUT -m set --match-set scan_targets src -m tcp -p tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT
 
-$ipt->rule(
+$oIPT->rule(
   'FORWARD', 
   {
     'in' => "eth0",
@@ -124,9 +124,9 @@ $ipt->rule(
 );
 # -A FORWARD -i eth0 -o eth1 -m ! tcp -m comment --comment "VM data" -j RETURN
 
-$ipt->comment("Some comment");
+$oIPT->comment("Some comment");
 
-$ipt->add_list(
+$oIPT->add_list(
   'scan_targets', 
   [qw/
     1.2.3.4 
@@ -137,11 +137,11 @@ $ipt->add_list(
   }
 );
 
-my $tests = 
+my $paTests = 
 [
   [
     [
-      $ipt->get_tables()
+      $oIPT->get_tables()
     ], 
     [qw/
       nat 
@@ -151,7 +151,7 @@ my $tests =
   ],
   [
     [
-      $ipt->save()
+      $oIPT->save()
     ],
     [
       '*nat',
@@ -175,7 +175,7 @@ my $tests =
   ],
 ];
 
-test($tests);
+test($paTests);
 
 # '*raw',
 # ':PREROUTING ACCEPT [0:0]',

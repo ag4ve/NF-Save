@@ -8,11 +8,19 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}});
+my $oIPT = NF::Save->new(
+  {
+    'UIDs' => 
+    {
+      'testuser' => 359
+    }
+  }
+);
 
-my $tests = [
+my $paTests = 
+[
   [
-    $ipt->_srcdst(
+    $oIPT->_srcdst(
       {
         'ip' => "1.2.3.4",
         '!direction' => "src",
@@ -24,7 +32,7 @@ my $tests = [
     'Source IP string.',
   ],
   [
-    $ipt->_srcdst(
+    $oIPT->_srcdst(
       {
         'ip' => "1.2.3.4"
       }
@@ -33,7 +41,7 @@ my $tests = [
     "Not enough parameters",
   ],
   [
-    $ipt->_io_if(
+    $oIPT->_io_if(
       {
         'not' => 0,
         'if' => "eth*",
@@ -46,7 +54,7 @@ my $tests = [
     "Source IF string",
   ],
   [
-    $ipt->_proto(
+    $oIPT->_proto(
       {
         'proto' => "UDP"
       }
@@ -57,7 +65,7 @@ my $tests = [
     "Protocol string"
   ],
   [
-    $ipt->_owner(
+    $oIPT->_owner(
       {
         'name' => "testuser"
       }
@@ -68,7 +76,7 @@ my $tests = [
     "Username"
   ],
   [
-    $ipt->_owner(
+    $oIPT->_owner(
       {
         'name' => 567
       }
@@ -79,7 +87,7 @@ my $tests = [
     "UserID"
   ],
   [
-    $ipt->add_list('test', 
+    $oIPT->add_list('test', 
       [qw/
         1.2.3.4 
         5.6.7.8
@@ -93,7 +101,7 @@ my $tests = [
   ],
   [
     [
-      $ipt->get_ipset()
+      $oIPT->get_ipset()
     ],
     [
       'create test hash:net family inet hashsize 2048 maxelen 65536',
@@ -103,7 +111,7 @@ my $tests = [
     "IPSET return data"
   ],
   [
-    $ipt->_tcp_udp(
+    $oIPT->_tcp_udp(
       {
         '!name' => "TCP", 
         'dport' => 80, 
@@ -116,7 +124,7 @@ my $tests = [
     "TCP options",
   ],
   [
-    $ipt->_tcp_udp(
+    $oIPT->_tcp_udp(
       {
         'name' => "TCP",
         'flags' => "syn",
@@ -128,7 +136,7 @@ my $tests = [
     "TCP flags",
   ],
   [
-    $ipt->_icmp(
+    $oIPT->_icmp(
       {
         '!name' => "ICMP", 
         'type' => 8
@@ -140,7 +148,7 @@ my $tests = [
     "ICMP options",
   ],
   [
-    $ipt->_ct(
+    $oIPT->_ct(
       {
         'name' => "established related"
       }
@@ -151,7 +159,7 @@ my $tests = [
     "Connection state options",
   ],
   [
-    $ipt->_limit(
+    $oIPT->_limit(
       {
         'limit' => "5/min", 
         'burst' => "10"
@@ -163,7 +171,7 @@ my $tests = [
     "Rate limit",
   ],
   [
-    $ipt->_limit(
+    $oIPT->_limit(
       {
         'limit' => 7, 
         'burst' => 0
@@ -175,7 +183,7 @@ my $tests = [
     "Rate limit (Invalid limit and no burst).",
   ],
   [
-    $ipt->_comment(
+    $oIPT->_comment(
       {
         'name' => "foo bar baz"
       }
@@ -186,7 +194,7 @@ my $tests = [
     "Comment"
   ],
   [
-    $ipt->_jump(
+    $oIPT->_jump(
       {
         'name' => "test"
       }
@@ -197,7 +205,7 @@ my $tests = [
     "Jump"
   ],
   [
-    $ipt->_jump(
+    $oIPT->_jump(
       {
         'name' => "LOG", 
         'prefix' => "foo", 
@@ -212,7 +220,7 @@ my $tests = [
     "LOG jump with options",
   ],
   [
-    $ipt->_jump(
+    $oIPT->_jump(
       {
         'name' => "REJECT", 
         'with' => 1
@@ -224,7 +232,7 @@ my $tests = [
     "REJECT jump with icmp-port-unreachable",
   ],
   [
-    $ipt->_jump(
+    $oIPT->_jump(
       {
         'name' => "CT", 'notrack' => 1
       }
@@ -235,7 +243,7 @@ my $tests = [
     "CT jump with notrack"
   ],
   [
-    $ipt->_jump(
+    $oIPT->_jump(
       {
         'name' => "SNAT", 
         'src' => "1.2.3.4"
@@ -247,7 +255,7 @@ my $tests = [
     "SNAT jump to source",
   ],
   [
-    $ipt->_jump(
+    $oIPT->_jump(
       {
         'name' => "DNAT", 
         'dst' => "5.6.7.8"
@@ -260,4 +268,4 @@ my $tests = [
   ],
 ];
 
-test($tests);
+test($paTests);

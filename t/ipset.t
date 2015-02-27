@@ -23,12 +23,13 @@ use Util;
 
 use NF::Save;
 
-my $ipt = NF::Save->new({'UIDs' => {'testuser' => 359}});
+my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}});
 
-my $tests = [
+my $paTests = 
+[
   [
     [
-      $ipt->add_list(
+      $oIPT->add_list(
         'test', 
         [qw/
           1.2.3.4 
@@ -39,12 +40,14 @@ my $tests = [
         }
       )
     ], 
-    [1], 
+    [
+      1
+    ], 
     "Save IPSET (add_list)"
   ],
   [
     [
-      $ipt->get_ipset()
+      $oIPT->get_ipset()
     ],
     [
       'create test hash:net family inet hashsize 2048 maxelen 65536',
@@ -54,17 +57,17 @@ my $tests = [
     "IPSET return data"
   ],
   [
-    $ipt->is_ipset('test'), 
+    $oIPT->is_ipset('test'), 
     1, 
     "The queried IPSET exists"
   ],
   [
-    $ipt->is_ipset('foo'), 
+    $oIPT->is_ipset('foo'), 
     0, 
     "The queried IPSET does not exist"
   ],
   [
-    $ipt->get_ipset_data('test'), 
+    $oIPT->get_ipset_data('test'), 
     {
       'list' => 
       [qw/
@@ -76,7 +79,7 @@ my $tests = [
     "IPSET data"
   ],
   [
-    $ipt->_list_set(
+    $oIPT->_list_set(
       {
         'name' => "test",
         'direction' => 
@@ -93,7 +96,7 @@ my $tests = [
     "Source and destination list",
   ],
   [
-    $ipt->_list_set(
+    $oIPT->_list_set(
       {
         'name' => "test",
         'direction' => 'src',
@@ -107,7 +110,7 @@ my $tests = [
   ],
   [
     [
-      $ipt->_list_set(
+      $oIPT->_list_set(
         {
           'name' => "foo"
         }
@@ -119,5 +122,5 @@ my $tests = [
 ];
 
 
-test($tests);
+test($paTests);
 

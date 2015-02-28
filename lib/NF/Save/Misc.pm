@@ -88,7 +88,7 @@ sub is_table
 
 =item useipset($sBool)
 
-Change whether ipset is used bu default.
+Change whether ipset is used by default.
 
 =cut
 

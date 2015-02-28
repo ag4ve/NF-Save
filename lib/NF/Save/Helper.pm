@@ -55,114 +55,114 @@ Misc helper methods for NF::Save
 # Confirm the value of the listkey is a base of a key of the hash
 sub _return_valid_param
 {
-  my ($self, $listkey, $hParams) = @_;
+  my ($oSelf, $sListKey, $phParams) = @_;
 
   # If a key has been used in the data correctly
-  my @key = grep {/^!?$listkey$/i} keys %$hParams;
-  if (scalar(@key) > 1)
+  my @aKey = grep {/^!?$sListKey$/i} keys %$phParams;
+  if (scalar(@aKey) > 1)
   {
     warn "Multiple keys with similar names [" . 
-      join("] [", @key) . "] - Moving on\n";
+      join("] [", @aKey) . "] - Moving on\n";
     return;
   }
-  elsif (scalar(@key) == 0)
+  elsif (scalar(@aKey) == 0)
   {
     return;
   }
   else
   {
-    return $key[0];
+    return $aKey[0];
   }
 }
 
 # Return part of the rule when passed the name of the private method and a hash.
 sub _param_str
 {
-  my ($self, $key, $val) = @_;
+  my ($oSelf, $sKey, $oVal) = @_;
 
-  my $data;
-  if (ref(\$val) eq 'SCALAR')
+  my $phData;
+  if (ref(\$oVal) eq 'SCALAR')
   {
-    $data = {'name' => $val};
+    $phData = {'name' => $oVal};
   }
-  elsif (ref($val) eq 'ARRAY')
+  elsif (ref($oVal) eq 'ARRAY')
   {
-    $data = {'name' => join(' ', @$val)};
+    $phData = {'name' => join(' ', @$oVal)};
   }
-  elsif (ref($val) eq 'HASH')
+  elsif (ref($oVal) eq 'HASH')
   {
-    $data = $val;
+    $phData = $oVal;
   }
-  $data->{key} = $key if (not defined($data->{key}));
+  $phData->{key} = $sKey if (not defined($phData->{key}));
 
-  return $data;
+  return $phData;
 }
 
 sub _comp
 {
-  my ($self, $comp, $data) = @_;
+  my ($oSelf, $sComp, $phData) = @_;
 
-  $comp = '_' . $comp;
+  $sComp = '_' . $sComp;
 
-  if (not $self->can($comp))
+  if (not $oSelf->can($sComp))
   {
-    warn "No method [$comp] - skipping\n";
+    warn "No method [$sComp] - skipping\n";
     return;
   }
 
-  return $self->$comp($data);
+  return $oSelf->$sComp($phData);
 }
 
 # Actually write the rule from ipt
 # NOTE This should be a private function
 sub _ipt_do
 {
-  my ($self, $rule, $table, $chain, $do, $num) = @_;
+  my ($oSelf, $sRule, $sTable, $sChain, $sDo, $sNum) = @_;
 
-  $num = $num -1 if ($num eq $num+0);
+  $sNum = $sNum -1 if ($sNum eq $sNum+0);
 
-  my $ret;
-  if ($do eq 'A')
+  my $sRet;
+  if ($sDo eq 'A')
   {
-    $ret = 1 unless splice
-      @{$self->{nf}{$table}{$chain}},
-      scalar(@{$self->{nf}{$table}{$chain}}) - $num,
+    $sRet = 1 unless splice
+      @{$oSelf->{nf}{$sTable}{$sChain}},
+      scalar(@{$oSelf->{nf}{$sTable}{$sChain}}) - $sNum,
       0,
-      $rule;
+      $sRule;
   }
-  elsif ($do eq 'I')
+  elsif ($sDo eq 'I')
   {
-    $ret = 1 unless splice
-      @{$self->{nf}{$table}{$chain}},
-      $num,
+    $sRet = 1 unless splice
+      @{$oSelf->{nf}{$sTable}{$sChain}},
+      $sNum,
       0,
-      $rule;
+      $sRule;
   }
-  elsif ($do eq 'D')
+  elsif ($sDo eq 'D')
   {
-    $ret = splice
-      @{$self->{nf}{$table}{$chain}},
-      $num,
+    $sRet = splice
+      @{$oSelf->{nf}{$sTable}{$sChain}},
+      $sNum,
       1;
   }
-  elsif ($do eq 'R')
+  elsif ($sDo eq 'R')
   {
-    $ret = splice
-      @{$self->{nf}{$table}{$chain}},
-      $num,
+    $sRet = splice
+      @{$oSelf->{nf}{$sTable}{$sChain}},
+      $sNum,
       1,
-      $rule;
+      $sRule;
   }
 
-  return $ret;
+  return $sRet;
 }
 
 # Return an array of source or destination IP address strings
 sub _srcdst
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
       'direction' => {
         'src' => "-s",
         'dst' => "-d",
@@ -181,9 +181,9 @@ sub _srcdst
 # Return an array of input/output interface strings
 sub _io_if
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
       'direction' => {
         'in' => "-i",
         'out' => "-o",
@@ -202,9 +202,9 @@ sub _io_if
 # Return an array of protocol strings
 sub _proto
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
       'proto lc' => "-p",
     ], {
       'proto' => "name",
@@ -215,9 +215,9 @@ sub _proto
 # Return an array of owner strings
 sub _owner
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
       'name bool'        => "-m owner",
       'owner %owner' => "--uid-owner",
     ], {
@@ -225,7 +225,7 @@ sub _owner
     }, [qw/
       owner
     /], {
-      "owner" => $self->{uids}
+      "owner" => $oSelf->{uids}
     }
   )];
 }
@@ -233,19 +233,19 @@ sub _owner
 # Return an array of IP address match strings or a set name
 sub _list_set
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  my $name = $hParams->{name};
-  my @return;
+  my $sName = $phParams->{name};
+  my @aRet;
 
   my %hDirection;
-  if (ref(\$hParams->{direction}) eq 'SCALAR')
+  if (ref(\$phParams->{direction}) eq 'SCALAR')
   {
-    %hDirection = map {$_ => 1} split(" ", $hParams->{direction});
+    %hDirection = map {$_ => 1} split(" ", $phParams->{direction});
   }
-  elsif (ref($hParams->{direction}) eq 'ARRAY')
+  elsif (ref($phParams->{direction}) eq 'ARRAY')
   {
-    %hDirection = map {$_ => 1} @{$hParams->{direction}};
+    %hDirection = map {$_ => 1} @{$phParams->{direction}};
   }
   else
   {
@@ -256,40 +256,40 @@ sub _list_set
     );
   }
 
-  if (($hParams->{useipset} and $hParams->{useipset} != 0) or 
-    ($self->{useipset} and $self->{useipset} != 0))
+  if (($phParams->{useipset} and $phParams->{useipset} != 0) or 
+    ($oSelf->{useipset} and $oSelf->{useipset} != 0))
   {
-    warn "Set [$name] has not been defined\n" if (not $self->is_ipset($name));
-    push @return, "-m set --match-set $name " . join(",", sort {$b cmp $a} keys(%hDirection));
+    warn "Set [$sName] has not been defined\n" if (not $oSelf->is_ipset($sName));
+    push @aRet, "-m set --match-set $sName " . join(",", sort {$b cmp $a} keys(%hDirection));
   }
   else
   {
-    if (not exists($self->{ipset}{$name}{list}) and
-      ref($self->{ipset}{$name}{list}) ne 'ARRAY')
+    if (not exists($oSelf->{ipset}{$sName}{list}) and
+      ref($oSelf->{ipset}{$sName}{list}) ne 'ARRAY')
     {
-      warn "No list of name [$name]\n";
+      warn "No list of name [$sName]\n";
       return;
     }
-    my @list = @{$self->{ipset}{$name}{list}}; 
+    my @aList = @{$oSelf->{ipset}{$sName}{list}}; 
     if (exists($hDirection{src}))
     {
-      push @return, map {"-s $_"} @list;
+      push @aRet, map {"-s $_"} @aList;
     }
     if (exists($hDirection{dst}))
     {
-      push @return, map {"-d $_"} @list;
+      push @aRet, map {"-d $_"} @aList;
     }
   }
 
-  return [@return];
+  return [@aRet];
 }
 
 # Return an array of match strings
 sub _match
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
     'name lc' => "-m",
   ])];
 }
@@ -297,9 +297,9 @@ sub _match
 # Return an array of TCP or UDP protocol match strings
 sub _tcp_udp
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
       'name lc' => "-p",
       'name lc' => "-m",
       'sport' => "--sport",
@@ -310,7 +310,7 @@ sub _tcp_udp
     }, [qw/
       name
     /], {
-      'flags' => $self->{flags}
+      'flags' => $oSelf->{flags}
     }
   )];
 }
@@ -318,9 +318,9 @@ sub _tcp_udp
 # Return an array of ICMP protocol match strings
 sub _icmp
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  return [$self->_str_map($hParams, [
+  return [$oSelf->_str_map($phParams, [
       'name lc' => "-p",
       'name lc' => "-m",
       'type' => '--icmp-type',
@@ -335,77 +335,78 @@ sub _icmp
 # Return an array of conntrack strings
 sub _ct
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
   my @order = qw/NEW RELATED ESTABLISHED INVALID/;
 
-  my @ctstate;
-  if (ref($hParams->{name}) eq 'ARRAY')
+  my @aCTState;
+  if (ref($phParams->{name}) eq 'ARRAY')
   {
-    @ctstate = @{$hParams->{name}};
+    @aCTState = @{$phParams->{name}};
   }
-  elsif (ref(\$hParams->{name}) eq 'SCALAR')
+  elsif (ref(\$phParams->{name}) eq 'SCALAR')
   {
-    @ctstate = split(' ', $hParams->{name});
+    @aCTState = split(' ', $phParams->{name});
   }
 
-  my @str;
-  push @str, "-m conntrack";
-  (push @str, "--ctstate " . join(',', 
+  my @aStr;
+  push @aStr, "-m conntrack";
+  (push @aStr, "--ctstate " . join(',', 
     map {
       my $unit = $_;
-      grep {$unit eq $_} map {uc($_)} @ctstate;
+      grep {$unit eq $_} map {uc($_)} @aCTState;
     } @order))
-    if (scalar(@ctstate));
-  return [join(" ", @str)];
+    if (scalar(@aCTState));
+  return [join(" ", @aStr)];
 }
 
+# TODO I think a burst value of 0 is allowed (useless but allowed)
 # Return an array of limit strings
 sub _limit
 {
-  my ($self, $hParams) = @_;
-  my @str;
-  push @str, "-m limit";
-  (push @str, "--limit " . $hParams->{limit}) 
-    if ($hParams->{limit} and 
-      $hParams->{limit} =~ /^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)/);
-  (push @str, "--limit-burst " . $hParams->{burst}) if($hParams->{burst});
-  return [join(" ", @str)];
+  my ($oSelf, $phParams) = @_;
+  my @aStr;
+  push @aStr, "-m limit";
+  (push @aStr, "--limit " . $phParams->{limit}) 
+    if ($phParams->{limit} and 
+      $phParams->{limit} =~ /^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)/);
+  (push @aStr, "--limit-burst " . $phParams->{burst}) if($phParams->{burst});
+  return [join(" ", @aStr)];
 }
 
 # Return an array of comment strings
 sub _comment
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
-  my @parts;
-  if (ref($hParams->{name}) eq 'ARRAY' and scalar(@{$hParams->{name}}))
+  my @aParts;
+  if (ref($phParams->{name}) eq 'ARRAY' and scalar(@{$phParams->{name}}))
   {
-    push @parts, @{$hParams->{name}};
+    push @aParts, @{$phParams->{name}};
   }
-  elsif (ref(\$hParams->{name}) eq 'SCALAR' and length($hParams->{name}))
+  elsif (ref(\$phParams->{name}) eq 'SCALAR' and length($phParams->{name}))
   {
-    push @parts, $hParams->{name};
+    push @aParts, $phParams->{name};
   }
   else
   {
     return;
   }
 
-  return ["-m comment --comment \"" . join(" ", grep {defined($_)} @parts) . "\""];
+  return ["-m comment --comment \"" . join(" ", grep {defined($_)} @aParts) . "\""];
 }
 
 # Return an array of jump strings
 sub _jump
 {
-  my ($self, $hParams) = @_;
-  return if (not defined($hParams->{name}));
-  my $jump = $hParams->{name};
-  warn "Assuming wrong case for [$jump] - matching against [" . uc($jump) . "]\n"
-    if ($jump =~ /[a-z]/ and $jump =~ /^(LOG|REJECT|CT|SNAT|DNAT)$/i);
+  my ($oSelf, $phParams) = @_;
+  return if (not defined($phParams->{name}));
+  my $sJump = $phParams->{name};
+  warn "Assuming wrong case for [$sJump] - matching against [" . uc($sJump) . "]\n"
+    if ($sJump =~ /[a-z]/ and $sJump =~ /^(LOG|REJECT|CT|SNAT|DNAT)$/i);
 
-  if (uc($jump) eq 'LOG')
+  if (uc($sJump) eq 'LOG')
   {
-    return [$self->_str_map($hParams, [
+    return [$oSelf->_str_map($phParams, [
         'name uc' => "-j",
         'prefix qq' => "--log-prefix",
         'tcp bool' => "--log-tcp-options",
@@ -414,33 +415,33 @@ sub _jump
       ], undef, [qw/name/],
     )];
   }
-  elsif (uc($jump) eq 'REJECT')
+  elsif (uc($sJump) eq 'REJECT')
   {
-    return [$self->_str_map($hParams, [
+    return [$oSelf->_str_map($phParams, [
         'name uc' => "-j",
         'with bool' => "--reject-with icmp-port-unreachable",
       ], undef, [qw/name/],
     )];
   }
-  elsif (uc($jump) eq 'CT')
+  elsif (uc($sJump) eq 'CT')
   {
-    return [$self->_str_map($hParams, [
+    return [$oSelf->_str_map($phParams, [
         'name uc' => "-j",
         'notrack bool' => "--notrack",
       ], undef, [qw/name/],
     )];
   }
-  elsif (uc($jump) eq 'SNAT')
+  elsif (uc($sJump) eq 'SNAT')
   {
-    return [$self->_str_map($hParams, [
+    return [$oSelf->_str_map($phParams, [
         'name uc' => "-j",
         'src ip' => "--to-source",
       ], undef, [qw/name/],
     )];
   }
-  elsif (uc($jump) eq 'DNAT')
+  elsif (uc($sJump) eq 'DNAT')
   {
-    return [$self->_str_map($hParams, [
+    return [$oSelf->_str_map($phParams, [
         'name uc' => "-j",
         'dst ip' => "--to-destination",
       ], undef, [qw/name/],
@@ -448,7 +449,7 @@ sub _jump
   }
   else
   {
-    return [$self->_str_map($hParams, [
+    return [$oSelf->_str_map($phParams, [
         'name' => "-j",
       ], undef, [qw/name/]
     )];
@@ -467,84 +468,84 @@ sub _jump
 # of params if the key of lookup says to use it.
 sub _str_map
 {
-  my ($self, $hParams, $map, $alt, $require, $lookup) = @_;
+  my ($oSelf, $phParams, $paMap, $phAlt, $paRequire, $phLookup) = @_;
 
-  return if (not $self->_check_type([qw/HASH ARRAY HASH ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
+  return if (not $oSelf->_check_type([qw/HASH ARRAY HASH ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
 
   # Setup hash to make sure that all fields that are required are present
-  my %hRequire = map {$_ => 0} @$require;
+  my %hRequire = map {$_ => 0} @$paRequire;
 
   # Make sure results are oldered from the even map array
-  $self->_each_kv($map, 'str_map');
+  $oSelf->_each_kv($paMap, 'str_map');
 
-  my (@ret, @done);
-  while (my ($mapkey, $mapval) = $self->_each_kv(undef, 'str_map'))
+  my (@aRet, @aDone);
+  while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
-    my @maps = split(' ', $mapkey);
-    next if (not exists($maps[0]));
-    my $mapstr = $maps[0];
+    my @aMaps = split(' ', $sMapKey);
+    next if (not exists($aMaps[0]));
+    my $sMapStr = $aMaps[0];
 
-    my @PossibleKeys;
-    push @PossibleKeys, $mapstr if (defined($mapstr) and length($mapstr));
-    push @PossibleKeys, $alt->{$mapstr} 
-      if (defined($alt) and defined($alt->{$mapstr}));
+    my @aPossibleKeys;
+    push @aPossibleKeys, $sMapStr if (defined($sMapStr) and length($sMapStr));
+    push @aPossibleKeys, $phAlt->{$sMapStr} 
+      if (defined($phAlt) and defined($phAlt->{$sMapStr}));
 
     # [Param Key] Get the actual key from the params. Eg '!destination'
-    my $pkey;
-    for my $whichkey (@PossibleKeys)
+    my $sPreferredKey;
+    for my $sWhichKey (@aPossibleKeys)
     {
-      my @key = grep {/$whichkey/} keys %$hParams;
-      $pkey = $key[0] if (scalar(@key) and defined($key[0]));
-      if (defined($pkey))
+      my @aKey = grep {/$sWhichKey/} keys %$phParams;
+      $sPreferredKey = $aKey[0] if (scalar(@aKey) and defined($aKey[0]));
+      if (defined($sPreferredKey))
       {
-        $hRequire{$PossibleKeys[0]} = 1;
+        $hRequire{$aPossibleKeys[0]} = 1;
         last;
       }
     }
 
-    next if (not defined($pkey));
+    next if (not defined($sPreferredKey));
 
-    my ($not, $str) = $pkey =~ /^(!)?(.*)$/;
-    # TODO Not sure why we're checking @done here.
-    push @ret, "!" if (defined($not) and not grep {$str} @done);
+    my ($sNot, $sFuncStr) = $sPreferredKey =~ /^(!)?(.*)$/;
+    # TODO Not sure why we're checking @aDone here.
+    push @aRet, "!" if (defined($sNot) and not grep {$sFuncStr} @aDone);
     # An index of keys that have already been processed.
-    push @done, $str;
-    if (ref($mapval) eq 'HASH')
+    push @aDone, $sFuncStr;
+    if (ref($oMapVal) eq 'HASH')
     {
-      # orkey - possible hParam value
-      foreach my $orkey (keys %$mapval)
+      # sOrKey - possible hParam value
+      foreach my $sOrKey (keys %$oMapVal)
       {
-        if ($orkey =~ /$hParams->{$pkey}/)
+        if ($sOrKey =~ /$phParams->{$sPreferredKey}/)
         {
-          push @ret, $mapval->{$orkey};
+          push @aRet, $oMapVal->{$sOrKey};
         }
       }
     }
-    elsif (ref(\$mapval) eq 'SCALAR')
+    elsif (ref(\$oMapVal) eq 'SCALAR')
     {
       # Modify the key based on each map option
-      my $tret = $hParams->{$pkey};
-      foreach my $tmap (@maps[1 .. $#maps])
+      my $sTempRet = $phParams->{$sPreferredKey};
+      foreach my $sPossibleFunc (@aMaps[1 .. $#aMaps])
       {
-        $tret = $self->_str_map_transform($tret, $tmap, $lookup);
+        $sTempRet = $oSelf->_str_map_transform($sTempRet, $sPossibleFunc, $phLookup);
       }
-      if (defined($tret))
+      if (defined($sTempRet))
       {
-        push @ret, $mapval if (defined($mapval));
-        push @ret, $tret;
+        push @aRet, $oMapVal if (defined($oMapVal));
+        push @aRet, $sTempRet;
       }
     }
   }
 
   if (not grep {$_ == 0} values(%hRequire))
   {
-    return join(' ', grep {defined($_) and length($_) > 0} @ret) if (scalar(@ret));
+    return join(' ', grep {defined($_) and length($_) > 0} @aRet) if (scalar(@aRet));
   }
   else
   {
     warn "Required fields not defined: [" . 
       join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "] " .
-      Dumper($hParams) . "\n";
+      Dumper($phParams) . "\n";
     return;
   }
 }
@@ -552,56 +553,56 @@ sub _str_map
 # Transform data based on mapfunc
 sub _str_map_transform
 {
-  my ($self, $data, $mapfunc, $lookup) = @_;
+  my ($oSelf, $sData, $sMapFunc, $phLookup) = @_;
 
-  return if (not defined($data));
+  return if (not defined($sData));
 
-  if (defined($mapfunc) and length($mapfunc))
+  if (defined($sMapFunc) and length($sMapFunc))
   {
-    if ($mapfunc eq 'lc')
+    if ($sMapFunc eq 'lc')
     {
-      return lc($data);
+      return lc($sData);
     }
-    elsif ($mapfunc eq 'uc')
+    elsif ($sMapFunc eq 'uc')
     {
-      return uc($data);
+      return uc($sData);
     }
-    elsif ($mapfunc eq 'qq')
+    elsif ($sMapFunc eq 'qq')
     {
-      return "\"" . $data . "\"";
+      return "\"" . $sData . "\"";
     }
-    elsif ($mapfunc eq 'bool')
+    elsif ($sMapFunc eq 'bool')
     {
-      return if (not defined($data));
+      return if (not defined($sData));
     }
-    elsif ($mapfunc eq 'ip')
+    elsif ($sMapFunc eq 'ip')
     {
-      return $self->_cidr_ip($data);
+      return $oSelf->_cidr_ip($sData);
     }
     # Key to lookup from
-    if ($mapfunc =~ /^%(.*)/)
+    if ($sMapFunc =~ /^%(.*)/)
     {
-      my $key = $1;
-      if (not defined($lookup))
+      my $sKey = $1;
+      if (not defined($phLookup))
       {
         warn "A lookup hash was wanted but not defined.\n";
         return;
       }
 
-      if (exists($lookup->{$key}{$data}) and defined($lookup->{$key}{$data}))
+      if (exists($phLookup->{$sKey}{$sData}) and defined($phLookup->{$sKey}{$sData}))
       {
-        return $lookup->{$key}{$data};
+        return $phLookup->{$sKey}{$sData};
       }
       else
       {
-        warn "[$data] does not exist in lookup.\n" if (defined($self->{trace}));
-        return $data;
+        warn "[$sData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
+        return $sData;
       }
     }
   }
   else
   {
-    return $data;
+    return $sData;
   }
 }
 
@@ -610,40 +611,40 @@ sub _str_map_transform
 # types than data (<)
 sub _check_type
 {
-  my ($self, $types, $which_more, $warn, $undef, @data) = @_;
+  my ($oSelf, $paTypes, $sWhichMore, $sWarn, $sAllowUndef, @aData) = @_;
 
-  if (ref($types) ne 'ARRAY')
+  if (ref($paTypes) ne 'ARRAY')
   {
-    warn "Type must be an arrayref [" . ref($types) . "].\n";
-    return;
-  }
-
-  $which_more //= '=';
-  if ($which_more eq '<' and scalar(@$types) > scalar(@data))
-  {
-    warn "More parameters than data\n" if ($warn);
-    return;
-  }
-  elsif ($which_more eq '>' and scalar(@$types) < scalar(@data))
-  {
-    warn "More data than parameters\n" if ($warn);
-    return;
-  }
-  elsif ($which_more eq '=' and scalar(@$types) != scalar(@data))
-  {
-    warn "Number of data not equal to the number of parameters\n" if ($warn);
+    warn "Type must be an arrayref [" . ref($paTypes) . "].\n";
     return;
   }
 
-  for my $i (0 .. $#{$types})
+  $sWhichMore //= '=';
+  if ($sWhichMore eq '<' and scalar(@$paTypes) > scalar(@aData))
   {
-    return 1 if (not defined($data[$i]));
-    if (($types->[$i] =~ /^(ARRAY|HASH|CODE)$/ and ref($data[$i]) ne $types->[$i]) or 
-      ($types->[$i] eq 'SCALAR' and ref(\$data[$i]) ne $types->[$i]) or
-      ($undef and not defined(($data[$i]))))
+    warn "More parameters than data\n" if ($sWarn);
+    return;
+  }
+  elsif ($sWhichMore eq '>' and scalar(@$paTypes) < scalar(@aData))
+  {
+    warn "More data than parameters\n" if ($sWarn);
+    return;
+  }
+  elsif ($sWhichMore eq '=' and scalar(@$paTypes) != scalar(@aData))
+  {
+    warn "Number of data not equal to the number of parameters\n" if ($sWarn);
+    return;
+  }
+
+  for my $i (0 .. $#{$paTypes})
+  {
+    return 1 if (not defined($aData[$i]));
+    if (($paTypes->[$i] =~ /^(ARRAY|HASH|CODE)$/ and ref($aData[$i]) ne $paTypes->[$i]) or 
+      ($paTypes->[$i] eq 'SCALAR' and ref(\$aData[$i]) ne $paTypes->[$i]) or
+      ($sAllowUndef and not defined(($aData[$i]))))
     {
-      warn "[$i] " . ref($data[$i]) . " not equal to " . $types->[$i] . " " . 
-        Dumper($data[$i]) . "\n" if ($warn);
+      warn "[$i] " . ref($aData[$i]) . " not equal to " . $paTypes->[$i] . " " . 
+        Dumper($aData[$i]) . "\n" if ($sWarn);
       return;
     }
   }
@@ -653,45 +654,45 @@ sub _check_type
 # Return a valid CIDR IP address if possible or undef
 sub _valid_ip
 {
-  my ($self, $ip) = @_;
-  $ip =~ s|/[0-9]+||;
+  my ($oSelf, $sIP) = @_;
+  $sIP =~ s|/[0-9]+||;
 
-  return (defined($ip) and inet_aton($ip) ? 1 : 0);
+  return (defined($sIP) and inet_aton($sIP) ? 1 : 0);
 }
 
 # Check that a base address is in the bounds of a subnet
 sub _valid_cidr
 {
-  my ($self, $cidr) = @_;
-  return 0 if (not defined($cidr));
+  my ($oSelf, $sCIDR) = @_;
+  return 0 if (not defined($sCIDR));
 
-  my ($network, $subnet) = split("/", $cidr);
-  return 0 if (not defined($network) or not defined($subnet));
+  my ($sNetwork, $sSubnet) = split("/", $sCIDR);
+  return 0 if (not defined($sNetwork) or not defined($sSubnet));
 
-  my $inet = unpack('N', inet_aton($network));
-  my $mask = (2**32) - (2**(32-$subnet));
+  my $sInet = unpack('N', inet_aton($sNetwork));
+  my $sMask = (2**32) - (2**(32-$sSubnet));
 
-  my $tmask = ($inet | $mask);
+  my $sTestMask = ($sInet | $sMask);
 
-  return ($tmask <= $mask ? 1 : 0);
+  return ($sTestMask <= $sMask ? 1 : 0);
 }
 
 # Return a valid CIDR address
 sub _cidr_ip
 {
-  my ($self, $ip) = @_;
+  my ($oSelf, $sIP) = @_;
 
-  if (not $self->_valid_ip($ip))
+  if (not $oSelf->_valid_ip($sIP))
   {
     return;
   }
-  elsif ($self->_valid_cidr($ip))
+  elsif ($oSelf->_valid_cidr($sIP))
   {
-    return $ip;
+    return $sIP;
   }
   else
   {
-    return "$ip/32";
+    return "$sIP/32";
   }
 }
 
@@ -699,101 +700,105 @@ sub _cidr_ip
 # Can take a 'name' for a data structure and data can either be the data or 'keys' or 'values' to return all keys/values
 sub _each_kv
 {
-  my ($self, $data, $name) = @_;
+  my ($oSelf, $oData, $sName) = @_;
 
-  $self->{kv} = {} if (not defined($self->{kv}) or ref($self->{kv}) ne 'HASH');
+  $oSelf->{kv} = {} if (not defined($oSelf->{kv}) or ref($oSelf->{kv}) ne 'HASH');
 
-  $name = (defined($name) ? $name : 'each_kv');
+  $sName = (defined($sName) ? $sName : 'each_kv');
 
-  if (defined($data))
+  if (defined($oData))
   {
     # Create named group
-    if (ref($data) eq 'ARRAY')
+    if (ref($oData) eq 'ARRAY')
     {
-      if (scalar(@$data) % 2)
+      if (scalar(@$oData) % 2)
       {
         warn "Uneven array - nothing done\n";
         return 0;
       }
       else
       {
-        $self->{kv}{$name} = [@$data];
-        $self->{kv}{$name . 'orig'} = [@$data];
+        $oSelf->{kv}{$sName} = [@$oData];
+        $oSelf->{kv}{$sName . 'orig'} = [@$oData];
         return 1;
       }
     }
     # Return named keys or values
-    elsif (ref(\$data) eq 'SCALAR' and defined($self->{kv}{$name . 'orig'}))
+    elsif (ref(\$oData) eq 'SCALAR' and defined($oSelf->{kv}{$sName . 'orig'}))
     {
-      my ($bool, $match);
-      if ($data =~ /^key[^ ]* ?(.*)/)
+      my ($sBool, $sMatch);
+      if ($oData =~ /^key[^ ]* ?(.*)/)
       {
-        $bool = 0;
-        $match = $1;
+        $sBool = 0;
+        $sMatch = $1;
       }
-      elsif ($data =~ /^val[^ ]* ?(.*)/)
+      elsif ($oData =~ /^val[^ ]* ?(.*)/)
       {
-        $bool = 1;
-        $match = $1;
+        $sBool = 1;
+        $sMatch = $1;
       }
       else
       {
         return;
       }
   
-      my @ret;
-      my $raOrig = $self->{kv}{$name . 'orig'};
-      for my $num (0 .. $#{$raOrig})
+      my @aRet;
+      my $raOrig = $oSelf->{kv}{$sName . 'orig'};
+      for my $sNum (0 .. $#{$raOrig})
       {
-        if ($num % 2 == $bool)
+        if ($sNum % 2 == $sBool)
         {
-          if (length($match) > 0)
+          if (length($sMatch) > 0)
           {
-            my $cmp_num = ($bool ? $num - 1 : $num + 1);
-            next if ($raOrig->[$cmp_num] !~ /$match/);
+            my $sCmpNum = ($sBool ? $sNum - 1 : $sNum + 1);
+            next if ($raOrig->[$sCmpNum] !~ /$sMatch/);
           }
-          push @ret, $raOrig->[$num];
+          push @aRet, $raOrig->[$sNum];
         }
       }
   
-      return @ret;
+      return @aRet;
     }
   }
 
   # Cleanup
-  if (ref($self->{kv}{$name}) ne 'ARRAY' or not scalar(@{$self->{kv}{$name}}))
+  if (ref($oSelf->{kv}{$sName}) ne 'ARRAY' or not scalar(@{$oSelf->{kv}{$sName}}))
   {
-    delete $self->{kv}{$name};
-    delete $self->{kv}{$name . 'orig'};
+    delete $oSelf->{kv}{$sName};
+    delete $oSelf->{kv}{$sName . 'orig'};
     return;
   }
 
   # Return key/value pair
-  my $k = shift @{$self->{kv}{$name}};
-  my $v = shift @{$self->{kv}{$name}};
+  my @aRet;
+  push @aRet, shift @{$oSelf->{kv}{$sName}} for (1,2);
 
-  return $k, $v;
+  return @aRet;
 }
 
 # Expand arrays of arrays into an array of strings for each possibility
+#        +- -+ +- -+              +-              -+
+#        | a | | c |       =      | ac, ad, bc, bd |
+#        | b | | d |              +-              -+
+#        +- -+ +- -+  
 sub _expand
 {
-  my ($self, $sets) = @_;
+  my ($oSelf, $paSets) = @_;
 
-  if (! @$sets)
+  if (not @$paSets)
   {
     return [ [] ];
   }
   else
   {
-    my $first_set = $sets->[0];
-    my $cross = $self->_expand([ @$sets[1 .. $#$sets] ]);
+    my $paFirstSet = $paSets->[0];
+    my $paCross = $oSelf->_expand([ @$paSets[1 .. $#$paSets] ]);
 
     return [
       map {
-        my $item = $_; 
-        map { [$item, @$_] } @$cross 
-      } @$first_set
+        my $sItem = $_; 
+        map { [$sItem, @$_] } @$paCross 
+      } @$paFirstSet
     ];
   }
 }
@@ -801,22 +806,22 @@ sub _expand
 # Precede sort with possible presorted values from an array.
 sub _sortpre
 {
-  my ($self, $data, $prevals) = @_;
-  $prevals //= [];
+  my ($oSelf, $paData, $paPreSort) = @_;
+  $paPreSort //= [];
 
   my $i = 1;
-  my $pre = (ref($prevals) eq 'ARRAY' and scalar(@$prevals) ?
-    {map {$_ => $i++} @$prevals} : {}
+  my $phPre = (ref($paPreSort) eq 'ARRAY' and scalar(@$paPreSort) ?
+    {map {$_ => $i++} @$paPreSort} : {}
   );
 
   return (
     sort {
-      return $pre->{$a} <=> $pre->{$b}
-        if $pre->{$a} && $pre->{$b};
-      return -1 if $pre->{$a};
-      return +1 if $pre->{$b};
+      return $phPre->{$a} <=> $phPre->{$b}
+        if $phPre->{$a} && $phPre->{$b};
+      return -1 if $phPre->{$a};
+      return +1 if $phPre->{$b};
       return $a cmp $b;
-    } @$data
+    } @$paData
   );
 }
 

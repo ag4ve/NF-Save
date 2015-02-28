@@ -5,11 +5,28 @@ use warnings;
 
 use Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw/
+
+my @aInternal = qw/
+  _str_map_transform
+/;
+
+my @aModuleInit = qw/
+  _add_module
+  _str_map
+/;
+
+my @aAssemble = qw/
   _return_valid_param
   _param_str
   _comp
   _ipt_do
+  _check_type
+  _each_kv
+  _expand
+  _sortpre
+/;
+
+my @aLookupComp = qw/
   _srcdst
   _io_if
   _proto
@@ -22,16 +39,21 @@ our @EXPORT = qw/
   _limit
   _comment
   _jump
-  _str_map
-  _str_map_transform
-  _check_type
+/;
+
+my @aIPCheck = qw/
   _valid_ip
   _valid_cidr
   _cidr_ip
-  _each_kv
-  _expand
-  _sortpre
 /;
+
+our @EXPORT_OK = (@aInternal, @aAssemble, @aLookupComp, @aIPCheck);
+our %EXPORT_TAGS = (
+  'all'       => \@EXPORT_OK,
+  'assemble'  => \@aAssemble,
+  'comp'      => \@aLookupComp,
+  'ipcheck'   => \@aIPCheck,
+);
  
 use Socket;
 use Data::Dumper;
@@ -482,7 +504,7 @@ sub _add_module
   }
   return if (not defined($sLower));
 
-  if (defined($paPost)
+  if (defined($paPost))
   {
     last if (not scalar(@$paPost));
     my $sUpper;

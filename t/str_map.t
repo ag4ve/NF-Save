@@ -8,7 +8,7 @@ use Util;
 
 use NF::Save;
 
-my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}};
+my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}});
 
 my $paTests = 
 [

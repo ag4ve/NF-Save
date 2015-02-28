@@ -456,6 +456,63 @@ sub _jump
   }
 }
 
+# Insert the name and method in the right place so the rule is in the order iptables
+# would present it.
+# @$paLookup is an even array of ["name" => "method"] where the method should be 
+# private and exclude the underscore (_) here.
+# @$paPre should be a list of names that should come before this module and
+# @$paPost should be a list of names that should come after.
+# If post isn't defined/found, the entry will come after the last pre entry found
+sub _add_module
+{
+  my ($oSelf, $paLookup, $paPre, $paPost) = @_;
+
+  $oSelf->_each_kv($oSelf->{lookup});
+
+  my @aKeys = @{$oSelf->_each_kv('keys')};
+
+  my $sLower;
+  foreach my $i (reverse(0 .. $#aKeys))
+  {
+    if (grep {$_ eq $aKeys[$i]} @$paPre)
+    {
+      $sLower = $i;
+      last;
+    }
+  }
+  return if (not defined($sLower));
+
+  if (defined($paPost)
+  {
+    last if (not scalar(@$paPost));
+    my $sUpper;
+    foreach my $i (0 .. $#aKeys)
+    {
+      if (grep {$_ eq $aKeys[$i]} @$paPost)
+      {
+        $sUpper = $i;
+        last;
+      }
+    }
+    if (not defined($sUpper) or $sLower >= $sUpper)
+    {
+      warn "There was an issue finding post modules.\n";
+    }
+  }
+  else
+  {
+    warn "Module [" . $paLookup->[0] . "] did not define an upper search. An empty set should be specified\n";
+  }
+
+  # Lookup is an even array - sLower/sUpper is an index of the keys - the value 
+  # needs to be doubled to be in the right place.
+  return 1 unless splice 
+    @{$oSelf->{lookup}}, 
+    $sLower*2, 
+    0, 
+    @$paLookup;
+}
+
 # Return a string from a definition
 # Input is a hashref of the input datastructure, a definition, optionally 
 # a third hash with alternate key map, required fields, and a lookup hash.

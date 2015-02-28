@@ -34,7 +34,7 @@ use NF::Save::Helper;
 use Data::Dumper;
 use Storable qw(dclone);
 
-=item get($chain, $table)
+=item get($sChain, $sTable)
 
 Return the internal data structure used to store iptables information
 
@@ -42,24 +42,24 @@ Return the internal data structure used to store iptables information
 
 sub get
 {
-  my ($self, $chain, $table) = @_;
-  $table //= 'filter';
+  my ($oSelf, $sChain, $sTable) = @_;
+  $sTable //= 'filter';
 
-  if (not $self->is_table($table) or not defined($chain))
+  if (not $oSelf->is_table($sTable) or not defined($sChain))
   {
-    return $self->{nf};
+    return $oSelf->{nf};
   }
-  elsif (not defined($chain) or not $self->is_chain($chain, $table))
+  elsif (not defined($sChain) or not $oSelf->is_chain($sChain, $sTable))
   {
-    return $self->{nf}{$table};
+    return $oSelf->{nf}{$sTable};
   }
   else
   {
-    return $self->{nf}{$table}{$chain};
+    return $oSelf->{nf}{$sTable}{$sChain};
   }
 }
 
-=item is_chain($chain, $table)
+=item is_chain($sChain, $sTable)
 
 Check if a chain is defined (the filter table is assumed if none is given)
 
@@ -67,10 +67,10 @@ Check if a chain is defined (the filter table is assumed if none is given)
 
 sub is_chain
 {
-  my ($self, $chain, $table) = @_;
-  $table //= 'filter';
+  my ($oSelf, $sChain, $sTable) = @_;
+  $sTable //= 'filter';
 
-  return (($self->is_table($table) and exists($self->{nf}{$table}{$chain})) ? 1 : 0);
+  return (($oSelf->is_table($sTable) and exists($oSelf->{nf}{$sTable}{$sChain})) ? 1 : 0);
 }
 
 =item is_table
@@ -81,12 +81,12 @@ Check if a table is defined
 
 sub is_table
 {
-  my ($self, $table) = @_;
+  my ($oSelf, $sTable) = @_;
 
-  return (exists($self->{nf}{$table}) ? 1 : 0);
+  return (exists($oSelf->{nf}{$sTable}) ? 1 : 0);
 }
 
-=item useipset($bool)
+=item useipset($sBool)
 
 Change whether ipset is used bu default.
 
@@ -94,19 +94,19 @@ Change whether ipset is used bu default.
 
 sub useipset
 {
-  my ($self, $bool) = @_;
+  my ($oSelf, $sBool) = @_;
 
-  if (defined($bool))
+  if (defined($sBool))
   {
-    $self->{useipset} = $bool;
+    $oSelf->{useipset} = $sBool;
   }
   else
   {
-    return $self->{useipset};
+    return $oSelf->{useipset};
   }
 }
 
-=item get_policy($chain, $table)
+=item get_policy($sChain, $sTable)
 
 Get the policy for a chain
 
@@ -114,13 +114,13 @@ Get the policy for a chain
 
 sub get_policy
 {
-  my ($self, $chain, $table) = @_;
+  my ($oSelf, $sChain, $sTable) = @_;
 
-  $table //= "filter";
+  $sTable //= "filter";
 
-  if (exists($self->{Policy}{$table}{$chain}))
+  if (exists($oSelf->{Policy}{$sTable}{$sChain}))
   {
-    return $self->{Policy}{$table}{$chain};
+    return $oSelf->{Policy}{$sTable}{$sChain};
   }
   else
   {
@@ -128,7 +128,7 @@ sub get_policy
   }
 }
 
-=item get_header($chain, $table)
+=item get_header($sChain, $sTable)
 
 Get header policies for iptable-save
 
@@ -136,21 +136,21 @@ Get header policies for iptable-save
 
 sub get_header
 {
-  my ($self, $chain, $table) = @_;
+  my ($oSelf, $sChain, $sTable) = @_;
 
-  $table //= "filter";
+  $sTable //= "filter";
 
-  if ($self->get_policy($chain, $table))
+  if ($oSelf->get_policy($sChain, $sTable))
   {
-    return ":$chain " . $self->get_policy($chain, $table) . " [0:0]";
+    return ":$sChain " . $oSelf->get_policy($sChain, $sTable) . " [0:0]";
   }
   else
   {
-    return ":$chain - [0:0]";
+    return ":$sChain - [0:0]";
   }
 }
 
-=item rule($chain, $rule, $table, $func)
+=item rule($sChain, $sRule, $sTable, $sFunc)
 
 An interface designed to look fairly similar to the iptables cli
 
@@ -171,32 +171,32 @@ C<$ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');>
 
 sub rule
 {
-  my ($self, $chain, $rule, $table, $func) = @_;
+  my ($oSelf, $sChain, $sRule, $sTable, $sFunc) = @_;
 
-  $table //= 'filter';
-  $func //= 'A';
-  my $do;
-  $do = uc(substr($1, 0, 1))
-    if ($func =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)\b/i);
+  $sTable //= 'filter';
+  $sFunc //= 'A';
+  my $sDo;
+  $sDo = uc(substr($1, 0, 1))
+    if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)\b/i);
 
-  return if (not defined($do));
+  return if (not defined($sDo));
 
-  my $num = (($func =~ /\S+ ([0-9]+)/) ? $1 : '1');
+  my $sNum = (($sFunc =~ /\S+ ([0-9]+)/) ? $1 : '1');
 
   # Make sure the hash is immutable
-  $rule = dclone($rule);
+  $sRule = dclone($sRule);
 
-  if ($self->{precheck} and not $self->check_rule($rule))
+  if ($oSelf->{precheck} and not $oSelf->check_rule($sRule))
   {
-    warn "Invalid rule " . Dumper($rule) . "\n";
+    warn "Invalid rule " . Dumper($sRule) . "\n";
     return;
   }
 
-  $self->{nf}{$table} = {map {$_ => []} keys %{$self->{Policy}{$table}}} 
-    unless (ref($self->{nf}{$table}) eq 'HASH');
-  $self->{nf}{$table}{$chain} = () unless (ref($self->{nf}{$table}{$chain}) eq 'ARRAY');
+  $oSelf->{nf}{$sTable} = {map {$_ => []} keys %{$oSelf->{Policy}{$sTable}}} 
+    unless (ref($oSelf->{nf}{$sTable}) eq 'HASH');
+  $oSelf->{nf}{$sTable}{$sChain} = () unless (ref($oSelf->{nf}{$sTable}{$sChain}) eq 'ARRAY');
 
-  return $self->_ipt_do($rule, $table, $chain, $do, $num);
+  return $oSelf->_ipt_do($sRule, $sTable, $sChain, $sDo, $sNum);
 }
 
 =item raw_rule(@rules)
@@ -207,46 +207,47 @@ Process a full iptables rule into the data structure
 
 =cut
 
+# TODO Untested and doesn't actually do anything
 sub raw_rule
 {
-  my ($self, $rules) = @_;
+  my ($oSelf, $paRules) = @_;
 
-  return unless (defined($rules) and ref($rules) eq 'ARRAY');
+  return unless (defined($paRules) and ref($paRules) eq 'ARRAY');
 
   my $return;
-  foreach my $rule (@{$rules})
+  foreach my $sRule (@{$paRules})
   {
-    my $orig_rule = $rule;
+    my $orig_rule = $sRule;
 
-    my $table;
+    my $sTable;
     {
-      $rule =~ s/^-t *([^ ]+) //;
-      $table = $1 // 'filter';
+      $sRule =~ s/^-t *([^ ]+) //;
+      $sTable = $1 // 'filter';
     }
 
-    my $chain;
+    my $sChain;
     {
-      $rule =~ s/^-A *([^ ]+) //;
-      $chain = $1;
+      $sRule =~ s/^-A *([^ ]+) //;
+      $sChain = $1;
     }
 
     my ($nsrc, $src);
     {
-      $rule =~ s/^(!)? -s *([0-9\.]+) //;
+      $sRule =~ s/^(!)? -s *([0-9\.]+) //;
       $nsrc = $1;
       $src = $2;
     }
 
     my ($ndst, $dst);
     {
-      $rule =~ s/^(!)? -d *([0-9\.]+) //;
+      $sRule =~ s/^(!)? -d *([0-9\.]+) //;
       $ndst = $1;
       $dst = $2;
     }
 
     my $mproto;
     {
-      $rule =~ s/^-m (tcp|TCP|udp|UDP|icmp|ICMP) //;
+      $sRule =~ s/^-m (tcp|TCP|udp|UDP|icmp|ICMP) //;
       $mproto = $1;
     }
       
@@ -254,53 +255,53 @@ sub raw_rule
     if ($mproto =~ /tcp|udp/i)
     {
       {
-        $rule =~ s/^(?:--sport ([0-9:]+) )?(?:--dport ([0-9:]+) )?//;
+        $sRule =~ s/^(?:--sport ([0-9:]+) )?(?:--dport ([0-9:]+) )?//;
         $sport = $1;
         $dport = $2;
       }
-      $rule =~ s/^ // if (defined($sport) or defined($dport));
+      $sRule =~ s/^ // if (defined($sport) or defined($dport));
 
       if ($mproto =~ /tcp/i)
       {
-        $rule =~ s/^--tcp-flags ([^ ]+) //;
+        $sRule =~ s/^--tcp-flags ([^ ]+) //;
         $flags = $1;
       }
     }
     elsif ($mproto =~ /icmp/i)
     {
-      $rule =~ s/^--icmp-type ([0-9]+) //;
+      $sRule =~ s/^--icmp-type ([0-9]+) //;
       $type = $1;
     }
 
     my $owner;
     {
-      $rule =~ s/^-m owner --uid-owner ([^ ]+) //;
+      $sRule =~ s/^-m owner --uid-owner ([^ ]+) //;
       $owner = $1;
     }
 
     my ($set, $setdir);
     {
-      $rule =~ s/^-m set --match-set ([^ ]+) ([^ ]+) //;
+      $sRule =~ s/^-m set --match-set ([^ ]+) ([^ ]+) //;
       $set = $1;
       $setdir = $2;
     }
 
     my $ct;
     {
-      $rule =~ s/^-m conntrack --ctstate ((?:(?:NEW|RELATED|ESTABLISHED|INVALID),?)+) //;
+      $sRule =~ s/^-m conntrack --ctstate ((?:(?:NEW|RELATED|ESTABLISHED|INVALID),?)+) //;
       $ct = $1;
     }
 
     my ($limit, $burst);
     {
-      $rule =~ s/^-m limit (?:--limit ([^ ]+) )?(?:--limit-burst ([^ ]+) )?//;
+      $sRule =~ s/^-m limit (?:--limit ([^ ]+) )?(?:--limit-burst ([^ ]+) )?//;
       $limit = $1;
       $burst = $2;
     }
 
     my $comment;
     {
-      $rule =~ s/^-m comment "([^"]+)" //;
+      $sRule =~ s/^-m comment "([^"]+)" //;
       $comment = $1;
     }
 
@@ -308,10 +309,10 @@ sub raw_rule
     # TODO can '-m tcp -m udp -m icmp' be used in one rule
     my $jump;
     {
-      $rule =~ s/^-j ([^ ]+)//;
+      $sRule =~ s/^-j ([^ ]+)//;
       $jump = $1;
     }
-    push @{$return->{$chain}{$table}}, {
+    push @{$return->{$sChain}{$sTable}}, {
       'src' => {
         'name' => $src,
         "not" => $nsrc,
@@ -353,14 +354,14 @@ Return true if the parameters in the rule structure make up a valid rule.
 
 sub check_rule
 {
-  my ($self, $data) = @_;
+  my ($oSelf, $phData) = @_;
 
-  my $ret = $self->assemble($data);
+  my $paRet = $oSelf->assemble($phData);
 
-  return (ref($ret) eq 'ARRAY' and scalar(@$ret) ? 1 : 0);
+  return (ref($paRet) eq 'ARRAY' and scalar(@$paRet) ? 1 : 0);
 }
 
-=item is_user($username)
+=item is_user($sUser)
 
 Return true if user has been defined.
 
@@ -368,12 +369,12 @@ Return true if user has been defined.
 
 sub is_user
 {
-  my ($self, $user) = @_;
+  my ($oSelf, $sUser) = @_;
 
-  return (exists($self->{uids}{$user}) ? 1 : 0);
+  return (exists($oSelf->{uids}{$sUser}) ? 1 : 0);
 }
 
-=item comment($str, $where)
+=item comment($sComment, $sWhere)
 
 Add a comment that will be displayed in iptables/ipset output
 
@@ -381,71 +382,71 @@ Add a comment that will be displayed in iptables/ipset output
 
 sub comment
 {
-  my ($self, $str, $where) = @_;
-  $where //= "nf";
+  my ($oSelf, $sComment, $sWhere) = @_;
+  $sWhere //= "nf";
 
-  $str = "# $str";
+  $sComment = "# $sComment";
 
-  if ($where =~ /^(ipt|nf)/)
+  if ($sWhere =~ /^(ipt|nf)/)
   {
-    push @{$self->{'nf comment'}}, $str;
+    push @{$oSelf->{'nf comment'}}, $sComment;
   }
-  elsif ($where =~ /^(ips|set)/)
+  elsif ($sWhere =~ /^(ips|set)/)
   {
-    push @{$self->{'set comment'}}, $str;
+    push @{$oSelf->{'set comment'}}, $sComment;
   }
   else
   {
-    push @{$self->{'nf comment'}}, $str;
-    push @{$self->{'set comment'}}, $str;
+    push @{$oSelf->{'nf comment'}}, $sComment;
+    push @{$oSelf->{'set comment'}}, $sComment;
   }
 }
 
-=item add_list($name, @list, $opts)
+=item add_list($sName, @$paList, %$phOpts)
 
 Define an ipset list.
 
-C<$name> is the name of the set
-C<@list> is a list of addresses in the set
-C<%opts> parameters for the set
+C<$sName> is the name of the set
+C<@$paList> is a list of addresses in the set
+C<%$phOpts> parameters for the set
 
 =cut
 
 # TODO only hash:net is assumed in the list - other types should be allowed and looked for
 sub add_list
 {
-  my ($self, $name, $list, $opts) = @_;
+  my ($oSelf, $sName, $paList, $phOpts) = @_;
 
-  return if (not $self->_check_type([qw/SCALAR ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
-  return if (not defined($name) and 
-    not defined($list) and ref($list) ne 'ARRAY');
+  return if (not $oSelf->_check_type([qw/SCALAR ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
+  return if (not defined($sName) and not defined($paList));
 
-  my $aIPs;
-  @$aIPs = grep {defined($_)} map {$self->_cidr_ip($_)} @$list;
+  my $paIPs;
+  @$paIPs = grep {defined($_)} map {$oSelf->_cidr_ip($_)} @$paList;
 
-  my $return = (scalar(@$list) - scalar(@$aIPs));
+  # The difference between given IPs and those that are valid - should be 0
+  my $sReturn = (scalar(@$paList) - scalar(@$paIPs));
 
-  if (not $self->is_ipset($name))
+  if (not $oSelf->is_ipset($sName))
   {
-    $self->{ipset}{$name} = {'list' => $aIPs};
+    $oSelf->{ipset}{$sName} = {'list' => $paIPs};
   }
   else 
   {
-    push @{$self->{ipset}{$name}{list}}, @$aIPs;
+    push @{$oSelf->{ipset}{$sName}{list}}, @$paIPs;
   }
 
-  if (defined($opts))
+  if (defined($phOpts))
   {
-    foreach my $key (keys %$opts)
+    foreach my $sKey (keys %$phOpts)
     {
-      $self->{ipset}{$name}{$key} = $opts->{$key};
+      $oSelf->{ipset}{$sName}{$sKey} = $phOpts->{$sKey};
     }
   }
 
-  return ($return ? -$return : 1);
+  return ($sReturn ? -$sReturn : 1);
 }
 
-=item get_set($name)
+=item get_set($sName)
 
 Return an array of data appropriate for 'ipset restore'. Return only one set if a valid name was supplied or all sets if no set name was given.
 
@@ -453,30 +454,30 @@ Return an array of data appropriate for 'ipset restore'. Return only one set if 
 
 sub get_ipset
 {
-  my ($self, $name) = @_;
+  my ($oSelf, $sName) = @_;
 
-  return if (defined($name) and not $self->is_ipset($name));
-  my @iter = ($name // keys(%{$self->{ipset}}));
+  return if (defined($sName) and not $oSelf->is_ipset($sName));
+  my @aIter = ($sName // keys(%{$oSelf->{ipset}}));
 
-  my @ret;
-  foreach my $name (@iter)
+  my @aRet;
+  foreach my $sName (@aIter)
   {
-    my $data = $self->{ipset}{$name};
-    my $type = $data->{type} // 'hash:net';
-    my $family = $data->{family} // 'inet';
-    my $hashsize = $data->{hashsize} // 1024;
-    my $maxelen = $data->{maxelen} // 65536;
+    my $phData = $oSelf->{ipset}{$sName};
+    my $sType = $phData->{type} // 'hash:net';
+    my $sFamily = $phData->{family} // 'inet';
+    my $sHashsize = $phData->{hashsize} // 1024;
+    my $sMaxelen = $phData->{maxelen} // 65536;
 
-    push @ret, "create $name $type family $family hashsize $hashsize maxelen $maxelen";
-    push @ret, map {"add $name $_"} @{$data->{list}};
+    push @aRet, "create $sName $sType family $sFamily hashsize $sHashsize maxelen $sMaxelen";
+    push @aRet, map {"add $sName $_"} @{$phData->{list}};
   }
 
-  push @ret, @{$self->{'set comment'}};
+  push @aRet, @{$oSelf->{'set comment'}};
 
-  return @ret;
+  return @aRet;
 }
 
-=item is_ipset($name)
+=item is_ipset($sName)
 
 Check if an ipset exists
 
@@ -484,12 +485,12 @@ Check if an ipset exists
 
 sub is_ipset
 {
-  my ($self, $name) = @_;
+  my ($oSelf, $sName) = @_;
 
-  return (exists($self->{ipset}{$name}) ? 1 : 0);
+  return (exists($oSelf->{ipset}{$sName}) ? 1 : 0);
 }
 
-=item get_ipset_data($name)
+=item get_ipset_data($sName)
 
 Return internal data for an ipset or all sets if no name was given
 
@@ -497,15 +498,15 @@ Return internal data for an ipset or all sets if no name was given
 
 sub get_ipset_data
 {
-  my ($self, $name) = @_;
+  my ($oSelf, $sName) = @_;
 
-  if (not defined($name))
+  if (not defined($sName))
   {
-    return $self->{ipset};
+    return $oSelf->{ipset};
   }
-  elsif ($self->is_ipset($name))
+  elsif ($oSelf->is_ipset($sName))
   {
-    return $self->{ipset}{$name};
+    return $oSelf->{ipset}{$sName};
   }
   else
   {
@@ -521,17 +522,17 @@ Return an array that can pe passed to iptables-restore. This data should duplica
 
 sub save
 {
-  my ($self) = @_;
+  my ($oSelf) = @_;
 
-  my @ret;
-  foreach my $table ($self->get_tables())
+  my @aRet;
+  foreach my $sTable ($oSelf->get_tables())
   {
-    push @ret, "*$table", @{$self->save_table($table)}, "COMMIT";
+    push @aRet, "*$sTable", @{$oSelf->save_table($sTable)}, "COMMIT";
   }
 
-  push @ret, @{$self->{'nf comment'}};
+  push @aRet, @{$oSelf->{'nf comment'}};
 
-  return @ret;
+  return @aRet;
 }
 
 =item get_tables()
@@ -542,15 +543,15 @@ Return a list of tables
 
 sub get_tables
 {
-  my ($self) = @_;
+  my ($oSelf) = @_;
 
-  return ($self->_sortpre(
-    [keys %{$self->{nf}}],
+  return ($oSelf->_sortpre(
+    [keys %{$oSelf->{nf}}],
     [qw/raw nat mangle filter/]
   ));
 }
 
-=item save_table($table)
+=item save_table($sTable)
 
 Return an iptables-save array for all chains in a table (default to filter if no table is supplied)
 
@@ -558,26 +559,26 @@ Return an iptables-save array for all chains in a table (default to filter if no
 
 sub save_table
 {
-  my ($self, $table) = @_;
-  $table //= 'filter';
+  my ($oSelf, $sTable) = @_;
+  $sTable //= 'filter';
 
-  return if (not $self->is_table($table));
+  return if (not $oSelf->is_table($sTable));
 
-  my (@head, @chains);
-  foreach my $chain ($self->get_chains($table))
+  my (@aHead, @aChains);
+  foreach my $sChain ($oSelf->get_chains($sTable))
   {
-    push @head, $self->get_header($chain, $table);
-    push @chains, @{$self->save_chain($chain, $table)};
+    push @aHead, $oSelf->get_header($sChain, $sTable);
+    push @aChains, @{$oSelf->save_chain($sChain, $sTable)};
   }
 
-  my @ret;
+  my @aRet;
 
-  push @ret, @head, @chains;
+  push @aRet, @aHead, @aChains;
 
-  return [@ret];
+  return [@aRet];
 }
 
-=item get_chain($table)
+=item get_chain($sTable)
 
 Return a list of chains for a table
 
@@ -585,18 +586,18 @@ Return a list of chains for a table
 
 sub get_chains
 {
-  my ($self, $table) = @_;
+  my ($oSelf, $sTable) = @_;
 
-  return if (not $self->is_table($table));
+  return if (not $oSelf->is_table($sTable));
   return (
-    $self->_sortpre(
-      [keys(%{$self->{nf}{$table}})], 
+    $oSelf->_sortpre(
+      [keys(%{$oSelf->{nf}{$sTable}})], 
       [qw/PREROUTING INPUT FORWARD OUTPUT POSTROUTING/],
     )
   );
 }
 
-=item save_chain($chain, $table)
+=item save_chain($sChain, $sTable)
 
 Return an array with iptables-save data for one chain
 
@@ -604,23 +605,23 @@ Return an array with iptables-save data for one chain
 
 sub save_chain
 {
-  my ($self, $chain, $table) = @_;
-  $table //= 'filter';
+  my ($oSelf, $sChain, $sTable) = @_;
+  $sTable //= 'filter';
 
-  return if (not defined($chain) and not $self->is_chain($chain, $table));
+  return if (not defined($sChain) and not $oSelf->is_chain($sChain, $sTable));
 
-  my @return;
-  foreach my $rule ($self->get_rules($chain, $table))
+  my @aReturn;
+  foreach my $sRule ($oSelf->get_rules($sChain, $sTable))
   {
-    my @assembled = $self->assemble($rule);
-    return if (not scalar(@assembled));
-    push @return, "-A $chain " . join(" ", map {@$_} @{$self->_expand(@assembled)});
+    my @aAssembled = $oSelf->assemble($sRule);
+    return if (not scalar(@aAssembled));
+    push @aReturn, "-A $sChain " . join(" ", map {@$_} @{$oSelf->_expand(@aAssembled)});
   }
 
-  return [@return];
+  return [@aReturn];
 }
 
-=item get_rules($chain, $table)
+=item get_rules($sChain, $sTable)
 
 Return data structure of rules in a chain
 
@@ -628,14 +629,14 @@ Return data structure of rules in a chain
 
 sub get_rules
 {
-  my ($self, $chain, $table) = @_;
-  $table //= 'filter';
+  my ($oSelf, $sChain, $sTable) = @_;
+  $sTable //= 'filter';
 
-  return if (not $self->is_chain($chain, $table));
-  return @{$self->{nf}{$table}{$chain}};
+  return if (not $oSelf->is_chain($sChain, $sTable));
+  return @{$oSelf->{nf}{$sTable}{$sChain}};
 }
 
-=item assemble(%params)
+=item assemble(%$phParams)
 
 Put an iptables rule for a data structure definition
 
@@ -643,27 +644,27 @@ Put an iptables rule for a data structure definition
 
 sub assemble
 {
-  my ($self, $hParams) = @_;
+  my ($oSelf, $phParams) = @_;
 
   my @iptparts;
-  $self->_each_kv($self->{lookup}, 'lookup');
+  $oSelf->_each_kv($oSelf->{lookup}, 'lookup');
 
-  while (my ($listkey, $comp) = $self->_each_kv(undef, 'lookup'))
+  while (my ($sListKey, $sComp) = $oSelf->_each_kv(undef, 'lookup'))
   {
-    my $key = $self->_return_valid_param($listkey, $hParams);
-    next if (not defined($key));
+    my $sKey = $oSelf->_return_valid_param($sListKey, $phParams);
+    next if (not defined($sKey));
 
-    my $data = $self->_param_str($key, $hParams->{$key});
-    my $ret = $self->_comp($comp, $data);
+    my $phData = $oSelf->_param_str($sKey, $phParams->{$sKey});
+    my $paRet = $oSelf->_comp($sComp, $phData);
 
-    if (defined($ret) and ref($ret) eq 'ARRAY')
+    if (defined($paRet) and ref($paRet) eq 'ARRAY')
     {
-      push @iptparts, $ret;
+      push @iptparts, $paRet;
     }
     else
     {
-      warn "No data or invalid data type returned for " . Dumper($data) .
-        "listkey [$listkey] key [$key] comp [$comp]\n";
+      warn "No data or invalid data type returned for " . Dumper($phData) .
+        "listkey [sListKey] key [$sKey] comp [$sComp]\n";
     }
   }
 

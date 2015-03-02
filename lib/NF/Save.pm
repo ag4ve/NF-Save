@@ -34,6 +34,7 @@ diff-compatible with iptables-save output.
 
 =cut
 
+# Lookup table to make sure elements are in order
 my $paIPTLookup = 
 [
   'src' => 'srcdst',
@@ -44,6 +45,7 @@ my $paIPTLookup =
   'jump' => 'jump',
 ];
 
+# Core iptables modules to load if +core is defined or if nothing else is defined
 my $phModules =
 {
   'core' => [qw/
@@ -58,7 +60,6 @@ my $phModules =
   /],
 };
 
-# TODO filter policies should all be ACCEPT since that is the default
 # Policy map for standard table chains
 my $phPolicy = 
 {
@@ -91,6 +92,7 @@ my $phPolicy =
   },
 };
 
+# actual flags to use for shorthand
 my $phFlags = 
 {
   'syn'   => 'FIN,SYN,RST,ACK SYN',
@@ -250,5 +252,4 @@ Copyright 2014- Shawn Wilson
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
-# Lookup table to make sure elements are in order
 

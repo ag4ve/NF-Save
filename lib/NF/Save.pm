@@ -44,8 +44,6 @@ my $paIPTLookup =
   'owner' => 'owner',
   'match' => 'match',
   'list' => 'list_set',
-  'tcp' => 'tcp_udp',
-  'udp' => 'tcp_udp',
   'jump' => 'jump',
 ];
 
@@ -56,6 +54,7 @@ my $phModules =
     Limit
     Conntrack
     ICMP
+    TCP_UDP
   /],
 };
 

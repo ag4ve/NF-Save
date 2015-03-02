@@ -33,7 +33,6 @@ my @aLookupComp = qw/
   _owner
   _list_set
   _match
-  _tcp_udp
   _jump
 /;
 
@@ -316,27 +315,6 @@ sub _match
   return [$oSelf->_str_map($phParams, [
     'name lc' => "-m",
   ])];
-}
-
-# Return an array of TCP or UDP protocol match strings
-sub _tcp_udp
-{
-  my ($oSelf, $phParams) = @_;
-
-  return [$oSelf->_str_map($phParams, [
-      'name lc' => "-p",
-      'name lc' => "-m",
-      'sport' => "--sport",
-      'dport' => "--dport",
-      'flags %flags' => "--tcp-flags",
-    ], {
-      'name' => "key"
-    }, [qw/
-      name
-    /], {
-      'flags' => $oSelf->{flags}
-    }
-  )];
 }
 
 # Return an array of jump strings

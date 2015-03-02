@@ -49,9 +49,13 @@ my $paIPTLookup =
   'icmp' => 'icmp',
   'conntrack' => 'ct',
   'limit' => 'limit',
-  'comment' => 'comment',
   'jump' => 'jump',
 ];
+
+my $phModules =
+{
+  'core' => [qw/Comment/],
+};
 
 # TODO filter policies should all be ACCEPT since that is the default
 # Policy map for standard table chains
@@ -164,19 +168,44 @@ sub new
 
   $phUseParams->{precheck} = $phParams->{PreCheck} // 0;
 
-  my @rModules = (qw/
-    Helper
-    Misc
-  /);
-
-  push @rModules, @{$phParams->{Modules}}
-    if (exists($phParams->{Modules}) and ref($phParams->{Modules}) eq 'ARRAY');
-
-  foreach my $sModule (@rModules)
+  my @aModules;
+  if (exists($phParams->{Modules}) and ref($phParams->{Modules}) eq 'ARRAY')
   {
-    load "NF::Save::" . $sModule;
+    foreach my $sModule (@{$phParams->{Modules}})
+    {
+      if ($sModule =~ /^\+(.+)$/)
+      {
+        push @aModules, @{$phModules->{$1}}
+          if (exists($phModules->{$1}) and ref($phModules->{$1}) eq 'ARRAY');
+      }
+      else
+      {
+        push @aModules, $sModule;
+      }
+    }
+  }
+  else
+  {
+    push @aModules, @{$phModules->{core}};
+  }
+
+  foreach my $sModule ('Misc', @aModules)
+  {
+    my $sFullName = "NF::Save::" . $sModule;
+    load $sFullName;
     our @ISA;
-    push @ISA, "NF::Save::" . $sModule;
+    push @ISA, $sFullName;
+    {
+      my $sInitFunc = $sFullName . "::Init";
+      no strict 'refs';
+      if (not exists(&{$sInitFunc}))
+      {
+        warn "$sInitFunc does not exist - skipping\n";
+        next;
+      }
+      warn "Failed initialize comment module.\n"
+        if (not \&{$sInitFunc});
+    }
   }
 
   return bless $phUseParams, $class;

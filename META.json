@@ -1,5 +1,5 @@
 {
-   "abstract" : "Module for storing, parsing, and restoring netfilter/iptables and ipset data",
+   "abstract" : "Module for storing, parsing, and restoring iptables and ipset data.",
    "author" : [
       "Shawn Wilson <swilson@korelogic.com>"
    ],

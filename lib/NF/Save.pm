@@ -46,13 +46,17 @@ my $paIPTLookup =
   'list' => 'list_set',
   'tcp' => 'tcp_udp',
   'udp' => 'tcp_udp',
-  'icmp' => 'icmp',
   'jump' => 'jump',
 ];
 
 my $phModules =
 {
-  'core' => [qw/Comment Limit Conntrack/],
+  'core' => [qw/
+    Comment
+    Limit
+    Conntrack
+    ICMP
+  /],
 };
 
 # TODO filter policies should all be ACCEPT since that is the default

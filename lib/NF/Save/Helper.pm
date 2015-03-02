@@ -34,7 +34,6 @@ my @aLookupComp = qw/
   _list_set
   _match
   _tcp_udp
-  _icmp
   _jump
 /;
 
@@ -337,23 +336,6 @@ sub _tcp_udp
     /], {
       'flags' => $oSelf->{flags}
     }
-  )];
-}
-
-# Return an array of ICMP protocol match strings
-sub _icmp
-{
-  my ($oSelf, $phParams) = @_;
-
-  return [$oSelf->_str_map($phParams, [
-      'name lc' => "-p",
-      'name lc' => "-m",
-      'type' => '--icmp-type',
-    ], {
-      'name' => "key"
-    }, [qw/
-      name
-    /],
   )];
 }
 

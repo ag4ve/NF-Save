@@ -30,7 +30,6 @@ my @aLookupComp = qw/
   _srcdst
   _io_if
   _proto
-  _owner
   _jump
 /;
 
@@ -229,24 +228,6 @@ sub _proto
       'proto lc' => "-p",
     ], {
       'proto' => "name",
-    }
-  )];
-}
-
-# Return an array of owner strings
-sub _owner
-{
-  my ($oSelf, $phParams) = @_;
-
-  return [$oSelf->_str_map($phParams, [
-      'name bool'        => "-m owner",
-      'owner %owner' => "--uid-owner",
-    ], {
-      'owner' => "name",
-    }, [qw/
-      owner
-    /], {
-      "owner" => $oSelf->{uids}
     }
   )];
 }

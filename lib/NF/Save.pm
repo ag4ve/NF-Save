@@ -41,7 +41,6 @@ my $paIPTLookup =
   'in' => 'io_if',
   'out' => 'io_if',
   'proto' => 'proto',
-  'owner' => 'owner',
   'jump' => 'jump',
 ];
 
@@ -55,6 +54,7 @@ my $phModules =
     TCP_UDP
     ListSet
     Match
+    Owner
   /],
 };
 

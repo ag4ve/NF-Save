@@ -43,7 +43,6 @@ my $paIPTLookup =
   'proto' => 'proto',
   'owner' => 'owner',
   'match' => 'match',
-  'list' => 'list_set',
   'jump' => 'jump',
 ];
 
@@ -55,6 +54,7 @@ my $phModules =
     Conntrack
     ICMP
     TCP_UDP
+    ListSet
   /],
 };
 

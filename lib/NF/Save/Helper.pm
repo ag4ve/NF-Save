@@ -35,7 +35,6 @@ my @aLookupComp = qw/
   _match
   _tcp_udp
   _icmp
-  _ct
   _jump
 /;
 
@@ -356,33 +355,6 @@ sub _icmp
       name
     /],
   )];
-}
-
-# Return an array of conntrack strings
-sub _ct
-{
-  my ($oSelf, $phParams) = @_;
-  my @order = qw/NEW RELATED ESTABLISHED INVALID/;
-
-  my @aCTState;
-  if (ref($phParams->{name}) eq 'ARRAY')
-  {
-    @aCTState = @{$phParams->{name}};
-  }
-  elsif (ref(\$phParams->{name}) eq 'SCALAR')
-  {
-    @aCTState = split(' ', $phParams->{name});
-  }
-
-  my @aStr;
-  push @aStr, "-m conntrack";
-  (push @aStr, "--ctstate " . join(',', 
-    map {
-      my $unit = $_;
-      grep {$unit eq $_} map {uc($_)} @aCTState;
-    } @order))
-    if (scalar(@aCTState));
-  return [join(" ", @aStr)];
 }
 
 # Return an array of jump strings

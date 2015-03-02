@@ -55,6 +55,10 @@ it under the same terms as Perl itself.
 
 Hey! **The above document had some coding errors, which are explained below:**
 
-- Around line 37:
+- Around line 24:
+
+    '=item' outside of any '=over'
+
+- Around line 35:
 
     You forgot a '=back' before '=head1'

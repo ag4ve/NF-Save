@@ -62,7 +62,9 @@ NF::Save::ModuleDoc - Adding a new module in this space.
         'flags' => $oSelf->{flags}
       }
     )];
-  }
+  };
+
+  1;
 
 =head1 DESCRIPTION
 

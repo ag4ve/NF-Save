@@ -36,7 +36,6 @@ my @aLookupComp = qw/
   _tcp_udp
   _icmp
   _ct
-  _limit
   _jump
 /;
 
@@ -386,20 +385,6 @@ sub _ct
   return [join(" ", @aStr)];
 }
 
-# TODO I think a burst value of 0 is allowed (useless but allowed)
-# Return an array of limit strings
-sub _limit
-{
-  my ($oSelf, $phParams) = @_;
-  my @aStr;
-  push @aStr, "-m limit";
-  (push @aStr, "--limit " . $phParams->{limit}) 
-    if ($phParams->{limit} and 
-      $phParams->{limit} =~ /^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)/);
-  (push @aStr, "--limit-burst " . $phParams->{burst}) if($phParams->{burst});
-  return [join(" ", @aStr)];
-}
-
 # Return an array of jump strings
 sub _jump
 {
@@ -499,9 +484,13 @@ sub _add_module
         last;
       }
     }
-    if (not defined($sUpper) or $sLower >= $sUpper)
+    if (not defined($sUpper))
     {
       warn "There was an issue finding post modules.\n";
+    }
+    elsif ($sLower >= $sUpper)
+    {
+      warn "Lower [" . $aKeys[$sLower] . "] comes after Upper [" . $aKeys[$sUpper] . "] - might be an issue.\n";
     }
   }
   else
@@ -513,7 +502,7 @@ sub _add_module
   # needs to be doubled to be in the right place.
   return 1 unless splice 
     @{$oSelf->{lookup}}, 
-    $sLower*2, 
+    ($sLower+1)*2, 
     0, 
     @$paLookup;
 }

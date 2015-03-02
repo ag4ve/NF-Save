@@ -9,8 +9,6 @@ sub Init
 {
   my ($oSelf) = @_;
 
-  use Data::Dumper;
-  no strict 'refs';
   my $paLookup = ['comment' => 'comment'];
   my $paPre = [qw/proto owner match list tcp udp icmp conntrack limit/];
   my $paPost = [qw/jump/];

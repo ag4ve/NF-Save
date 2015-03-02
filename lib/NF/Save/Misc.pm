@@ -206,8 +206,6 @@ sub rule
 
 Process a full iptables rule into the data structure
 
-=back
-
 =cut
 
 # TODO Untested and doesn't actually do anything
@@ -641,7 +639,7 @@ sub get_rules
 
 =item assemble(%$phParams)
 
-Put an iptables rule for a data structure definition
+Create an iptables rule for a data structure definition
 
 =cut
 

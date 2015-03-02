@@ -61,7 +61,7 @@ ipset data.
   }
 
   # Get a set of rules that could be used with: 
-  # $ ./firewall.pl | iptables-save
+  # $ ./firewall.pl | iptables-restore
   print "$_\n" for ($oIPT->save());
 
 =head1 DESCRIPTION
@@ -332,6 +332,7 @@ Create an iptables rule for a data structure definition
 - Integration with libiptc using FFI or similar instead of using IPC
   - Consider making a different module since the purpose of this is just to 
     dump information
+- IPT allows deletion on exact rule match - not supported here
 
 =head1 AUTHOR
 

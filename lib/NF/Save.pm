@@ -96,6 +96,8 @@ my $phFlags =
   'syn'   => 'FIN,SYN,RST,ACK SYN',
 };
 
+=over 4
+
 =item new({%UIDs, @IPTLookup, @Flags})
 
 C<%UIDs> contains a hash of {'username' => #id}
@@ -222,6 +224,8 @@ sub new
 
 
 1;
+
+=back
 
 __END__
 

@@ -15,11 +15,54 @@ our $VERSION = '0.01';
 
 =head1 NAME
 
-NF::Save - Module for storing, parsing, and restoring netfilter/iptables and ipset data
+NF::Save - Module for storing, parsing, and restoring iptables and 
+ipset data.
 
 =head1 SYNOPSIS
 
   use NF::Save;
+
+  my $oIPT = NF::Save->new(
+    {
+      'Policy'  =>
+      {
+        'filter'    =>
+        {
+          'INPUT'       => 'DROP',
+          'OUTPUT'      => 'DROP',
+          'FORWARD'     => 'DROP',
+        },
+      }
+    }
+  );
+
+  my $paStruct = 
+  [
+    {
+      'in' => "eth0",
+      'udp' => 
+      {
+        'sport' => "1024:65535",
+        'dport' => "53",
+      }, 
+      'dst' => "192.168.15.1",
+      'comment' => [qw/nameserver/],
+      'jump' => "ACCEPT",
+    },
+    {
+      # more rules
+    },
+  ];
+
+  # Add rules to the OUTPUT chain.
+  foreach my $phRule (@$paStruct)
+  {
+    $oIPT->rule('OUTPUT', $phRule);
+  }
+
+  # Get a set of rules that could be used with: 
+  # $ ./firewall.pl | iptables-save
+  print "$_\n" for ($oIPT->save());
 
 =head1 DESCRIPTION
 
@@ -31,6 +74,9 @@ tokens, same defaults when things weren't explicitly specified, etc.
 That way, existing policies can be imported easily and completely, and
 policies composed in perl code can be written out in a way that is 100%
 diff-compatible with iptables-save output.
+
+More less used methods are documented in L<NF::Save::Misc>. If you wish 
+to create new modules, see L<NF::Save::ModuleDoc>.
 
 =cut
 
@@ -98,18 +144,25 @@ my $phFlags =
   'syn'   => 'FIN,SYN,RST,ACK SYN',
 };
 
+=head1 Common methods
+
 =over 4
 
 =item new({%UIDs, @IPTLookup, @Flags})
 
 C<%UIDs> contains a hash of {'username' => #id}
-C<@IPTLookup> contains replacement data to be used to handle the data structure (an index with an undefined value will not effect the original array)
-C<@Flags> contains a hash of flags to be used when --syn/mss/etc would have been used - (arbitrary names can be defined)
+C<@IPTLookup> contains replacement data to be used to handle the data 
+structure (an index with an undefined value will not effect the 
+original array)
+C<@Flags> contains a hash of flags to be used when --syn/mss/etc would 
+have been used - (arbitrary names can be defined)
 C<$UseIPSET> boolean - whether or not to default lists as ipset
 C<%Policy> default policy to use
 C<$Trace> boolean - whether or not to print a stack trace with warnings
-C<$PreCheck> boolean - whether or not to pre-check the structure passed to rule().
-C<@Modules> list of NF::Save modules to use. If this is a string, all modules in this namespace will be loaded.
+C<$PreCheck> boolean - whether or not to pre-check the structure passed 
+to rule().
+C<@Modules> list of NF::Save modules to use. If this is a string, all 
+modules in this namespace will be loaded.
 
 =cut
 
@@ -227,9 +280,49 @@ sub new
 
 1;
 
-=back
-
 __END__
+
+=item get($sChain, $sTable)
+
+Return the internal data structure used to store iptables information
+
+=item useipset($sBool)
+
+Change whether ipset is used by default.
+
+=item rule($sChain, $sRule, $sTable, $sFunc)
+
+An interface designed to look fairly similar to the iptables cli
+
+The tcp '--syn' and '! --syn' options add masks from individual from
+the $rhFlags hashref
+
+The big difference is that the chain is seperate from the action
+This:
+C<iptables -I INPUT 5 -j ACCEPT>
+Turns into this:
+C<$ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5');>
+The default is to APPEND to the filter table, which means the pattern is:
+C<$ipt->rule('INPUT', {jump => 'ACCEPT'});>
+Delete and replace have been implemented for completeness - for replace:
+C<$ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');>
+
+=item get_ipset_data($sName)
+
+Return internal data for an ipset or all sets if no name was given
+
+=item save()
+
+Return an array that can pe passed to iptables-restore. This data 
+should duplicate iptables-save so that data generated with this and 
+restored into iptables would show no differece when compared to 
+iptables-save output
+
+=item assemble(%$phParams)
+
+Create an iptables rule for a data structure definition
+
+=back
 
 =head1 TODO
 

@@ -74,6 +74,11 @@ Misc helper methods for NF::Save
 
 =cut
 
+sub Init
+{
+  return @EXPORT_OK;
+}
+
 # Confirm the value of the listkey is a base of a key of the hash
 sub _return_valid_param
 {
@@ -469,7 +474,7 @@ sub _add_module
 
   $oSelf->_each_kv($oSelf->{lookup});
 
-  my @aKeys = @{$oSelf->_each_kv('keys')};
+  my @aKeys = $oSelf->_each_kv('keys');
 
   my $sLower;
   foreach my $i (reverse(0 .. $#aKeys))

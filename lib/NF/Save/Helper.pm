@@ -37,7 +37,6 @@ my @aLookupComp = qw/
   _icmp
   _ct
   _limit
-  _comment
   _jump
 /;
 
@@ -47,9 +46,10 @@ my @aIPCheck = qw/
   _cidr_ip
 /;
 
-our @EXPORT_OK = (@aInternal, @aAssemble, @aLookupComp, @aIPCheck);
+our @EXPORT_OK = (@aInternal, @aModuleInit, @aAssemble, @aLookupComp, @aIPCheck);
 our %EXPORT_TAGS = (
   'all'       => \@EXPORT_OK,
+  'module'    => \@aModuleInit,
   'assemble'  => \@aAssemble,
   'comp'      => \@aLookupComp,
   'ipcheck'   => \@aIPCheck,
@@ -393,28 +393,6 @@ sub _limit
       $phParams->{limit} =~ /^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)/);
   (push @aStr, "--limit-burst " . $phParams->{burst}) if($phParams->{burst});
   return [join(" ", @aStr)];
-}
-
-# Return an array of comment strings
-sub _comment
-{
-  my ($oSelf, $phParams) = @_;
-
-  my @aParts;
-  if (ref($phParams->{name}) eq 'ARRAY' and scalar(@{$phParams->{name}}))
-  {
-    push @aParts, @{$phParams->{name}};
-  }
-  elsif (ref(\$phParams->{name}) eq 'SCALAR' and length($phParams->{name}))
-  {
-    push @aParts, $phParams->{name};
-  }
-  else
-  {
-    return;
-  }
-
-  return ["-m comment --comment \"" . join(" ", grep {defined($_)} @aParts) . "\""];
 }
 
 # Return an array of jump strings

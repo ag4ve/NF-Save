@@ -231,7 +231,6 @@ __END__
 - Integration with libiptc using FFI or similar instead of using IPC
   - Consider making a different module since the purpose of this is just to 
     dump information
-- Make a debug option
 
 =head1 AUTHOR
 

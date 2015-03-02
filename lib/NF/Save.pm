@@ -112,7 +112,7 @@ C<@Modules> list of NF::Save modules to use. If this is a string, all modules in
 
 sub new
 {
-  my ($class, $phParams) = @_;
+  my ($oClass, $phParams) = @_;
 
   if (exists($phParams->{Trace}) and $phParams->{Trace} == 1)
   {
@@ -168,6 +168,8 @@ sub new
 
   $phUseParams->{precheck} = $phParams->{PreCheck} // 0;
 
+  my $oSelf = bless $phUseParams, $oClass;
+
   my @aModules;
   if (exists($phParams->{Modules}) and ref($phParams->{Modules}) eq 'ARRAY')
   {
@@ -189,26 +191,30 @@ sub new
     push @aModules, @{$phModules->{core}};
   }
 
-  foreach my $sModule ('Misc', @aModules)
+  foreach my $sModule ('Helper', 'Misc', @aModules)
   {
     my $sFullName = "NF::Save::" . $sModule;
     load $sFullName;
-    our @ISA;
-    push @ISA, $sFullName;
     {
-      my $sInitFunc = $sFullName . "::Init";
+      my $sInitFunc = $sFullName->can('Init');
       no strict 'refs';
-      if (not exists(&{$sInitFunc}))
+      if (not $sInitFunc)
       {
         warn "$sInitFunc does not exist - skipping\n";
         next;
       }
-      warn "Failed initialize comment module.\n"
-        if (not \&{$sInitFunc});
+      my @aSubs = $sInitFunc->($oSelf);
+      foreach my $sSub (@aSubs)
+      {
+        my $sFullSub = $sFullName . "::" . $sSub;
+        warn "No function [$sFullSub]\n" if (not exists(&{$sFullSub}));
+        warn "Namespace conflict [$sFullSub]\n" if ($oSelf->can($sSub));
+        *{"NF::Save::" . $sSub} = *{$sFullSub};
+      }
     }
   }
 
-  return bless $phUseParams, $class;
+  return $oSelf;
 }
 
 

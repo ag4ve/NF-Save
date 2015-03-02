@@ -3,9 +3,7 @@ package NF::Save::Misc;
 use strict;
 use warnings;
  
-require Exporter;
-our @ISA = qw(Exporter NF::Save::Helper);
-our @EXPORT = qw/
+my @aMixinSubs = qw/
   get
   is_chain
   is_table
@@ -30,14 +28,13 @@ our @EXPORT = qw/
   assemble
 /;
  
-use NF::Save::Helper qw(:all);
 use Data::Dumper;
 use Storable qw(dclone);
 
 sub Init
 {
   # Do nothing
-  return 1;
+  return @aMixinSubs;
 }
 
 =item get($sChain, $sTable)

@@ -42,7 +42,6 @@ my $paIPTLookup =
   'out' => 'io_if',
   'proto' => 'proto',
   'owner' => 'owner',
-  'match' => 'match',
   'jump' => 'jump',
 ];
 
@@ -55,6 +54,7 @@ my $phModules =
     ICMP
     TCP_UDP
     ListSet
+    Match
   /],
 };
 

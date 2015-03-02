@@ -31,7 +31,6 @@ my @aLookupComp = qw/
   _io_if
   _proto
   _owner
-  _match
   _jump
 /;
 
@@ -250,16 +249,6 @@ sub _owner
       "owner" => $oSelf->{uids}
     }
   )];
-}
-
-# Return an array of match strings
-sub _match
-{
-  my ($oSelf, $phParams) = @_;
-
-  return [$oSelf->_str_map($phParams, [
-    'name lc' => "-m",
-  ])];
 }
 
 # Return an array of jump strings

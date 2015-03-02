@@ -38,3 +38,6 @@ sub _comment
   return ["-m comment --comment \"" . join(" ", grep {defined($_)} @aParts) . "\""];
 }
 
+
+1;
+

@@ -34,6 +34,12 @@ use NF::Save::Helper qw(:all);
 use Data::Dumper;
 use Storable qw(dclone);
 
+sub Init
+{
+  # Do nothing
+  return 1;
+}
+
 =item get($sChain, $sTable)
 
 Return the internal data structure used to store iptables information

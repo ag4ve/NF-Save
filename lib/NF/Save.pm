@@ -208,7 +208,11 @@ sub new
       foreach my $sSub (@aSubs)
       {
         my $sFullSub = $sFullName . "::" . $sSub;
-        warn "No function [$sFullSub]\n" if (not exists(&{$sFullSub}));
+        if (not exists(&{$sFullSub}))
+        {
+          warn "No function [$sFullSub]\n";
+          next;
+        }
         warn "Namespace conflict [$sFullSub]\n" if ($oSelf->can($sSub));
         *{"NF::Save::" . $sSub} = *{$sFullSub};
       }

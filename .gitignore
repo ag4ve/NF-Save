@@ -3,3 +3,4 @@
 !META.json
 _build_params
 blib/
+cover_db/

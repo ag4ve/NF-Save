@@ -42,8 +42,8 @@ sub _list_set
     );
   }
 
-  if (($phParams->{useipset} and $phParams->{useipset} != 0) or 
-    ($oSelf->{useipset} and $oSelf->{useipset} != 0))
+  if ((exists($phParams->{useipset}) and $phParams->{useipset}) or 
+    (not exists($phParams->{useipset}) and $oSelf->{useipset}))
   {
     warn "Set [$sName] has not been defined\n" if (not $oSelf->is_ipset($sName));
     push @aRet, "-m set --match-set $sName " . join(",", sort {$b cmp $a} keys(%hDirection));

@@ -103,10 +103,8 @@ sub useipset
   {
     $oSelf->{useipset} = $sBool;
   }
-  else
-  {
-    return $oSelf->{useipset};
-  }
+
+  return $oSelf->{useipset};
 }
 
 =item get_policy($sChain, $sTable)
@@ -357,7 +355,7 @@ sub check_rule
 {
   my ($oSelf, $phData) = @_;
 
-  my $paRet = $oSelf->assemble($phData, 1);
+  my $paRet = $oSelf->assemble($phData, undef, 1);
 
   return ((ref($paRet) eq 'ARRAY' and scalar(@$paRet)) ? 1 : 0);
 }
@@ -614,9 +612,9 @@ sub save_chain
   my @aReturn;
   foreach my $sRule ($oSelf->get_rules($sChain, $sTable))
   {
-    my @aAssembled = $oSelf->assemble($sRule);
+    my @aAssembled = $oSelf->assemble($sRule, $sChain);
     return if (not scalar(@aAssembled));
-    push @aReturn, "-A $sChain " . join(" ", map {@$_} @{$oSelf->_expand(@aAssembled)});
+    push @aReturn, map {join(' ', @$_)} @{$oSelf->_expand(@aAssembled)};
   }
 
   return [@aReturn];
@@ -637,15 +635,16 @@ sub get_rules
   return @{$oSelf->{nf}{$sTable}{$sChain}};
 }
 
-=item assemble(%$phParams)
+=item assemble(%$phParams, $sChain, $check)
 
-Create an iptables rule for a data structure definition
+Create an iptables rule for a data structure definition.
+The chain name and whether to check the ruleset are optional.
 
 =cut
 
 sub assemble
 {
-  my ($oSelf, $phParams, $check) = @_;
+  my ($oSelf, $phParams, $sChain, $check) = @_;
 
   my @iptparts;
   $oSelf->_each_kv($oSelf->{lookup}, 'lookup');
@@ -673,6 +672,7 @@ sub assemble
 
   return if ($check and grep {$phUsed->{$_} == 0} keys %$phUsed);
 
+  unshift(@iptparts, ["-A $sChain"]) if (defined($sChain));
   return [@iptparts];
 }
 

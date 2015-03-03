@@ -357,9 +357,9 @@ sub check_rule
 {
   my ($oSelf, $phData) = @_;
 
-  my $paRet = $oSelf->assemble($phData);
+  my $paRet = $oSelf->assemble($phData, 1);
 
-  return (ref($paRet) eq 'ARRAY' and scalar(@$paRet) ? 1 : 0);
+  return ((ref($paRet) eq 'ARRAY' and scalar(@$paRet)) ? 1 : 0);
 }
 
 =item is_user($sUser)
@@ -645,11 +645,12 @@ Create an iptables rule for a data structure definition
 
 sub assemble
 {
-  my ($oSelf, $phParams) = @_;
+  my ($oSelf, $phParams, $check) = @_;
 
   my @iptparts;
   $oSelf->_each_kv($oSelf->{lookup}, 'lookup');
 
+  my $phUsed = {map {$_ => 0} keys %$phParams};
   while (my ($sListKey, $sComp) = $oSelf->_each_kv(undef, 'lookup'))
   {
     my $sKey = $oSelf->_return_valid_param($sListKey, $phParams);
@@ -661,6 +662,7 @@ sub assemble
     if (defined($paRet) and ref($paRet) eq 'ARRAY')
     {
       push @iptparts, $paRet;
+      $phUsed->{$sKey} = 1;
     }
     else
     {
@@ -668,6 +670,8 @@ sub assemble
         "listkey [sListKey] key [$sKey] comp [$sComp]\n";
     }
   }
+
+  return if ($check and grep {$phUsed->{$_} == 0} keys %$phUsed);
 
   return [@iptparts];
 }

@@ -157,6 +157,26 @@ my $paTests =
     "Header for the foobar chain."
   ],
   [
+    $oIPT->is_user('testuser'),
+    1,
+    "User testuser exists.",
+  ],
+  [
+    $oIPT->is_user('foobar'),
+    0,
+    "User foobar does not exist.",
+  ],
+  [
+    $oIPT->check_rule($phStruct),
+    1,
+    "Rule checks ok.",
+  ],
+  [
+    $oIPT->check_rule({%$phStruct, 'bad' => 'data'}),
+    0,
+    "Rule checks bad.",
+  ],
+  [
     $oIPT->get(), 
     {
       'filter' => 

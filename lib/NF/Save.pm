@@ -318,9 +318,10 @@ should duplicate iptables-save so that data generated with this and
 restored into iptables would show no differece when compared to 
 iptables-save output
 
-=item assemble(%$phParams)
+=item assemble(%$phParams, $sChain, $check)
 
-Create an iptables rule for a data structure definition
+Create an iptables rule for a data structure definition.
+The chain name and whether to check the ruleset are optional.
 
 =back
 

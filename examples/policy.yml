@@ -1,0 +1,19 @@
+firewall:
+  filter:
+    OUTPUT:
+      -
+        tcp:
+          sport: 20,
+          dport: 1024:65535
+        list:
+          name: scan_targets
+          direction:
+            - src
+        comment:
+          - scan_targets_add
+        jump: ACCEPT
+lists:
+  scan_targets:
+    - 1.2.3.4
+    - 5.6.7.8
+

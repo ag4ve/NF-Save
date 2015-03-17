@@ -327,8 +327,6 @@ The chain name and whether to check the ruleset are optional.
 
 =head1 TODO
 
-- dist.ini should use Module::Build::Tiny 0.034 so that a local install with 
-  Debian packages can succeed.
 - Need more tests and use cases
   - Need to handle more modules
 - Integration with libiptc using FFI or similar instead of using IPC

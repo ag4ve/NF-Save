@@ -330,8 +330,7 @@ The chain name and whether to check the ruleset are optional.
 - dist.ini should use Module::Build::Tiny 0.034 so that a local install with 
   Debian packages can succeed.
 - Need more tests and use cases
-  - Need to handle more modules (and probably separate that namespace out)
-  - code is kinda brittle
+  - Need to handle more modules
 - Integration with libiptc using FFI or similar instead of using IPC
   - Consider making a different module since the purpose of this is just to 
     dump information
@@ -343,7 +342,7 @@ Shawn Wilson E<lt>swilson@korelogic.comE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2014- Shawn Wilson
+Copyright 2014 - Shawn Wilson
 
 =head1 LICENSE
 

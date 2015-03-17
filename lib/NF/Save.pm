@@ -9,7 +9,7 @@ use Module::Load qw(load);
 
 use subs qw(warn);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =encoding utf8
 

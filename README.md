@@ -124,6 +124,8 @@ to create new modules, see [NF::Save::ModuleDoc](https://metacpan.org/pod/NF::Sa
 
 # TODO
 
+\- dist.ini should use Module::Build::Tiny 0.034 so that a local install with 
+  Debian packages can succeed.
 \- Need more tests and use cases
   - Need to handle more modules (and probably separate that namespace out)
   - code is kinda brittle
@@ -142,5 +144,5 @@ Copyright 2014- Shawn Wilson
 
 # LICENSE
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+The GNU Lesser General Public License, version 3.0 (LGPL-3.0)
+http://opensource.org/licenses/LGPL-3.0

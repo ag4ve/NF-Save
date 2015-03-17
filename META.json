@@ -4,13 +4,13 @@
       "Shawn Wilson <swilson@korelogic.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Milla version v1.0.14, Dist::Zilla version 5.019, CPAN::Meta::Converter version 2.141520",
+   "generated_by" : "Dist::Zilla version 5.033, Dist::Milla version v1.0.14, CPAN::Meta::Converter version 2.150001",
    "license" : [
-      "perl_5"
+      "lgpl_3_0"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+      "version" : 2
    },
    "name" : "NF-Save",
    "no_index" : {
@@ -49,7 +49,7 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.01",
+   "version" : "0.02",
    "x_contributors" : [
       "Hank Leininger <hlein@korelogic.com>"
    ]

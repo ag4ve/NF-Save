@@ -46,7 +46,7 @@ ipset data.
     }
 
     # Get a set of rules that could be used with: 
-    # $ ./firewall.pl | iptables-save
+    # $ ./firewall.pl | iptables-restore
     print "$_\n" for ($oIPT->save());
 
 # DESCRIPTION
@@ -117,9 +117,10 @@ to create new modules, see [NF::Save::ModuleDoc](https://metacpan.org/pod/NF::Sa
     restored into iptables would show no differece when compared to 
     iptables-save output
 
-- assemble(%$phParams)
+- assemble(%$phParams, $sChain, $check)
 
-    Create an iptables rule for a data structure definition
+    Create an iptables rule for a data structure definition.
+    The chain name and whether to check the ruleset are optional.
 
 # TODO
 
@@ -129,6 +130,7 @@ to create new modules, see [NF::Save::ModuleDoc](https://metacpan.org/pod/NF::Sa
 \- Integration with libiptc using FFI or similar instead of using IPC
   - Consider making a different module since the purpose of this is just to 
     dump information
+\- IPT allows deletion on exact rule match - not supported here
 
 # AUTHOR
 

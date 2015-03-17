@@ -4,5 +4,5 @@ requires 'Socket';
 on test => sub 
 {
   requires 'Test::More', 0.96;
-  requires 'Test::Differences', 0,60;
+  requires 'Test::Differences', 0.60;
 };

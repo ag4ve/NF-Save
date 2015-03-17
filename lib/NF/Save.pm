@@ -347,6 +347,6 @@ Copyright 2014- Shawn Wilson
 
 =head1 LICENSE
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+The GNU Lesser General Public License, version 3.0 (LGPL-3.0)
+http://opensource.org/licenses/LGPL-3.0
 

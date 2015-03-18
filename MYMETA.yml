@@ -3,13 +3,13 @@ abstract: 'Module for storing, parsing, and restoring iptables and ipset data.'
 author:
   - 'Shawn Wilson <swilson@korelogic.com>'
 build_requires:
-  Test::Differences: '0'
+  Test::Differences: '0.6'
   Test::More: '0.96'
 configure_requires:
-  Module::Build::Tiny: '0.039'
+  Module::Build::Tiny: '0.007'
 dynamic_config: 0
-generated_by: 'Dist::Milla version v1.0.14, Dist::Zilla version 5.019, CPAN::Meta::Converter version 2.141520'
-license: perl
+generated_by: 'Dist::Zilla version 5.033, Dist::Milla version v1.0.14, CPAN::Meta::Converter version 2.150001'
+license: lgpl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: '1.4'

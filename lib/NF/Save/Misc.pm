@@ -3,6 +3,14 @@ package NF::Save::Misc;
 use strict;
 use warnings;
  
+=encoding utf8
+
+=head1 NAME
+
+NF::Save::Misc - Miscelaneous functions.
+
+=cut
+
 my @aMixinSubs = qw/
   get
   is_chain
@@ -36,9 +44,9 @@ sub Init
   return @aMixinSubs;
 }
 
-=item get($sChain, $sTable)
+=head2 get($sChain, $sTable)
 
-Return the internal data structure used to store iptables information
+Return the internal data structure used to store iptables information.
 
 =cut
 
@@ -61,7 +69,7 @@ sub get
   }
 }
 
-=item is_chain($sChain, $sTable)
+=head2 is_chain($sChain, $sTable)
 
 Check if a chain is defined (the filter table is assumed if none is given)
 
@@ -75,7 +83,7 @@ sub is_chain
   return (($oSelf->is_table($sTable) and exists($oSelf->{nf}{$sTable}{$sChain})) ? 1 : 0);
 }
 
-=item is_table
+=head2 is_table
 
 Check if a table is defined
 
@@ -88,9 +96,13 @@ sub is_table
   return (exists($oSelf->{nf}{$sTable}) ? 1 : 0);
 }
 
-=item useipset($sBool)
+=head2 useipset($sBool)
 
-Change whether ipset is used by default.
+Return whether ipset is used by default and optionally change whether
+or not ipset is used by default. So:
+C<< $ipt->useipset(1); >>
+is the same as:
+C<< $ipt->new({UseIPSET => 1}); >>
 
 =cut
 
@@ -106,7 +118,7 @@ sub useipset
   return $oSelf->{useipset};
 }
 
-=item get_policy($sChain, $sTable)
+=head2 get_policy($sChain, $sTable)
 
 Get the policy for a chain
 
@@ -128,7 +140,7 @@ sub get_policy
   }
 }
 
-=item get_header($sChain, $sTable)
+=head2 get_header($sChain, $sTable)
 
 Get header policies for iptable-save
 
@@ -150,22 +162,30 @@ sub get_header
   }
 }
 
-=item rule($sChain, $sRule, $sTable, $sFunc)
+=head2 rule($sChain, $sRule, $sTable, $sFunc)
 
-An interface designed to look fairly similar to the iptables cli
+An interface designed to look fairly similar to the iptables CLI.
 
-The tcp '--syn' and '! --syn' options add masks from individual from
-the $rhFlags hashref
+The tcp '--syn' and '! --syn' options add masks described in the 
+$rhFlags hashref. Flag being the key of rhFlags.
 
-The big difference is that the chain is seperate from the action
-This:
-C<iptables -I INPUT 5 -j ACCEPT>
-Turns into this:
-C<$ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5');>
-The default is to APPEND to the filter table, which means the pattern is:
-C<$ipt->rule('INPUT', {jump => 'ACCEPT'});>
-Delete and replace have been implemented for completeness - for replace:
-C<$ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');>
+The big difference is that the chain is seperate from the action.
+
+=over 4
+
+=item This:
+C<< iptables -I INPUT 5 -j ACCEPT >>
+
+=item Turns into this:
+C<< $ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5'); >>
+
+=item The default is to APPEND to the filter table, which means the pattern is:
+C<< $ipt->rule('INPUT', {jump => 'ACCEPT'}); >>
+
+=item Delete and replace have been implemented for completeness - for replace:
+C<< $ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5'); >>
+
+=back
 
 =cut
 
@@ -199,7 +219,7 @@ sub rule
   return $oSelf->_ipt_do($sRule, $sTable, $sChain, $sDo, $sNum);
 }
 
-=item check_rule
+=head2 check_rule
 
 Return true if the parameters in the rule structure make up a valid rule.
 
@@ -214,7 +234,7 @@ sub check_rule
   return ((ref($paRet) eq 'ARRAY' and scalar(@$paRet)) ? 1 : 0);
 }
 
-=item is_user($sUser)
+=head2 is_user($sUser)
 
 Return true if user has been defined.
 
@@ -227,7 +247,7 @@ sub is_user
   return (exists($oSelf->{uids}{$sUser}) ? 1 : 0);
 }
 
-=item comment($sComment, $sWhere)
+=head2 comment($sComment, $sWhere)
 
 Add a comment that will be displayed in iptables/ipset output
 
@@ -255,7 +275,7 @@ sub comment
   }
 }
 
-=item add_list($sName, @$paList, %$phOpts)
+=head2 add_list($sName, @$paList, %$phOpts)
 
 Define an ipset list.
 
@@ -299,7 +319,7 @@ sub add_list
   return ($sReturn ? -$sReturn : 1);
 }
 
-=item get_set($sName)
+=head2 get_set($sName)
 
 Return an array of data appropriate for 'ipset restore'. Return only one set if a valid name was supplied or all sets if no set name was given.
 
@@ -330,7 +350,7 @@ sub get_ipset
   return @aRet;
 }
 
-=item is_ipset($sName)
+=head2 is_ipset($sName)
 
 Check if an ipset exists
 
@@ -343,9 +363,9 @@ sub is_ipset
   return (exists($oSelf->{ipset}{$sName}) ? 1 : 0);
 }
 
-=item get_ipset_data($sName)
+=head2 get_ipset_data($sName)
 
-Return internal data for an ipset or all sets if no name was given
+Return internal data for an ipset or all sets if no name was given.
 
 =cut
 
@@ -367,9 +387,14 @@ sub get_ipset_data
   }
 }
 
-=item save()
+=head2 save()
 
-Return an array that can pe passed to iptables-restore. This data should duplicate iptables-save so that data generated with this and restored into iptables would show no differece when compared to iptables-save output
+Return an array that can pe passed to iptables-restore. This data 
+should duplicate iptables-save so that data generated with this and 
+restored into iptables would show no differece when compared to the
+output of:
+
+iptables-save
 
 =cut
 
@@ -388,7 +413,7 @@ sub save
   return @aRet;
 }
 
-=item get_tables()
+=head2 get_tables()
 
 Return a list of tables
 
@@ -404,7 +429,7 @@ sub get_tables
   ));
 }
 
-=item save_table($sTable)
+=head2 save_table($sTable)
 
 Return an iptables-save array for all chains in a table (default to filter if no table is supplied)
 
@@ -431,7 +456,7 @@ sub save_table
   return [@aRet];
 }
 
-=item get_chain($sTable)
+=head2 get_chain($sTable)
 
 Return a list of chains for a table
 
@@ -450,7 +475,7 @@ sub get_chains
   );
 }
 
-=item save_chain($sChain, $sTable)
+=head2 save_chain($sChain, $sTable)
 
 Return an array with iptables-save data for one chain
 
@@ -474,7 +499,7 @@ sub save_chain
   return [@aReturn];
 }
 
-=item get_rules($sChain, $sTable)
+=head2 get_rules($sChain, $sTable)
 
 Return data structure of rules in a chain
 
@@ -489,7 +514,7 @@ sub get_rules
   return @{$oSelf->{nf}{$sTable}{$sChain}};
 }
 
-=item assemble(%$phParams, $sChain, $check)
+=head2 assemble(%$phParams, $sChain, $check)
 
 Create an iptables rule for a data structure definition.
 The chain name and whether to check the ruleset are optional.

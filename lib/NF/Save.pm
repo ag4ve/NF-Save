@@ -146,23 +146,34 @@ my $phFlags =
 
 =head1 Common methods
 
+=head2 new(%Options)
+
+%Options:
+
 =over 4
 
-=item new({%UIDs, @IPTLookup, @Flags})
+=item C<%UIDs> contains a hash of {'username' => #id}
 
-C<%UIDs> contains a hash of {'username' => #id}
-C<@IPTLookup> contains replacement data to be used to handle the data 
+=item C<@IPTLookup> contains replacement data to be used to handle the data 
 structure (an index with an undefined value will not effect the 
-original array)
-C<@Flags> contains a hash of flags to be used when --syn/mss/etc would 
-have been used - (arbitrary names can be defined)
-C<$UseIPSET> boolean - whether or not to default lists as ipset
-C<%Policy> default policy to use
-C<$Trace> boolean - whether or not to print a stack trace with warnings
-C<$PreCheck> boolean - whether or not to pre-check the structure passed 
+original array).
+
+=item C<@Flags> contains a hash of flags to be used when --syn/mss/etc would 
+have been used - (arbitrary names can be defined).
+
+=item C<$UseIPSET> boolean - whether or not to default lists as ipset.
+
+=item C<%Policy> default policy to use.
+
+=item C<$Trace> boolean - whether or not to print a stack trace with warnings.
+
+=item C<$PreCheck> boolean - whether or not to pre-check the structure passed 
 to rule().
-C<@Modules> list of NF::Save modules to use. If this is a string, all 
+
+=item C<@Modules> list of NF::Save modules to use. If this is a string, all 
 modules in this namespace will be loaded.
+
+=back
 
 =cut
 
@@ -282,57 +293,105 @@ sub new
 
 __END__
 
-=item get($sChain, $sTable)
+=head2 get($sChain, $sTable)
 
-Return the internal data structure used to store iptables information
+Return the internal data structure used to store iptables information.
 
-=item useipset($sBool)
+=head2 useipset($sBool)
 
-Change whether ipset is used by default.
+Return whether ipset is used by default and optionally change whether
+or not ipset is used by default. So:
+C<< $ipt->useipset(1); >>
+is the same as:
+C<< $ipt->new({UseIPSET => 1}); >>
 
-=item rule($sChain, $sRule, $sTable, $sFunc)
+=head2 rule($sChain, $sRule, $sTable, $sFunc)
 
-An interface designed to look fairly similar to the iptables cli
+An interface designed to look fairly similar to the iptables CLI.
 
 The tcp '--syn' and '! --syn' options add masks from individual from
-the $rhFlags hashref
+the $rhFlags hashref.
 
-The big difference is that the chain is seperate from the action
-This:
-C<iptables -I INPUT 5 -j ACCEPT>
-Turns into this:
-C<$ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5');>
-The default is to APPEND to the filter table, which means the pattern is:
-C<$ipt->rule('INPUT', {jump => 'ACCEPT'});>
-Delete and replace have been implemented for completeness - for replace:
-C<$ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');>
+The big difference is that the chain is seperate from the action.
 
-=item get_ipset_data($sName)
+=over 4
 
-Return internal data for an ipset or all sets if no name was given
+=item This:
+C<< iptables -I INPUT 5 -j ACCEPT >>
 
-=item save()
+=item Turns into this:
+C<< $ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5'); >>
+
+=item The default is to APPEND to the filter table, which means the pattern is:
+C<< $ipt->rule('INPUT', {jump => 'ACCEPT'}); >>
+
+=item Delete and replace have been implemented for completeness - for replace:
+C<< $ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5'); >>
+
+=back
+
+=head2 get_ipset_data($sName)
+
+Return internal data for an ipset or all sets if no name was given.
+
+=head2 save()
 
 Return an array that can pe passed to iptables-restore. This data 
 should duplicate iptables-save so that data generated with this and 
-restored into iptables would show no differece when compared to 
-iptables-save output
+restored into iptables would show no differece when compared to the
+output of:
 
-=item assemble(%$phParams, $sChain, $check)
+iptables-save
+
+=head2 assemble(%$phParams, $sChain, $check)
 
 Create an iptables rule for a data structure definition.
 The chain name and whether to check the ruleset are optional.
+
+=head1 DOCUMENTATION SYNTAX
+
+When defining the values in a hash, perl data types are used to 
+describe the value type and variable names that are used to define 
+the key name. Documentation may define an alternative data type not
+self documented in this syntax. A hash that looks like:
+
+{
+  array   => [qw/1 2 3/],
+  hash    => {"a" => "1", "b" => "2"},
+  string  => "foo",
+}
+
+Would be defined as:
+
+=over 4
+
+=item C<@array> description
+
+=item C<%hash> description
+
+=item C<$string> description
 
 =back
 
 =head1 TODO
 
-- Need more tests and use cases
-  - Need to handle more modules
-- Integration with libiptc using FFI or similar instead of using IPC
-  - Consider making a different module since the purpose of this is just to 
-    dump information
-- IPT allows deletion on exact rule match - not supported here
+=over 4
+
+=item Need more tests (branch coverage is ~40%) and use cases
+
+=over 4
+
+=item Need to handle more modules
+
+=back
+
+=item Integration with libiptc using FFI or similar instead of using IPC
+
+=item Make NF::RuleParser to make a NF::Save structure from iptables
+
+=item IPT allows deletion on exact rule match - not supported here
+
+=back
 
 =head1 AUTHOR
 

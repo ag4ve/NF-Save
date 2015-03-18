@@ -65,73 +65,98 @@ to create new modules, see [NF::Save::ModuleDoc](https://metacpan.org/pod/NF::Sa
 
 # Common methods
 
-- new({%UIDs, @IPTLookup, @Flags})
+## new(%Options)
 
-    `%UIDs` contains a hash of {'username' => #id}
-    `@IPTLookup` contains replacement data to be used to handle the data 
-    structure (an index with an undefined value will not effect the 
-    original array)
-    `@Flags` contains a hash of flags to be used when --syn/mss/etc would 
-    have been used - (arbitrary names can be defined)
-    `$UseIPSET` boolean - whether or not to default lists as ipset
-    `%Policy` default policy to use
-    `$Trace` boolean - whether or not to print a stack trace with warnings
-    `$PreCheck` boolean - whether or not to pre-check the structure passed 
-    to rule().
-    `@Modules` list of NF::Save modules to use. If this is a string, all 
-    modules in this namespace will be loaded.
+%Options:
 
-- get($sChain, $sTable)
+- `%UIDs` contains a hash of {'username' => #id}
+- `@IPTLookup` contains replacement data to be used to handle the data 
+structure (an index with an undefined value will not effect the 
+original array).
+- `@Flags` contains a hash of flags to be used when --syn/mss/etc would 
+have been used - (arbitrary names can be defined).
+- `$UseIPSET` boolean - whether or not to default lists as ipset.
+- `%Policy` default policy to use.
+- `$Trace` boolean - whether or not to print a stack trace with warnings.
+- `$PreCheck` boolean - whether or not to pre-check the structure passed 
+to rule().
+- `@Modules` list of NF::Save modules to use. If this is a string, all 
+modules in this namespace will be loaded.
 
-    Return the internal data structure used to store iptables information
+## get($sChain, $sTable)
 
-- useipset($sBool)
+Return the internal data structure used to store iptables information.
 
-    Change whether ipset is used by default.
+## useipset($sBool)
 
-- rule($sChain, $sRule, $sTable, $sFunc)
+Return whether ipset is used by default and optionally change whether
+or not ipset is used by default. So:
+`$ipt->useipset(1);`
+is the same as:
+`$ipt->new({UseIPSET => 1});`
 
-    An interface designed to look fairly similar to the iptables cli
+## rule($sChain, $sRule, $sTable, $sFunc)
 
-    The tcp '--syn' and '! --syn' options add masks from individual from
-    the $rhFlags hashref
+An interface designed to look fairly similar to the iptables CLI.
 
-    The big difference is that the chain is seperate from the action
-    This:
-    `iptables -I INPUT 5 -j ACCEPT`
-    Turns into this:
-    `$ipt-`rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5');>
-    The default is to APPEND to the filter table, which means the pattern is:
-    `$ipt-`rule('INPUT', {jump => 'ACCEPT'});>
-    Delete and replace have been implemented for completeness - for replace:
-    `$ipt-`rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');>
+The tcp '--syn' and '! --syn' options add masks from individual from
+the $rhFlags hashref.
 
-- get\_ipset\_data($sName)
+The big difference is that the chain is seperate from the action.
 
-    Return internal data for an ipset or all sets if no name was given
+- This:
+`iptables -I INPUT 5 -j ACCEPT`
+- Turns into this:
+`$ipt->rule('INPUT', {jump => 'ACCEPT'}, undef, 'I 5');`
+- The default is to APPEND to the filter table, which means the pattern is:
+`$ipt->rule('INPUT', {jump => 'ACCEPT'});`
+- Delete and replace have been implemented for completeness - for replace:
+`$ipt->rule('OUTPUT', {jump => 'ACCEPT'}, 'filter', 'R 5');`
 
-- save()
+## get\_ipset\_data($sName)
 
-    Return an array that can pe passed to iptables-restore. This data 
-    should duplicate iptables-save so that data generated with this and 
-    restored into iptables would show no differece when compared to 
-    iptables-save output
+Return internal data for an ipset or all sets if no name was given.
 
-- assemble(%$phParams, $sChain, $check)
+## save()
 
-    Create an iptables rule for a data structure definition.
-    The chain name and whether to check the ruleset are optional.
+Return an array that can pe passed to iptables-restore. This data 
+should duplicate iptables-save so that data generated with this and 
+restored into iptables would show no differece when compared to the
+output of:
+
+iptables-save
+
+## assemble(%$phParams, $sChain, $check)
+
+Create an iptables rule for a data structure definition.
+The chain name and whether to check the ruleset are optional.
+
+# DOCUMENTATION SYNTAX
+
+When defining the values in a hash, perl data types are used to 
+describe the value type and variable names that are used to define 
+the key name. Documentation may define an alternative data type not
+self documented in this syntax. A hash that looks like:
+
+{
+  array   => \[qw/1 2 3/\],
+  hash    => {"a" => "1", "b" => "2"},
+  string  => "foo",
+}
+
+Would be defined as:
+
+- `@array` description
+- `%hash` description
+- `$string` description
 
 # TODO
 
-\- dist.ini should use Module::Build::Tiny 0.034 so that a local install with 
-  Debian packages can succeed.
-\- Need more tests and use cases
-  - Need to handle more modules
-\- Integration with libiptc using FFI or similar instead of using IPC
-  - Consider making a different module since the purpose of this is just to 
-    dump information
-\- IPT allows deletion on exact rule match - not supported here
+- Need more tests (branch coverage is ~40%) and use cases
+    - Need to handle more modules
+- Integration with libiptc using FFI or similar instead of using IPC
+- Make NF::RuleParser to make a NF::Save structure from iptables
+- IPT allows deletion on exact rule match - not supported here
 
 # AUTHOR
 

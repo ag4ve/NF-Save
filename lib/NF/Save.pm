@@ -309,8 +309,8 @@ C<< $ipt->new({UseIPSET => 1}); >>
 
 An interface designed to look fairly similar to the iptables CLI.
 
-The tcp '--syn' and '! --syn' options add masks from individual from
-the $rhFlags hashref.
+The tcp '--syn' and '! --syn' options add masks described in the 
+$rhFlags hashref. Flag being the key of rhFlags.
 
 The big difference is that the chain is seperate from the action.
 

@@ -23,14 +23,14 @@ use Test::Differences;
 
 sub test
 {
-  my ($tests) = @_;
+  my ($paTests) = @_;
 
-  foreach my $test (@$tests)
+  foreach my $paTest (@$paTests)
   {
-    eq_or_diff(@$test);
+    eq_or_diff(@$paTest);
   }
   
-  done_testing(scalar(@$tests));
+  done_testing(scalar(@$paTests));
 }
 
 

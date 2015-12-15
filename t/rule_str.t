@@ -13,6 +13,23 @@ my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}});
 my $paTests = 
 [
   [
+    $oIPT->_srcdst({'ip' => "1.2.3.4"}),
+    [],
+    "Not enough parameters in srcdst",
+  ],
+  [
+    $oIPT->_srcdst(
+      {
+        'ip' => "1.2.3.4",
+        'direction' => "src",
+      }
+    ),
+    [
+      '-s 1.2.3.4/32'
+    ],
+    'Source direction IP string.',
+  ],
+  [
     $oIPT->_srcdst(
       {
         'ip' => "1.2.3.4",
@@ -22,17 +39,29 @@ my $paTests =
     [
       '! -s 1.2.3.4/32'
     ],
-    'Source IP string.',
+    'Source direction not IP string.',
   ],
   [
-    $oIPT->_srcdst({'ip' => "1.2.3.4"}),
+    $oIPT->_srcdst(
+      {
+        'not' => 1,
+        'ip' => "1.2.3.4",
+        'direction' => "src",
+      }
+    ),
+    [
+      '! -s 1.2.3.4/32'
+    ],
+    'Source not key IP string.',
+  ],
+  [
+    $oIPT->_io_if({'if' => 'eth0'}),
     [],
-    "Not enough parameters",
+    "Not enough parameters in io_if",
   ],
   [
     $oIPT->_io_if(
       {
-        'not' => 0,
         'if' => "eth*",
         'direction' => "out",
       }
@@ -40,7 +69,32 @@ my $paTests =
     [
       '-o eth*'
     ],
-    "Source IF string",
+    "Out IF string",
+  ],
+  [
+    $oIPT->_io_if(
+      {
+        'if' => "eth*",
+        '!direction' => "out",
+      }
+    ),
+    [
+      '! -o eth*'
+    ],
+    "Out not IF string",
+  ],
+  [
+    $oIPT->_io_if(
+      {
+        'not' => 1,
+        'if' => "eth*",
+        'direction' => "out",
+      }
+    ),
+    [
+      '! -o eth*'
+    ],
+    "Out not key IF string",
   ],
   [
     $oIPT->_proto({'proto' => "UDP"}), 
@@ -50,11 +104,39 @@ my $paTests =
     "Protocol string"
   ],
   [
+    $oIPT->_proto({'!proto' => "UDP"}), 
+    [
+      '! -p udp'
+    ], 
+    "Protocol not string"
+  ],
+  [
+    $oIPT->_proto({'not' => 1, 'proto' => "UDP"}), 
+    [
+      '! -p udp'
+    ], 
+    "Protocol not key"
+  ],
+  [
     $oIPT->_owner({'name' => "testuser"}), 
     [
       '-m owner --uid-owner 359'
     ], 
     "Username"
+  ],
+  [
+    $oIPT->_owner({'!name' => "testuser"}), 
+    [
+      '-m owner ! --uid-owner 359'
+    ], 
+    "Not username"
+  ],
+  [
+    $oIPT->_owner({'not' => 1, 'name' => "testuser"}), 
+    [
+      '-m owner ! --uid-owner 359'
+    ], 
+    "Not key username"
   ],
   [
     $oIPT->_owner({'name' => 567}), 
@@ -64,27 +146,17 @@ my $paTests =
     "UserID"
   ],
   [
-    $oIPT->add_list(
-      'test', 
-      [qw/
-        1.2.3.4 
-        5.6.7.8
-      /], 
+    $oIPT->_tcp_udp(
       {
-        'hashsize' => 2048
+        'name' => "TCP", 
+        '!dport' => 80, 
+        'sport' => "1024:65536"
       }
-    ), 
-    1, 
-    "Save IPSET"
-  ],
-  [
-    [$oIPT->get_ipset()],
+    ),
     [
-      'create test hash:net family inet hashsize 2048 maxelen 65536',
-      'add test 1.2.3.4/32',
-      'add test 5.6.7.8/32',
+      '-p tcp -m tcp ! --sport 1024:65536 --dport 80'
     ],
-    "IPSET return data"
+    "TCP not one key options",
   ],
   [
     $oIPT->_tcp_udp(
@@ -95,9 +167,23 @@ my $paTests =
       }
     ),
     [
-      '! -p tcp -m tcp --sport 1024:65536 --dport 80'
+      '-p tcp -m tcp ! --sport 1024:65536 ! --dport 80'
     ],
-    "TCP options",
+    "TCP not all keys options",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'not' => 1,
+        'name' => "TCP", 
+        'dport' => 80, 
+        'sport' => "1024:65536"
+      }
+    ),
+    [
+      '-p tcp -m tcp ! --sport 1024:65536 ! --dport 80'
+    ],
+    "TCP not key options",
   ],
   [
     $oIPT->_tcp_udp(
@@ -112,16 +198,66 @@ my $paTests =
     "TCP flags",
   ],
   [
+    $oIPT->_tcp_udp(
+      {
+        'name' => "TCP",
+        '!flags' => "syn",
+      }
+    ),
+    [
+      '-p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN'
+    ],
+    "TCP not flags",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'not' => 1,
+        'name' => "TCP",
+        'flags' => "syn",
+      }
+    ),
+    [
+      '-p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN'
+    ],
+    "TCP not key flags",
+  ],
+  [
     $oIPT->_icmp(
       {
-        '!name' => "ICMP", 
+        'name' => "ICMP", 
         'type' => 8
       }
     ),
     [
-      '! -p icmp -m icmp --icmp-type 8'
+      '-p icmp -m icmp --icmp-type 8'
     ],
     "ICMP options",
+  ],
+  [
+    $oIPT->_icmp(
+      {
+        'not' => 1,
+        'name' => "ICMP", 
+        'type' => 8
+      }
+    ),
+    [
+      '-p icmp -m icmp ! --icmp-type 8'
+    ],
+    "ICMP not key options",
+  ],
+  [
+    $oIPT->_icmp(
+      {
+        'name' => "ICMP", 
+        '!type' => 8
+      }
+    ),
+    [
+      '-p icmp -m icmp ! --icmp-type 8'
+    ],
+    "ICMP not options",
   ],
   [
     $oIPT->_ct({'name' => "established related"}),
@@ -129,6 +265,20 @@ my $paTests =
       "-m conntrack --ctstate RELATED,ESTABLISHED"
     ],
     "Connection state options",
+  ],
+  [
+    $oIPT->_ct({'!name' => "established related"}),
+    [
+      "-m conntrack ! --ctstate RELATED,ESTABLISHED"
+    ],
+    "Connection state not options",
+  ],
+  [
+    $oIPT->_ct({'not' => 1, 'name' => "established related"}),
+    [
+      "-m conntrack ! --ctstate RELATED,ESTABLISHED"
+    ],
+    "Connection state not key options",
   ],
   [
     $oIPT->_limit(
@@ -141,6 +291,11 @@ my $paTests =
       '-m limit --limit 5/min --limit-burst 10'
     ],
     "Rate limit",
+  ],
+  [
+    $oIPT->_limit({'not' => 1, limit => 5}),
+    [],
+    "Fail rate limit limit - can not use not",
   ],
   [
     $oIPT->_limit(
@@ -160,6 +315,11 @@ my $paTests =
       '-m comment --comment "foo bar baz"'
     ], 
     "Comment"
+  ],
+  [
+    $oIPT->_comment({'not' => 1, 'name' => "foo"}), 
+    [], 
+    "Failed comment - can not use not"
   ],
   [
     $oIPT->_jump({'name' => "test"}), 
@@ -230,6 +390,54 @@ my $paTests =
       '-j DNAT --to-destination 5.6.7.8/32'
     ],
     "DNAT jump to destination",
+  ],
+  [
+    $oIPT->add_list(
+      'test', 
+      [qw(
+        1.2.3.4 
+        5.6.7.8
+      )], 
+      {
+        'hashsize' => 2048
+      }
+    ), 
+    1, 
+    "Save IPSET"
+  ],
+  [
+    [$oIPT->get_ipset()],
+    [
+      'create test hash:net family inet hashsize 2048 maxelen 65536',
+      'add test 1.2.3.4/32',
+      'add test 5.6.7.8/32',
+    ],
+    "IPSET return data"
+  ],
+  [
+    $oIPT->add_list(
+      'test', 
+      [qw(
+        1.1.1.0/24
+        2.2.0.0/16
+      )], 
+      {
+        'hashsize' => 2048
+      }
+    ), 
+    1, 
+    "Save IPSET #2"
+  ],
+  [
+    [$oIPT->get_ipset()],
+    [
+      'create test hash:net family inet hashsize 2048 maxelen 65536',
+      'add test 1.2.3.4/32',
+      'add test 5.6.7.8/32',
+      'add test 1.1.1.0/24',
+      'add test 2.2.0.0/16',
+    ],
+    "IPSET return data #2"
   ],
 ];
 

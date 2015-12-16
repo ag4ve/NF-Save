@@ -379,31 +379,35 @@ sub _str_map
   my (@aRet, @aDone);
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
+    # Additional words for typing and modification (ie, uc/lc)
     my @aMaps = split(' ', $sMapKey);
     next if (not exists($aMaps[0]));
     my $sMapStr = $aMaps[0];
 
     my @aPossibleKeys;
+    # Original possible key
     push @aPossibleKeys, $sMapStr if (defined($sMapStr) and length($sMapStr));
+    # Values of alternative keys
     push @aPossibleKeys, $phAlt->{$sMapStr} 
       if (defined($phAlt) and defined($phAlt->{$sMapStr}));
 
     # [Param Key] Get the actual key from the params. Eg '!destination'
-    my $sPreferredKey;
+    my $sActualKey;
     for my $sWhichKey (@aPossibleKeys)
     {
       my @aKey = grep {/$sWhichKey/} keys %$phParams;
-      $sPreferredKey = $aKey[0] if (scalar(@aKey) and defined($aKey[0]));
-      if (defined($sPreferredKey))
+      $sActualKey = $aKey[0] if (scalar(@aKey) and defined($aKey[0]));
+      if (defined($sActualKey))
       {
         $hRequire{$aPossibleKeys[0]} = 1;
         last;
       }
     }
 
-    next if (not defined($sPreferredKey));
+    next if (not defined($sActualKey));
 
-    my ($sNot, $sFuncStr) = $sPreferredKey =~ /^(!)?(.*)$/;
+    # Strip out and find not designation
+    my ($sNot, $sFuncStr) = $sActualKey =~ /^(!)?(.*)$/;
     # TODO Not sure why we're checking @aDone here.
     push @aRet, "!" if (defined($sNot) and not grep {$sFuncStr} @aDone);
     # An index of keys that have already been processed.
@@ -413,7 +417,7 @@ sub _str_map
       # sOrKey - possible hParam value
       foreach my $sOrKey (keys %$oMapVal)
       {
-        if ($sOrKey =~ /$phParams->{$sPreferredKey}/)
+        if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
           push @aRet, $oMapVal->{$sOrKey};
         }
@@ -422,7 +426,7 @@ sub _str_map
     elsif (ref(\$oMapVal) eq 'SCALAR')
     {
       # Modify the key based on each map option
-      my $sTempRet = $phParams->{$sPreferredKey};
+      my $sTempRet = $phParams->{$sActualKey};
       foreach my $sPossibleFunc (@aMaps[1 .. $#aMaps])
       {
         $sTempRet = $oSelf->_str_map_transform($sTempRet, $sPossibleFunc, $phLookup);

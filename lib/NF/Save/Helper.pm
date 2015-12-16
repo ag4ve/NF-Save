@@ -385,7 +385,7 @@ sub _str_map
   return if (not $oSelf->_check_type([qw/HASH HASH/], '>', 1, 1, @_[1 .. $#_]));
 
   # Check hash value types and assign them variables
-  return if (not $oSelf->_check_type([qw/ARRAY HASH ARRAY HASH ARRAY/], '>', 1, 1, @{$phData}{qw/map alt req lookup not/}));
+  return if (not $oSelf->_check_type([qw/ARRAY HASH ARRAY HASH ARRAY/], '<', 0, 0, @{$phData}{qw/map alt req lookup not/}));
   my ($paMap, $phAlt, $paRequire, $phLookup, $paNot) = @{$phData}{qw/map alt req lookup not/};
 
   # Setup hash to make sure that all fields that are required are present
@@ -531,6 +531,8 @@ sub _str_map_transform
 # Check a list of types against an array of data
 # Second option is whether there can be more data than types (>) or 
 # types than data (<)
+# The next two parameters are boolean - whether to warn and whether to allow undef values
+# Followed by an array of data
 sub _check_type
 {
   my ($oSelf, $paTypes, $sWhichMore, $sWarn, $sAllowUndef, @aData) = @_;

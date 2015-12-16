@@ -13,6 +13,9 @@ sub Init
   my $paPre = [qw/proto owner match list tcp udp icmp/];
   my $paPost = [qw/limit comment jump/];
 
+  # Define the order connection types should be listed in
+  $oSelf->{ctorder} = [qw/NEW RELATED ESTABLISHED INVALID/] if (not exists($oSelf->{ctorder}));
+
   return @aMixinSubs if ($oSelf->_add_module($paLookup, $paPre, $paPost));
 }
  
@@ -20,27 +23,22 @@ sub Init
 sub _ct
 {
   my ($oSelf, $phParams) = @_;
-  my @order = qw/NEW RELATED ESTABLISHED INVALID/;
 
-  my @aCTState;
-  if (ref($phParams->{name}) eq 'ARRAY')
-  {
-    @aCTState = @{$phParams->{name}};
-  }
-  elsif (ref(\$phParams->{name}) eq 'SCALAR')
-  {
-    @aCTState = split(' ', $phParams->{name});
-  }
-
-  my @aStr;
-  push @aStr, "-m conntrack";
-  (push @aStr, "--ctstate " . join(',', 
-    map {
-      my $unit = $_;
-      grep {$unit eq $_} map {uc($_)} @aCTState;
-    } @order))
-    if (scalar(@aCTState));
-  return [join(" ", @aStr)];
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'name'            => "-m conntrack",
+        'state @ctorder'  => "--ctstate",
+      ], 
+      'alt' => {
+        'state' => "name",
+      }, 
+      'req' => [qw/state/], 
+      'lookup' => {
+        'state' => $oSelf->{ctorder}
+      },
+      'not' => [qw/state/],
+    }
+  )];
 }
 
  

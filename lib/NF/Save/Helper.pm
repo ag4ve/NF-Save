@@ -467,6 +467,11 @@ sub _str_map
       # sOrKey - possible hParam value
       foreach my $sOrKey (keys %$oMapVal)
       {
+        if (ref($phParams->{$sActualKey}) ne 'SCALAR')
+        {
+          warn "Bad data in [$sActualKey] - must be a string.\n";
+          return;
+        }
         if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
           push @aRet, '!' if (defined($sNot));
@@ -476,11 +481,19 @@ sub _str_map
     }
     elsif (ref(\$oMapVal) eq 'SCALAR')
     {
+      # Might be a hash or scalar
+      my $oTempRet = $phParams->{$sActualKey};
+      my $sTempRet;
       # Modify the key based on each map option
-      my $sTempRet = $phParams->{$sActualKey};
       foreach my $sPossibleFunc (@aMaps[1 .. $#aMaps])
       {
-        $sTempRet = $oSelf->_str_map_transform($sTempRet, $sPossibleFunc, $phLookup);
+        $sTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
+        if (ref($sTempRet) ne 'SCALAR')
+        {
+          warn "Must return a string - something went wrong " .
+            "(possibly in _str_map_transform).\n";
+          return;
+        }
       }
       if (defined($sTempRet))
       {
@@ -507,56 +520,75 @@ sub _str_map
 # Transform data based on mapfunc
 sub _str_map_transform
 {
-  my ($oSelf, $sData, $sMapFunc, $phLookup) = @_;
+  my ($oSelf, $oData, $sMapFunc, $phLookup) = @_;
 
-  return if (not defined($sData));
+  return if (not defined($oData));
 
   if (defined($sMapFunc) and length($sMapFunc))
   {
-    if ($sMapFunc eq 'lc')
+    if (ref($oData) eq 'SCALAR')
     {
-      return lc($sData);
-    }
-    elsif ($sMapFunc eq 'uc')
-    {
-      return uc($sData);
-    }
-    elsif ($sMapFunc eq 'qq')
-    {
-      return "\"" . $sData . "\"";
-    }
-    elsif ($sMapFunc eq 'bool')
-    {
-      return if (not defined($sData));
-    }
-    elsif ($sMapFunc eq 'ip')
-    {
-      return $oSelf->_cidr_ip($sData);
+      if ($sMapFunc eq 'lc')
+      {
+        return lc($oData);
+      }
+      elsif ($sMapFunc eq 'uc')
+      {
+        return uc($oData);
+      }
+      elsif ($sMapFunc eq 'qq')
+      {
+        return "\"" . $oData . "\"";
+      }
+      elsif ($sMapFunc eq 'bool')
+      {
+        return if (not defined($oData));
+      }
+      elsif ($sMapFunc eq 'ip')
+      {
+        return $oSelf->_cidr_ip($oData);
+      }
     }
     # Key to lookup from
-    if ($sMapFunc =~ /^%(.*)/)
+    if ($sMapFunc =~ /^(%@)(.*)/)
     {
-      my $sKey = $1;
-      if (not defined($phLookup))
+      my ($sType, $sKey) = ($1, $2);
+      if (not defined($phLookup) or not exists($phLookup->{$sKey}))
       {
         warn "A lookup hash was wanted but not defined.\n";
         return;
       }
 
-      if (exists($phLookup->{$sKey}{$sData}) and defined($phLookup->{$sKey}{$sData}))
+      if ($sType eq '%' and ref($oData) eq 'SCALAR')
       {
-        return $phLookup->{$sKey}{$sData};
+        if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
+        {
+          return $phLookup->{$sKey}{$oData};
+        }
+        else
+        {
+          warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
+          return $oData;
+        }
       }
-      else
+      elsif ($sType eq '@')
       {
-        warn "[$sData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
-        return $sData;
+        if (ref($phLookup->{$sKey}) eq 'ARRAY' and ref($oData) eq 'ARRAY')
+        {
+          my %order;
+          for my $i (0 .. $#{$phLookup->{$sKey}})
+          {
+            $order{$phLookup->{$sKey}[$i]} = $i;
+          }
+          return join(",", sort {$order{$a} <=> $order{$b}} @$oData);
+        }
       }
     }
   }
   else
   {
-    return $sData;
+    warn "Unknown function type or bad data.\n";
+    return $oData;
   }
 }
 

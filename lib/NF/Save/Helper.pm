@@ -369,15 +369,14 @@ sub _add_module
 }
 
 # Return a string from a definition
-# Input is a hashref of the input datastructure, a definition, optionally 
-# a third hash with alternate key map, required fields, and a lookup hash.
-# The definition of "map" is a balanced array of:
-# <key of input data structure [function]> => <value>
-# Or
-# <key of input data structure> => {<value of input data structure> => <value to use>}
-# The later form is used to yield different outputs depending on the input value
-# Lookup is a hashref of hashes whose value (string) can be substituted for the value 
-# of params if the key of lookup says to use it.
+# Input is a hashref of the input datastructure and a definition hash.
+# The definition hash must contain a data map (key: map) but may also contain:
+# alt: mapping of 'actual value' => 'alias'
+# req: array of required fields
+# lookup: a hash of values to replace (will be used with a value of % type 
+# from map) or an array which is used to sort data (will be used from a value 
+# of @ type from map)
+# not: keys that may have not (!) prepended
 sub _str_map
 {
   my ($oSelf, $phParams, $phData) = @_;

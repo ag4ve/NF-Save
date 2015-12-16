@@ -47,7 +47,7 @@ our %EXPORT_TAGS = (
   'comp'      => \@aLookupComp,
   'ipcheck'   => \@aIPCheck,
 );
- 
+
 use Socket;
 use Data::Dumper;
 
@@ -81,7 +81,7 @@ sub _return_valid_param
   my @aKey = grep {/^!?$sListKey$/i} keys %$phParams;
   if (scalar(@aKey) > 1)
   {
-    warn "Multiple keys with similar names [" . 
+    warn "Multiple keys with similar names [" .
       join("] [", @aKey) . "] - Moving on.\n";
     return;
   }
@@ -189,11 +189,11 @@ sub _srcdst
           'dst' => "-d",
         },
         'ip ip' => "",
-      ], 
+      ],
       'alt' => {
         'ip' => "name",
         'direction' => 'key',
-      }, 
+      },
       'req' => [qw/
         direction
         ip
@@ -215,13 +215,13 @@ sub _io_if
           'out' => "-o",
         },
         'if' => "",
-      ], 
+      ],
       'alt' => {
         'if' => "name",
         'direction' => "key",
-      }, 
+      },
       'req' => [qw/
-        direction 
+        direction
         if
       /],
       'not' => [qw/direction/],
@@ -237,7 +237,7 @@ sub _proto
   return [$oSelf->_str_map($phParams, {
       'map' => [
         'proto lc' => "-p",
-      ], 
+      ],
       'alt' => {
         'proto' => "name",
       },
@@ -309,7 +309,7 @@ sub _jump
 
 # Insert the name and method in the right place so the rule is in the order iptables
 # would present it.
-# @$paLookup is an even array of ["name" => "method"] where the method should be 
+# @$paLookup is an even array of ["name" => "method"] where the method should be
 # private and exclude the underscore (_) here.
 # @$paPre should be a list of names that should come before this module and
 # @$paPost should be a list of names that should come after.
@@ -351,22 +351,22 @@ sub _add_module
     }
     elsif ($sLower >= $sUpper)
     {
-      warn "Lower [" . $aKeys[$sLower] . "] comes after Upper [" . 
+      warn "Lower [" . $aKeys[$sLower] . "] comes after Upper [" .
         $aKeys[$sUpper] . "] - might be an issue.\n";
     }
   }
   else
   {
-    warn "Module [" . $paLookup->[0] . "] did not define an upper search. " . 
+    warn "Module [" . $paLookup->[0] . "] did not define an upper search. " .
       "An empty set should be specified.\n";
   }
 
-  # Lookup is an even array - sLower/sUpper is an index of the keys - the value 
+  # Lookup is an even array - sLower/sUpper is an index of the keys - the value
   # needs to be doubled to be in the right place.
-  return 1 unless splice 
-    @{$oSelf->{lookup}}, 
-    ($sLower+1)*2, 
-    0, 
+  return 1 unless splice
+    @{$oSelf->{lookup}},
+    ($sLower+1)*2,
+    0,
     @$paLookup;
 }
 
@@ -375,28 +375,37 @@ sub _add_module
 # The definition hash must contain a data map (key: map) but may also contain:
 # alt: mapping of 'actual value' => 'alias'
 # req: array of required fields
-# lookup: a hash of values to replace (will be used with a value of % type 
-# from map) or an array which is used to sort data (will be used from a value 
+# lookup: a hash of values to replace (will be used with a value of % type
+# from map) or an array which is used to sort data (will be used from a value
 # of @ type from map)
-# not: keys that may have not (!) prepended - if not is undefineda user 
+# not: keys that may have not (!) prepended - if not is undefineda user
 # will not be able to pass a 'not' or '!name' key.
 sub _str_map
 {
   my ($oSelf, $phParams, $phData) = @_;
 
-  return if (not $oSelf->_check_type([qw/HASH HASH/], '>', 1, 1, @_[1 .. $#_]));
+  return
+    if (not $oSelf->_check_type([qw/HASH HASH/],
+      '>', 1, 1, @_[1 .. $#_]));
 
   # Check hash value types and assign them variables
-  return if (not $oSelf->_check_type([qw/ARRAY HASH ARRAY HASH ARRAY/], '<', 0, 0, @{$phData}{qw/map alt req lookup not/}));
-  my ($paMap, $phAlt, $paRequire, $phLookup, $paNot) = @{$phData}{qw/map alt req lookup not/};
+  return
+    if (not $oSelf->_check_type([qw/ARRAY HASH ARRAY HASH ARRAY/],
+      '<', 0, 0, @{$phData}{qw/map alt req lookup not/}));
+  my ($paMap, $phAlt, $paRequire, $phLookup, $paNot) =
+    @{$phData}{qw/map alt req lookup not/};
 
   # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$paRequire;
+
+  my $sGlobalNot = 0;
+  $sGlobalNot = 1 if (exists($paMap->('not')) and defined($paNot));
 
   # Make sure results are oldered from the even map array
   $oSelf->_each_kv($paMap, 'str_map');
 
   my (@aRet, @aDone);
+  # Evaluate map - look at actual data later
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
     # Additional words for typing and modification (ie, uc/lc)
@@ -404,44 +413,50 @@ sub _str_map
     next if (not exists($aMaps[0]));
     my $sMapStr = $aMaps[0];
 
-    my @aPossibleKeys;
-    # Original possible key
-    push @aPossibleKeys, $sMapStr if (defined($sMapStr) and length($sMapStr));
-    # Values of alternative keys
-    push @aPossibleKeys, $phAlt->{$sMapStr} 
-      if (defined($phAlt) and defined($phAlt->{$sMapStr}));
-
     # Get the actual key from the params. Eg '!destination'
     my $sActualKey;
-    for my $sWhichKey (@aPossibleKeys)
     {
-      # Only possible alteration from the given key should be a not (!)
-      my @aKey = grep {/^!?$sWhichKey$/} keys %$phParams;
-      if (scalar(@aKey) and defined($aKey[0]))
+      my @aPossibleKeys;
+      # Original possible key
+      push @aPossibleKeys, $sMapStr if (defined($sMapStr) and length($sMapStr));
+      # Values of alternative keys
+      push @aPossibleKeys, $phAlt->{$sMapStr}
+        if (defined($phAlt) and defined($phAlt->{$sMapStr}));
+
+      for my $sWhichKey (@aPossibleKeys)
       {
-        $sActualKey = $aKey[0];
-        # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
-        $hRequire{$sMapStr} = 1;
-        last;
+        # Only possible alteration from the given key should be a not (!)
+        my @aKey = grep {/^!?$sWhichKey$/} keys %$phParams;
+        if (scalar(@aKey) and defined($aKey[0]))
+        {
+          $sActualKey = $aKey[0];
+          # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
+          $hRequire{$sMapStr} = 1;
+          last;
+        }
       }
     }
 
     next if (not defined($sActualKey));
 
-    # Strip out not designation and return early if it was it is not allowed
+    # Strip out not designation
     my ($sNot, $sFuncStr) = $sActualKey =~ /^(!)?(.*)$/;
-    if (defined($sNot) and not defined($paNot) and 
+    # Return early if a not was it is not allowed
+    if (defined($sNot) and not defined($paNot) and
       (not $sFuncStr eq 'name' or not grep {$sFuncStr eq $_} @$paNot))
     {
       warn "A not (!) can not be used for [$sFuncStr] - doing nothing\n";
       return;
     }
+    # Apply global not if needed
+    $sNot = $sGlobalNot if (not defined($sNot));
 
-    # First check for keys that have already been processed - still need 
+    # First check for keys that have already been processed - still need
     # to make sure the key is not an alias
     next if (grep {$sFuncStr} @aDone);
     push @aDone, $sFuncStr;
 
+    # User input is processed by one of these blocks or not at all
     if (ref($oMapVal) eq 'HASH')
     {
       # sOrKey - possible hParam value
@@ -449,6 +464,7 @@ sub _str_map
       {
         if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
+          push @aRet, '!' if (defined($sNot));
           push @aRet, $oMapVal->{$sOrKey};
         }
       }
@@ -463,6 +479,7 @@ sub _str_map
       }
       if (defined($sTempRet))
       {
+        push @aRet, '!' if ($sNot);
         push @aRet, $oMapVal if (defined($oMapVal));
         push @aRet, $sTempRet;
       }
@@ -475,7 +492,7 @@ sub _str_map
   }
   else
   {
-    warn "Required fields not defined: [" . 
+    warn "Required fields not defined: [" .
       join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "] " .
       Dumper($phParams) . "\n";
     return;
@@ -539,7 +556,7 @@ sub _str_map_transform
 }
 
 # Check a list of types against an array of data
-# Second option is whether there can be more data than types (>) or 
+# Second option is whether there can be more data than types (>) or
 # types than data (<)
 # The next two parameters are boolean - whether to warn and whether to allow undef values
 # Followed by an array of data
@@ -573,11 +590,11 @@ sub _check_type
   for my $i (0 .. $#{$paTypes})
   {
     return 1 if (not defined($aData[$i]));
-    if (($paTypes->[$i] =~ /^(ARRAY|HASH|CODE)$/ and ref($aData[$i]) ne $paTypes->[$i]) or 
+    if (($paTypes->[$i] =~ /^(ARRAY|HASH|CODE)$/ and ref($aData[$i]) ne $paTypes->[$i]) or
       ($paTypes->[$i] eq 'SCALAR' and ref(\$aData[$i]) ne $paTypes->[$i]) or
       ($sAllowUndef and not defined(($aData[$i]))))
     {
-      warn "[$i] " . ref($aData[$i]) . " not equal to " . $paTypes->[$i] . " " . 
+      warn "[$i] " . ref($aData[$i]) . " not equal to " . $paTypes->[$i] . " " .
         Dumper($aData[$i]) . "\n" if ($sWarn);
       return;
     }
@@ -675,7 +692,7 @@ sub _each_kv
       {
         return;
       }
-  
+
       my @aRet;
       my $raOrig = $oSelf->{kv}{$sName . 'orig'};
       for my $sNum (0 .. $#{$raOrig})
@@ -690,7 +707,7 @@ sub _each_kv
           push @aRet, $raOrig->[$sNum];
         }
       }
-  
+
       return @aRet;
     }
   }
@@ -714,7 +731,7 @@ sub _each_kv
 #        +- -+ +- -+              +-              -+
 #        | a | | c |       =      | ac, ad, bc, bd |
 #        | b | | d |              +-              -+
-#        +- -+ +- -+  
+#        +- -+ +- -+
 sub _expand
 {
   my ($oSelf, $paSets) = @_;
@@ -730,8 +747,8 @@ sub _expand
 
     return [
       map {
-        my $sItem = $_; 
-        map { [$sItem, @$_] } @$paCross 
+        my $sItem = $_;
+        map { [$sItem, @$_] } @$paCross
       } @$paFirstSet
     ];
   }

@@ -376,7 +376,8 @@ sub _add_module
 # lookup: a hash of values to replace (will be used with a value of % type 
 # from map) or an array which is used to sort data (will be used from a value 
 # of @ type from map)
-# not: keys that may have not (!) prepended
+# not: keys that may have not (!) prepended - if not is undefineda user 
+# will not be able to pass a 'not' or '!name' key.
 sub _str_map
 {
   my ($oSelf, $phParams, $phData) = @_;

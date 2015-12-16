@@ -395,6 +395,10 @@ sub _str_map
   my ($paMap, $phAlt, $paRequire, $phLookup, $paNot) =
     @{$phData}{qw/map alt req lookup not/};
 
+  # Check that not is either 1 or 0
+  warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
+    if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
+
   # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$paRequire;
 

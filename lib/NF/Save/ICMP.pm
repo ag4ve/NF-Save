@@ -21,15 +21,17 @@ sub _icmp
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
+  return [$oSelf->_str_map($phParams, {
+    'map' => [
       'name lc' => "-p",
       'name lc' => "-m",
       'type' => '--icmp-type',
-    ], {
+    ], 
+    'alt' => {
       'name' => "key"
-    }, [qw/
-      name
-    /],
+    }, 
+    'req' => [qw/name/],
+    'not' => [qw/type/],
   )];
 }
 

@@ -21,15 +21,19 @@ sub _owner
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
-      'name bool'        => "-m owner",
-      'owner %owner' => "--uid-owner",
-    ], {
-      'owner' => "name",
-    }, [qw/
-      owner
-    /], {
-      "owner" => $oSelf->{uids}
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'name bool'        => "-m owner",
+        'owner %owner' => "--uid-owner",
+      ], 
+      'alt' => {
+        'owner' => "name",
+      }, 
+      'req' => [qw/owner/], 
+      'lookup' => {
+        "owner" => $oSelf->{uids}
+      },
+      'not' => [qw/owner/],
     }
   )];
 }

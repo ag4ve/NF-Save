@@ -182,19 +182,24 @@ sub _srcdst
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
-      'direction' => {
-        'src' => "-s",
-        'dst' => "-d",
-      },
-      'ip ip' => "",
-    ], {
-      'ip' => "name",
-      'direction' => 'key',
-    }, [qw/
-      direction
-      ip
-    /],
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'direction' => {
+          'src' => "-s",
+          'dst' => "-d",
+        },
+        'ip ip' => "",
+      ], 
+      'alt' => {
+        'ip' => "name",
+        'direction' => 'key',
+      }, 
+      'req' => [qw/
+        direction
+        ip
+      /],
+      'not' => [qw/direction/]
+    }
   )];
 }
 
@@ -203,19 +208,24 @@ sub _io_if
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
-      'direction' => {
-        'in' => "-i",
-        'out' => "-o",
-      },
-      'if' => "",
-    ], {
-      'if' => "name",
-      'direction' => "key",
-    }, [qw/
-      direction 
-      if
-    /],
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'direction' => {
+          'in' => "-i",
+          'out' => "-o",
+        },
+        'if' => "",
+      ], 
+      'alt' => {
+        'if' => "name",
+        'direction' => "key",
+      }, 
+      'req' => [qw/
+        direction 
+        if
+      /],
+      'not' => [qw/direction/],
+    }
   )];
 }
 
@@ -224,10 +234,14 @@ sub _proto
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
-      'proto lc' => "-p",
-    ], {
-      'proto' => "name",
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'proto lc' => "-p",
+      ], 
+      'alt' => {
+        'proto' => "name",
+      },
+      'not' => [qw/proto/],
     }
   )];
 }
@@ -366,9 +380,13 @@ sub _add_module
 # of params if the key of lookup says to use it.
 sub _str_map
 {
-  my ($oSelf, $phParams, $paMap, $phAlt, $paRequire, $phLookup) = @_;
+  my ($oSelf, $phParams, $phData) = @_;
 
-  return if (not $oSelf->_check_type([qw/HASH ARRAY HASH ARRAY HASH/], '>', 1, 1, @_[1 .. $#_]));
+  return if (not $oSelf->_check_type([qw/HASH HASH/], '>', 1, 1, @_[1 .. $#_]));
+
+  # Check hash value types and assign them variables
+  return if (not $oSelf->_check_type([qw/ARRAY HASH ARRAY HASH ARRAY/], '>', 1, 1, @{$phData}{qw/map alt req lookup not/}));
+  my ($paMap, $phAlt, $paRequire, $phLookup, $paNot) = @{$phData}{qw/map alt req lookup not/};
 
   # Setup hash to make sure that all fields that are required are present
   my %hRequire = map {$_ => 0} @$paRequire;

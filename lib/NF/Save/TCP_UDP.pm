@@ -24,18 +24,26 @@ sub _tcp_udp
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
-      'name lc' => "-p",
-      'name lc' => "-m",
-      'sport' => "--sport",
-      'dport' => "--dport",
-      'flags %flags' => "--tcp-flags",
-    ], {
-      'name' => "key"
-    }, [qw/
-      name
-    /], {
-      'flags' => $oSelf->{flags}
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'name lc' => "-p",
+        'name lc' => "-m",
+        'sport' => "--sport",
+        'dport' => "--dport",
+        'flags %flags' => "--tcp-flags",
+      ], 
+      'alt' => {
+        'name' => "key"
+      }, 
+      'req' => [qw/name/], 
+      'lookup' => {
+        'flags' => $oSelf->{flags}
+      },
+      'not' => [qw/
+        sport
+        dport
+        flags
+      /],
     }
   )];
 }

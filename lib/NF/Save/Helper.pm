@@ -391,15 +391,17 @@ sub _str_map
     push @aPossibleKeys, $phAlt->{$sMapStr} 
       if (defined($phAlt) and defined($phAlt->{$sMapStr}));
 
-    # [Param Key] Get the actual key from the params. Eg '!destination'
+    # Get the actual key from the params. Eg '!destination'
     my $sActualKey;
     for my $sWhichKey (@aPossibleKeys)
     {
-      my @aKey = grep {/$sWhichKey/} keys %$phParams;
-      $sActualKey = $aKey[0] if (scalar(@aKey) and defined($aKey[0]));
-      if (defined($sActualKey))
+      # Only possible alteration from the given key should be a not (!)
+      my @aKey = grep {/^!?$sWhichKey$/} keys %$phParams;
+      if (scalar(@aKey) and defined($aKey[0]))
       {
-        $hRequire{$aPossibleKeys[0]} = 1;
+        $sActualKey = $aKey[0];
+        # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
+        $hRequire{$sMapStr} = 1;
         last;
       }
     }

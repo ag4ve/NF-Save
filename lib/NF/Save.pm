@@ -348,6 +348,10 @@ iptables-save
 Create an iptables rule for a data structure definition.
 The chain name and whether to check the ruleset are optional.
 
+=head2 get_uids()
+
+Populate the module's UID hash with user => uid
+
 =head1 DOCUMENTATION SYNTAX
 
 When defining the values in a hash, perl data types are used to 

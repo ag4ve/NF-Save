@@ -3,7 +3,7 @@ package NF::Save::Owner;
 use strict;
 use warnings;
  
-my @aMixinSubs = qw/_owner/;
+my @aMixinSubs = qw/_owner get_uids/;
 
 sub Init
 {
@@ -23,19 +23,46 @@ sub _owner
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'name bool'        => "-m owner",
-        'owner %owner' => "--uid-owner",
+        'name'          => "-m owner",
+        'owner %owner'  => "--uid-owner",
       ], 
       'alt' => {
         'owner' => "name",
       }, 
       'req' => [qw/owner/], 
       'lookup' => {
-        "owner" => $oSelf->{uids}
+        'owner' => $oSelf->{uids}
       },
       'not' => [qw/owner/],
     }
   )];
+}
+
+=head2 get_uids()
+
+Populate the module's UID hash with user => uid
+
+=cut
+
+sub get_uids
+{
+  my ($oSelf) = @_;
+
+  my $fh;
+  if (open(my $fh, '<', '/etc/passwd'))
+  {
+    while (my $line = <$fh>)
+    {
+      my @parts = split(':', $line);
+      $oSelf->{uids}{$parts[0]} = $parts[2];
+    }
+    close($fh);
+    return 1;
+  }
+  else
+  {
+    warn "Could not read password file.";
+  }
 }
 
  

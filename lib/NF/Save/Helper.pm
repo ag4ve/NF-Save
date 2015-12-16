@@ -428,19 +428,20 @@ sub _str_map
 
     next if (not defined($sActualKey));
 
-    # Strip out and find not designation
+    # Strip out not designation and return early if it was it is not allowed
     my ($sNot, $sFuncStr) = $sActualKey =~ /^(!)?(.*)$/;
-      
-    if (not defined($paNot) and 
+    if (defined($sNot) and not defined($paNot) and 
       (not $sFuncStr eq 'name' or not grep {$sFuncStr eq $_} @$paNot))
     {
       warn "A not (!) can not be used for [$sFuncStr] - doing nothing\n";
       return;
     }
-    # TODO Not sure why we're checking @aDone here.
-    push @aRet, "!" if (defined($sNot) and not grep {$sFuncStr} @aDone);
-    # An index of keys that have already been processed.
+
+    # First check for keys that have already been processed - still need 
+    # to make sure the key is not an alias
+    next if (grep {$sFuncStr} @aDone);
     push @aDone, $sFuncStr;
+
     if (ref($oMapVal) eq 'HASH')
     {
       # sOrKey - possible hParam value

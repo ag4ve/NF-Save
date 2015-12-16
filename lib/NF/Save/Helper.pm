@@ -82,7 +82,7 @@ sub _return_valid_param
   if (scalar(@aKey) > 1)
   {
     warn "Multiple keys with similar names [" . 
-      join("] [", @aKey) . "] - Moving on\n";
+      join("] [", @aKey) . "] - Moving on.\n";
     return;
   }
   elsif (scalar(@aKey) == 0)
@@ -126,7 +126,7 @@ sub _comp
 
   if (not $oSelf->can($sComp))
   {
-    warn "No method [$sComp] - skipping\n";
+    warn "No method [$sComp] - skipping.\n";
     return;
   }
 
@@ -252,7 +252,7 @@ sub _jump
   my ($oSelf, $phParams) = @_;
   return if (not defined($phParams->{name}));
   my $sJump = $phParams->{name};
-  warn "Assuming wrong case for [$sJump] - matching against [" . uc($sJump) . "]\n"
+  warn "Assuming wrong case for [$sJump] - matching against [" . uc($sJump) . "].\n"
     if ($sJump =~ /[a-z]/ and $sJump =~ /^(LOG|REJECT|CT|SNAT|DNAT)$/i);
 
   if (uc($sJump) eq 'LOG')
@@ -351,12 +351,14 @@ sub _add_module
     }
     elsif ($sLower >= $sUpper)
     {
-      warn "Lower [" . $aKeys[$sLower] . "] comes after Upper [" . $aKeys[$sUpper] . "] - might be an issue.\n";
+      warn "Lower [" . $aKeys[$sLower] . "] comes after Upper [" . 
+        $aKeys[$sUpper] . "] - might be an issue.\n";
     }
   }
   else
   {
-    warn "Module [" . $paLookup->[0] . "] did not define an upper search. An empty set should be specified\n";
+    warn "Module [" . $paLookup->[0] . "] did not define an upper search. " . 
+      "An empty set should be specified.\n";
   }
 
   # Lookup is an even array - sLower/sUpper is an index of the keys - the value 
@@ -428,6 +430,13 @@ sub _str_map
 
     # Strip out and find not designation
     my ($sNot, $sFuncStr) = $sActualKey =~ /^(!)?(.*)$/;
+      
+    if (not defined($paNot) and 
+      (not $sFuncStr eq 'name' or not grep {$sFuncStr eq $_} @$paNot))
+    {
+      warn "A not (!) can not be used for [$sFuncStr] - doing nothing\n";
+      return;
+    }
     # TODO Not sure why we're checking @aDone here.
     push @aRet, "!" if (defined($sNot) and not grep {$sFuncStr} @aDone);
     # An index of keys that have already been processed.
@@ -546,17 +555,17 @@ sub _check_type
   $sWhichMore //= '=';
   if ($sWhichMore eq '<' and scalar(@$paTypes) > scalar(@aData))
   {
-    warn "More parameters than data\n" if ($sWarn);
+    warn "More parameters than data.\n" if ($sWarn);
     return;
   }
   elsif ($sWhichMore eq '>' and scalar(@$paTypes) < scalar(@aData))
   {
-    warn "More data than parameters\n" if ($sWarn);
+    warn "More data than parameters.\n" if ($sWarn);
     return;
   }
   elsif ($sWhichMore eq '=' and scalar(@$paTypes) != scalar(@aData))
   {
-    warn "Number of data not equal to the number of parameters\n" if ($sWarn);
+    warn "Number of data not equal to the number of parameters.\n" if ($sWarn);
     return;
   }
 
@@ -637,7 +646,7 @@ sub _each_kv
     {
       if (scalar(@$oData) % 2)
       {
-        warn "Uneven array - nothing done\n";
+        warn "Uneven array - nothing done.\n";
         return 0;
       }
       else

@@ -61,7 +61,7 @@ sub get_uids
   }
   else
   {
-    warn "Could not read password file.";
+    warn "Could not read password file.\n";
   }
 }
 

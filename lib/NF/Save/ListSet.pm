@@ -35,7 +35,7 @@ sub _list_set
   }
   else
   {
-    warn "Direction not defined - applying filter in both directions";
+    warn "Direction not defined - applying filter in both directions.\n";
     %hDirection = (
       'src' => 1,
       'dst' => 1,
@@ -45,7 +45,7 @@ sub _list_set
   if ((exists($phParams->{useipset}) and $phParams->{useipset}) or 
     (not exists($phParams->{useipset}) and $oSelf->{useipset}))
   {
-    warn "Set [$sName] has not been defined\n" if (not $oSelf->is_ipset($sName));
+    warn "Set [$sName] has not been defined.\n" if (not $oSelf->is_ipset($sName));
     push @aRet, "-m set --match-set $sName " . join(",", sort {$b cmp $a} keys(%hDirection));
   }
   else
@@ -53,7 +53,7 @@ sub _list_set
     if (not exists($oSelf->{ipset}{$sName}{list}) and
       ref($oSelf->{ipset}{$sName}{list}) ne 'ARRAY')
     {
-      warn "No list of name [$sName]\n";
+      warn "No list of name [$sName].\n";
       return;
     }
     my @aList = @{$oSelf->{ipset}{$sName}{list}}; 

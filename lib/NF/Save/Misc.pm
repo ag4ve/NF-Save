@@ -545,7 +545,7 @@ sub assemble
     else
     {
       warn "No data or invalid data type returned for " . Dumper($phData) .
-        "listkey [sListKey] key [$sKey] comp [$sComp]\n";
+        "listkey [sListKey] key [$sKey] comp [$sComp].\n";
     }
   }
 

@@ -267,7 +267,7 @@ sub new
       no strict 'refs';
       if (not $sInitFunc)
       {
-        warn "$sInitFunc does not exist - skipping\n";
+        warn "$sInitFunc does not exist - skipping.\n";
         next;
       }
       my @aSubs = $sInitFunc->($oSelf);
@@ -276,10 +276,10 @@ sub new
         my $sFullSub = $sFullName . "::" . $sSub;
         if (not exists(&{$sFullSub}))
         {
-          warn "No function [$sFullSub]\n";
+          warn "No function [$sFullSub].\n";
           next;
         }
-        warn "Namespace conflict [$sFullSub]\n" if ($oSelf->can($sSub));
+        warn "Namespace conflict [$sFullSub].\n" if ($oSelf->can($sSub));
         *{"NF::Save::" . $sSub} = *{$sFullSub};
       }
     }

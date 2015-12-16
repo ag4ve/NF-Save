@@ -399,7 +399,8 @@ sub _str_map
   my %hRequire = map {$_ => 0} @$paRequire;
 
   my $sGlobalNot = 0;
-  $sGlobalNot = 1 if (exists($paMap->('not')) and defined($paNot));
+  $sGlobalNot = 1
+    if (exists($phParams->{'not'}) and $phParams->{'not'} and defined($paNot));
 
   # Make sure results are oldered from the even map array
   $oSelf->_each_kv($paMap, 'str_map');

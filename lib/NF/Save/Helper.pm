@@ -498,7 +498,6 @@ sub _str_map
       {
         $oTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
       }
-      # Any transform should yield a string at the end or there's a problem
       if (ref(\$oTempRet) ne 'SCALAR')
       {
         warn "Must return a string - something went wrong " .
@@ -566,7 +565,7 @@ sub _str_map_transform
         return;
       }
 
-      if ($sType eq '%' ref(\$oData) eq 'SCALAR')
+      if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
       {
         if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
         {

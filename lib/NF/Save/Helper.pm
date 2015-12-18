@@ -413,6 +413,9 @@ sub _str_map
   # Evaluate map - look at actual data later
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
+    # MapVal can be an empty string
+    next if (not defined($oMapVal));
+
     # Additional words for typing and modification (ie, uc/lc)
     my @aMaps = split(' ', $sMapKey);
     next if (not exists($aMaps[0]));
@@ -445,6 +448,8 @@ sub _str_map
     next if (not defined($sActualKey));
 
     # Strip out not designation
+    # FuncStr is used when determining what the key's function is
+    # ActualKey is used to refer to the param data
     my ($sNot, $sFuncStr) = $sActualKey =~ /^(!)?(.*)$/;
     # Return early if a not was it is not allowed
     if (defined($sNot) and not defined($paNot) and
@@ -458,7 +463,7 @@ sub _str_map
 
     # First check for keys that have already been processed - still need
     # to make sure the key is not an alias
-    next if (grep {$sFuncStr} @aDone);
+    next if (grep {/^$sFuncStr$/} @aDone);
     push @aDone, $sFuncStr;
 
     # User input is processed by one of these blocks or not at all
@@ -467,40 +472,42 @@ sub _str_map
       # sOrKey - possible hParam value
       foreach my $sOrKey (keys %$oMapVal)
       {
-        if (ref($phParams->{$sActualKey}) ne 'SCALAR')
+        if (ref(\$phParams->{$sActualKey}) ne 'SCALAR')
         {
           warn "Bad data in [$sActualKey] - must be a string.\n";
           return;
         }
         if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
-          push @aRet, '!' if (defined($sNot));
+          push @aRet, '!' if ($sNot);
           push @aRet, $oMapVal->{$sOrKey};
         }
       }
     }
-    elsif (ref(\$oMapVal) eq 'SCALAR')
+    elsif (ref($oMapVal) eq 'ARRAY')
+    {
+      warn "Map value can not be an array\n";
+      return;
+    }
+    else
     {
       # Might be a hash or scalar
       my $oTempRet = $phParams->{$sActualKey};
-      my $sTempRet;
-      # Modify the key based on each map option
+      # If modifications were defined, run through them
       foreach my $sPossibleFunc (@aMaps[1 .. $#aMaps])
       {
-        $sTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
-        if (ref($sTempRet) ne 'SCALAR')
-        {
-          warn "Must return a string - something went wrong " .
-            "(possibly in _str_map_transform).\n";
-          return;
-        }
+        $oTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
       }
-      if (defined($sTempRet))
+      # Any transform should yield a string at the end or there's a problem
+      if (ref(\$oTempRet) ne 'SCALAR')
       {
-        push @aRet, '!' if ($sNot);
-        push @aRet, $oMapVal if (defined($oMapVal));
-        push @aRet, $sTempRet;
+        warn "Must return a string - something went wrong " .
+          "(possibly in _str_map_transform).\n";
+        return;
       }
+      push @aRet, '!' if ($sNot);
+      push @aRet, $oMapVal if (defined($oMapVal));
+      push @aRet, $oTempRet;
     }
   }
 
@@ -526,7 +533,7 @@ sub _str_map_transform
 
   if (defined($sMapFunc) and length($sMapFunc))
   {
-    if (ref($oData) eq 'SCALAR')
+    if (ref(\$oData) eq 'SCALAR')
     {
       if ($sMapFunc eq 'lc')
       {
@@ -559,7 +566,7 @@ sub _str_map_transform
         return;
       }
 
-      if ($sType eq '%' and ref($oData) eq 'SCALAR')
+      if ($sType eq '%' ref(\$oData) eq 'SCALAR')
       {
         if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
         {

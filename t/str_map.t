@@ -19,14 +19,16 @@ my $paTests =
           'direction' => "src",
           'if' => "eth*",
         }, 
-        [
-          'direction' => 
-          {
-            'src' => "-s",
-            'dst' => "-d",
-          },
-          'if' => "",
-        ]
+        {
+          'map' => [
+            'direction' => 
+            {
+              'src' => "-s",
+              'dst' => "-d",
+            },
+            'if' => "",
+          ],
+        },
       )
     ], 
     [

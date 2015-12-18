@@ -260,21 +260,21 @@ my $paTests =
     "ICMP not options",
   ],
   [
-    $oIPT->_ct({'name' => "established related"}),
+    $oIPT->_ct({'name' => [qw/established related/]}),
     [
       "-m conntrack --ctstate RELATED,ESTABLISHED"
     ],
     "Connection state options",
   ],
   [
-    $oIPT->_ct({'!name' => "established related"}),
+    $oIPT->_ct({'!name' => [qw/established related/]}),
     [
       "-m conntrack ! --ctstate RELATED,ESTABLISHED"
     ],
     "Connection state not options",
   ],
   [
-    $oIPT->_ct({'not' => 1, 'name' => "established related"}),
+    $oIPT->_ct({'not' => 1, 'name' => [qw/established related/]}),
     [
       "-m conntrack ! --ctstate RELATED,ESTABLISHED"
     ],
@@ -426,7 +426,7 @@ my $paTests =
       }
     ), 
     1, 
-    "Save IPSET #2"
+    "Save IPSET 2"
   ],
   [
     [$oIPT->get_ipset()],
@@ -437,7 +437,7 @@ my $paTests =
       'add test 1.1.1.0/24',
       'add test 2.2.0.0/16',
     ],
-    "IPSET return data #2"
+    "IPSET return data 2"
   ],
 ];
 

@@ -373,11 +373,25 @@ sub _add_module
 # Return a string from a definition
 # Input is a hashref of the input datastructure and a definition hash.
 # The definition hash must contain a data map (key: map) but may also contain:
+# map: key/value array whose keys match that of params data
+# - the lookup value may not contain spaces - spaces are used to 
+#   designate options
+# - options/attributes may be any of:
+#   - +req: required field - must be explicitly or implicitly (see alt) passed
+#     from params
+#   - +imp: implied field - the value will always be displayed
+#   - @<lookup> and %<lookup>: see below
+#   - lc and uc: upper or lower case the string
+#   - qq: quote the string
+#   - bool: make sure data is defined
+#   - ip: confirm a proper IP or CIDR string and return the CIDR string
 # alt: mapping of 'actual value' => 'alias'
-# req: array of required fields
-# lookup: a hash of values to replace (will be used with a value of % type
-# from map) or an array which is used to sort data (will be used from a value
-# of @ type from map)
+# lookup: a hash of values to replace
+# - the key must be the name of the %value or @value of the map key parameter
+# - a %value defines a hash whose value will be replaced with that of the 
+#   data passed from the params
+# - a @value defines an array template that will be used to sort the data 
+#   passed from the params
 # not: keys that may have not (!) prepended - if not is undefineda user
 # will not be able to pass a 'not' or '!name' key.
 sub _str_map
@@ -390,17 +404,14 @@ sub _str_map
 
   # Check hash value types and assign them variables
   return
-    if (not $oSelf->_check_type([qw/ARRAY HASH ARRAY HASH ARRAY/],
-      '<', 0, 0, @{$phData}{qw/map alt req lookup not/}));
-  my ($paMap, $phAlt, $paRequire, $phLookup, $paNot) =
-    @{$phData}{qw/map alt req lookup not/};
+    if (not $oSelf->_check_type([qw/ARRAY HASH HASH ARRAY/],
+      '<', 0, 0, @{$phData}{qw/map alt lookup not/}));
+  my ($paMap, $phAlt, $phLookup, $paNot) =
+    @{$phData}{qw/map alt lookup not/};
 
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
     if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
-
-  # Setup hash to make sure that all fields that are required are present
-  my %hRequire = map {$_ => 0} @$paRequire;
 
   my $sGlobalNot = 0;
   $sGlobalNot = 1
@@ -409,14 +420,14 @@ sub _str_map
   # Make sure results are oldered from the even map array
   $oSelf->_each_kv($paMap, 'str_map');
 
-  my (@aRet, @aDone);
+  my (@aRet, @aDone, %hRequire);
   # Evaluate map - look at actual data later
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
     # MapVal can be an empty string
     next if (not defined($oMapVal));
 
-    # Additional words for typing and modification (ie, uc/lc)
+    # Additional options for typing and modification (ie, uc/lc)
     my @aMaps = split(' ', $sMapKey);
     next if (not exists($aMaps[0]));
     my $sMapStr = $aMaps[0];
@@ -479,7 +490,7 @@ sub _str_map
         }
         if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
-          push @aRet, '!' if ($sNot);
+          push @aRet, '!' if ($sNot and grep {/^$sFuncStr$/} @$paNot);
           push @aRet, $oMapVal->{$sOrKey};
         }
       }
@@ -504,7 +515,7 @@ sub _str_map
           "(possibly in _str_map_transform).\n";
         return;
       }
-      push @aRet, '!' if ($sNot);
+      push @aRet, '!' if ($sNot and grep {/^$sFuncStr$/} @$paNot);
       push @aRet, $oMapVal if (defined($oMapVal));
       push @aRet, $oTempRet;
     }
@@ -561,8 +572,16 @@ sub _str_map_transform
       my ($sType, $sKey) = ($1, $2);
       if (not defined($phLookup) or not exists($phLookup->{$sKey}))
       {
-        warn "A lookup hash was wanted but not defined.\n";
-        return;
+        # Try to use data in the instance before failing
+        if (exists($oSelf->{$sKey}))
+        {
+          $phLookup = $oSelf;
+        }
+        else
+        {
+          warn "A lookup hash was wanted but not defined.\n";
+          return;
+        }
       }
 
       if ($sType eq '%' and ref(\$oData) eq 'SCALAR')

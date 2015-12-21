@@ -8,6 +8,7 @@ our @ISA = qw(Exporter);
 
 my @aInternal = qw/
   _str_map_transform
+  _compile_ret
 /;
 
 my @aModuleInit = qw/
@@ -380,10 +381,11 @@ sub _add_module
 #   - +req: required field - must be explicitly or implicitly (see alt) passed
 #     from params
 #   - +imp: implied field - the value will always be displayed
+#   - +not: field can have not (!) prepended
+#   - +bool: value of map is used if the param evaluates true
 #   - @<lookup> and %<lookup>: see below
 #   - lc and uc: upper or lower case the string
 #   - qq: quote the string
-#   - bool: make sure data is defined
 #   - ip: confirm a proper IP or CIDR string and return the CIDR string
 # alt: mapping of 'actual value' => 'alias'
 # lookup: a hash of values to replace
@@ -392,7 +394,6 @@ sub _add_module
 #   data passed from the params
 # - a @value defines an array template that will be used to sort the data 
 #   passed from the params
-# not: keys that may have not (!) prepended - if not is undefineda user
 # will not be able to pass a 'not' or '!name' key.
 sub _str_map
 {
@@ -404,10 +405,10 @@ sub _str_map
 
   # Check hash value types and assign them variables
   return
-    if (not $oSelf->_check_type([qw/ARRAY HASH HASH ARRAY/],
-      '<', 0, 0, @{$phData}{qw/map alt lookup not/}));
-  my ($paMap, $phAlt, $phLookup, $paNot) =
-    @{$phData}{qw/map alt lookup not/};
+    if (not $oSelf->_check_type([qw/ARRAY HASH HASH/],
+      '<', 0, 0, @{$phData}{qw/map alt lookup/}));
+  my ($paMap, $phAlt, $phLookup) =
+    @{$phData}{qw/map alt lookup/};
 
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
@@ -415,11 +416,14 @@ sub _str_map
 
   my $sGlobalNot = 0;
   $sGlobalNot = 1
-    if (exists($phParams->{'not'}) and $phParams->{'not'} and defined($paNot));
+    if (exists($phParams->{'not'}) and $phParams->{'not'});
 
   # Make sure results are oldered from the even map array
   $oSelf->_each_kv($paMap, 'str_map');
 
+  # Ret are elements of a string to be returned
+  # Done are the keys that have been processed
+  # Require are fields that are required - set 0 after processing
   my (@aRet, @aDone, %hRequire);
   # Evaluate map - look at actual data later
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
@@ -431,9 +435,41 @@ sub _str_map
     my @aMaps = split(' ', $sMapKey);
     next if (not exists($aMaps[0]));
     my $sMapStr = $aMaps[0];
+    my (@aFuncs, $sCanNot, $sIsImp, $sIsBool) = ((), 0, 0, 0);
+    for my $i (1 .. $#aMaps)
+    {
+      my $sStr = $aMaps[$i];
+      if ($sStr =~ /^\+req$/)
+      {
+        $hRequire{$sMapStr} = 1;
+      }
+      elsif ($sStr =~ /^\+not$/)
+      {
+        $sCanNot = 1;
+      }
+      elsif ($sStr =~ /^\+imp$/)
+      {
+        $sIsImp = 1;
+      }
+      elsif ($sStr =~ /^\+bool$/)
+      {
+        $sIsBool = 1;
+      }
+      elsif ($sStr =~ /^(lc|uc|qq|ip)$/)
+      {
+        push @aFuncs, $sStr;
+      }
+      else
+      {
+        warn "Option [$sStr] is undefined in the API for _map_str().\n";
+        return;
+      }
+    }
+    warn "A bool type pre-empts function definitions in [$sMapKey].\n"
+      if ($sIsBool and scalar(@aFuncs));
 
     # Get the actual key from the params. Eg '!destination'
-    my $sActualKey;
+    my ($sActualKey, $sWhichKey);
     {
       my @aPossibleKeys;
       # Original possible key
@@ -442,7 +478,7 @@ sub _str_map
       push @aPossibleKeys, $phAlt->{$sMapStr}
         if (defined($phAlt) and defined($phAlt->{$sMapStr}));
 
-      for my $sWhichKey (@aPossibleKeys)
+      for $sWhichKey (@aPossibleKeys)
       {
         # Only possible alteration from the given key should be a not (!)
         my @aKey = grep {/^!?$sWhichKey$/} keys %$phParams;
@@ -450,27 +486,50 @@ sub _str_map
         {
           $sActualKey = $aKey[0];
           # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
-          $hRequire{$sMapStr} = 1;
+          $hRequire{$sWhichKey} = 1;
           last;
         }
       }
     }
 
-    next if (not defined($sActualKey));
+    # Key was not passed in params
+    if (not defined($sActualKey))
+    {
+      if ($hRequire{$sWhichKey})
+      {
+        warn "[$sMapStr] required.\n";
+      }
+      # Handle implied keys
+      elsif ($sIsImp)
+      {
+        if (ref(\$oMapVal) ne 'SCALAR')
+        {
+          warn "The map value of [$sMapStr] must be a string.\n";
+          return;
+        }
+        push @aRet, $oSelf->_compile_ret([$sCanNot, $sGlobalNot], $oMapVal);
+        $hRequire{$sWhichKey} = 0;
+        next;
+      }
+      else
+      {
+        next;
+      }
+    }
+
 
     # Strip out not designation
     # FuncStr is used when determining what the key's function is
     # ActualKey is used to refer to the param data
     my ($sNot, $sFuncStr) = $sActualKey =~ /^(!)?(.*)$/;
     # Return early if a not was it is not allowed
-    if (defined($sNot) and not defined($paNot) and
-      (not $sFuncStr eq 'name' or not grep {$sFuncStr eq $_} @$paNot))
+    if (defined($sNot) and not $sCanNot)
     {
       warn "A not (!) can not be used for [$sFuncStr] - doing nothing\n";
       return;
     }
     # Apply global not if needed
-    $sNot = $sGlobalNot if (not defined($sNot));
+    $sNot = $sGlobalNot if (not defined($sNot) and $sCanNot);
 
     # First check for keys that have already been processed - still need
     # to make sure the key is not an alias
@@ -490,8 +549,7 @@ sub _str_map
         }
         if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
-          push @aRet, '!' if ($sNot and grep {/^$sFuncStr$/} @$paNot);
-          push @aRet, $oMapVal->{$sOrKey};
+          push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal->{$sOrKey});
         }
       }
     }
@@ -500,10 +558,24 @@ sub _str_map
       warn "Map value can not be an array\n";
       return;
     }
-    else
+    elsif (ref(\$oMapVal) eq 'SCALAR')
     {
       # Might be a hash or scalar
       my $oTempRet = $phParams->{$sActualKey};
+      # Use and short circuit if bool type
+      if ($sIsBool)
+      {
+        if (ref(\$oTempRet) ne 'SCALAR' or not grep {$_ eq $oTempRet} (0, 1))
+        {
+          warn "[$sMapStr] value must be a 1 or 0.\n";
+          return;
+        }
+        elsif ($oTempRet)
+        {
+          push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal);
+        }
+        next;
+      }
       # If modifications were defined, run through them
       foreach my $sPossibleFunc (@aMaps[1 .. $#aMaps])
       {
@@ -515,9 +587,7 @@ sub _str_map
           "(possibly in _str_map_transform).\n";
         return;
       }
-      push @aRet, '!' if ($sNot and grep {/^$sFuncStr$/} @$paNot);
-      push @aRet, $oMapVal if (defined($oMapVal));
-      push @aRet, $oTempRet;
+      push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal, $oTempRet);
     }
   }
 
@@ -556,10 +626,6 @@ sub _str_map_transform
       elsif ($sMapFunc eq 'qq')
       {
         return "\"" . $oData . "\"";
-      }
-      elsif ($sMapFunc eq 'bool')
-      {
-        return if (not defined($oData));
       }
       elsif ($sMapFunc eq 'ip')
       {
@@ -615,6 +681,30 @@ sub _str_map_transform
     warn "Unknown function type or bad data.\n";
     return $oData;
   }
+}
+
+# Take an arrayref of values that must be true to prepend a not (!) and a
+# list of strings to append
+sub _compile_ret
+{
+  my ($oSelf, $paCheckNot, @aData) = @_;
+  my @aRet;
+
+  # All CheckNot must be true
+  push @aRet, '!'
+    if (not grep {not $_} @$paCheckNot);
+
+  for my $sData (@aData)
+  {
+    if (ref(\$sData) ne 'SCALAR')
+    {
+      warn "_compile_ret() data must be a string.\n";
+      return;
+    }
+    push @aRet, $sData;
+  }
+
+  return @aData;
 }
 
 # Check a list of types against an array of data

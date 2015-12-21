@@ -21,21 +21,12 @@ sub _comment
 {
   my ($oSelf, $phParams) = @_;
 
-  my @aParts;
-  if (ref($phParams->{name}) eq 'ARRAY' and scalar(@{$phParams->{name}}))
-  {
-    push @aParts, @{$phParams->{name}};
-  }
-  elsif (ref(\$phParams->{name}) eq 'SCALAR' and length($phParams->{name}))
-  {
-    push @aParts, $phParams->{name};
-  }
-  else
-  {
-    return;
-  }
-
-  return ["-m comment --comment \"" . join(" ", grep {defined($_)} @aParts) . "\""];
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'name +req qq' => "-m comment --comment",
+      ],
+    }
+  )];
 }
 
 

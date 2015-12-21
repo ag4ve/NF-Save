@@ -185,11 +185,11 @@ sub _srcdst
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'direction' => {
+        'direction +req +not' => {
           'src' => "-s",
           'dst' => "-d",
         },
-        'ip ip' => "",
+        'ip +req ip' => "",
       ],
       'alt' => {
         'ip' => "name",
@@ -199,7 +199,6 @@ sub _srcdst
         direction
         ip
       /],
-      'not' => [qw/direction/]
     }
   )];
 }
@@ -211,11 +210,11 @@ sub _io_if
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'direction' => {
+        'direction +req +not' => {
           'in' => "-i",
           'out' => "-o",
         },
-        'if' => "",
+        'if +req' => "",
       ],
       'alt' => {
         'if' => "name",
@@ -225,7 +224,6 @@ sub _io_if
         direction
         if
       /],
-      'not' => [qw/direction/],
     }
   )];
 }
@@ -237,12 +235,11 @@ sub _proto
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'proto lc' => "-p",
+        'proto +not +req lc' => "-p",
       ],
       'alt' => {
         'proto' => "name",
       },
-      'not' => [qw/proto/],
     }
   )];
 }
@@ -258,52 +255,64 @@ sub _jump
 
   if (uc($sJump) eq 'LOG')
   {
-    return [$oSelf->_str_map($phParams, [
-        'name uc' => "-j",
-        'prefix qq' => "--log-prefix",
-        'tcp bool' => "--log-tcp-options",
-        'ip bool' => "--log-ip-options",
-        'uid bool' => "--log-uid",
-      ], undef, [qw/name/],
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req uc' => "-j",
+          'prefix qq' => "--log-prefix",
+          'tcp +bool' => "--log-tcp-options",
+          'ip +bool' => "--log-ip-options",
+          'uid +bool' => "--log-uid",
+        ], 
+      },
     )];
   }
   elsif (uc($sJump) eq 'REJECT')
   {
-    return [$oSelf->_str_map($phParams, [
-        'name uc' => "-j",
-        'with bool' => "--reject-with icmp-port-unreachable",
-      ], undef, [qw/name/],
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req uc' => "-j",
+          'with +bool' => "--reject-with icmp-port-unreachable",
+        ],
+      },
     )];
   }
   elsif (uc($sJump) eq 'CT')
   {
-    return [$oSelf->_str_map($phParams, [
-        'name uc' => "-j",
-        'notrack bool' => "--notrack",
-      ], undef, [qw/name/],
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req uc' => "-j",
+          'notrack +bool' => "--notrack",
+        ],
+      },
     )];
   }
   elsif (uc($sJump) eq 'SNAT')
   {
-    return [$oSelf->_str_map($phParams, [
-        'name uc' => "-j",
-        'src ip' => "--to-source",
-      ], undef, [qw/name/],
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req uc' => "-j",
+          'src ip' => "--to-source",
+        ],
+      },
     )];
   }
   elsif (uc($sJump) eq 'DNAT')
   {
-    return [$oSelf->_str_map($phParams, [
-        'name uc' => "-j",
-        'dst ip' => "--to-destination",
-      ], undef, [qw/name/],
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req uc' => "-j",
+          'dst ip' => "--to-destination",
+        ],
+      },
     )];
   }
   else
   {
-    return [$oSelf->_str_map($phParams, [
-        'name' => "-j",
-      ], undef, [qw/name/]
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req' => "-j",
+        ],
+      },
     )];
   }
 }

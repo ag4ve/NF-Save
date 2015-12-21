@@ -24,7 +24,7 @@ sub _owner
   return [$oSelf->_str_map($phParams, {
       'map' => [
         'name'          => "-m owner",
-        'owner %owner'  => "--uid-owner",
+        'owner %uids'   => "--uid-owner",
       ], 
       'alt' => {
         'owner' => "name",

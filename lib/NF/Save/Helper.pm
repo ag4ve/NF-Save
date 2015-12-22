@@ -392,7 +392,7 @@ sub _add_module
 #   - +imp: implied field - the value will always be displayed
 #   - +not: field can have not (!) prepended
 #   - +bool: value of map is used if the param evaluates true
-#   - @<lookup> and %<lookup>: see below
+#   - @<lookup> and %<lookup> and =<lookup>: see below
 #   - lc and uc: upper or lower case the string
 #   - qq: quote the string
 #   - ip: confirm a proper IP or CIDR string and return the CIDR string
@@ -403,6 +403,7 @@ sub _add_module
 #   data passed from the params
 # - a @value defines an array template that will be used to sort the data 
 #   passed from the params
+# - a =value defines a regex the param value must match against
 # will not be able to pass a 'not' or '!name' key.
 sub _str_map
 {
@@ -440,38 +441,40 @@ sub _str_map
     # MapVal can be an empty string
     next if (not defined($oMapVal));
 
-    # Additional options for typing and modification (ie, uc/lc)
-    my @aMaps = split(' ', $sMapKey);
-    next if (not exists($aMaps[0]));
-    my $sMapStr = $aMaps[0];
-    my (@aFuncs, $sCanNot, $sIsImp, $sIsBool) = ((), 0, 0, 0);
-    for my $i (1 .. $#aMaps)
+    # Options for typing and modification (ie, uc/lc)
+    my (@aFuncs, $sCanNot, $sIsImp, $sIsBool, $sMapStr) = ((), 0, 0, 0, undef);
     {
-      my $sStr = $aMaps[$i];
-      if ($sStr =~ /^\+req$/)
+      my @aMaps = split(' ', $sMapKey);
+      next if (not exists($aMaps[0]));
+      $sMapStr = $aMaps[0];
+      for my $i (1 .. $#aMaps)
       {
-        $hRequire{$sMapStr} = 1;
-      }
-      elsif ($sStr =~ /^\+not$/)
-      {
-        $sCanNot = 1;
-      }
-      elsif ($sStr =~ /^\+imp$/)
-      {
-        $sIsImp = 1;
-      }
-      elsif ($sStr =~ /^\+bool$/)
-      {
-        $sIsBool = 1;
-      }
-      elsif ($sStr =~ /^(lc|uc|qq|ip)$/)
-      {
-        push @aFuncs, $sStr;
-      }
-      else
-      {
-        warn "Option [$sStr] is undefined in the API for _map_str().\n";
-        return;
+        my $sStr = $aMaps[$i];
+        if ($sStr =~ /^\+req$/)
+        {
+          $hRequire{$sMapStr} = 1;
+        }
+        elsif ($sStr =~ /^\+not$/)
+        {
+          $sCanNot = 1;
+        }
+        elsif ($sStr =~ /^\+imp$/)
+        {
+          $sIsImp = 1;
+        }
+        elsif ($sStr =~ /^\+bool$/)
+        {
+          $sIsBool = 1;
+        }
+        elsif ($sStr =~ /^(lc|uc|qq|ip|[@%=].*)$/)
+        {
+          push @aFuncs, $sStr;
+        }
+        else
+        {
+          warn "Option [$sStr] is undefined in the API for _map_str().\n";
+          return;
+        }
       }
     }
     warn "A bool type pre-empts function definitions in [$sMapKey].\n"
@@ -487,15 +490,16 @@ sub _str_map
       push @aPossibleKeys, $phAlt->{$sMapStr}
         if (defined($phAlt) and defined($phAlt->{$sMapStr}));
 
-      for $sWhichKey (@aPossibleKeys)
+      for my $sKey (@aPossibleKeys)
       {
         # Only possible alteration from the given key should be a not (!)
-        my @aKey = grep {/^!?$sWhichKey$/} keys %$phParams;
+        my @aKey = grep {/^!?$sKey$/} keys %$phParams;
         if (scalar(@aKey) and defined($aKey[0]))
         {
           $sActualKey = $aKey[0];
           # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
-          $hRequire{$sWhichKey} = 1;
+          $sWhichKey = $sKey;
+          $hRequire{$sKey} = 1;
           last;
         }
       }
@@ -525,7 +529,6 @@ sub _str_map
         next;
       }
     }
-
 
     # Strip out not designation
     # FuncStr is used when determining what the key's function is
@@ -586,7 +589,7 @@ sub _str_map
         next;
       }
       # If modifications were defined, run through them
-      foreach my $sPossibleFunc (@aMaps[1 .. $#aMaps])
+      foreach my $sPossibleFunc (@aFuncs)
       {
         $oTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
       }
@@ -640,9 +643,14 @@ sub _str_map_transform
       {
         return $oSelf->_cidr_ip($oData);
       }
+      else
+      {
+        warn "Unknown option [$sMapFunc].\n";
+        return $oData;
+      }
     }
     # Key to lookup from
-    if ($sMapFunc =~ /^(%@)(.*)/)
+    if ($sMapFunc =~ /^([%@=])(.*)/)
     {
       my ($sType, $sKey) = ($1, $2);
       if (not defined($phLookup) or not exists($phLookup->{$sKey}))
@@ -683,11 +691,19 @@ sub _str_map_transform
           return join(",", sort {$order{$a} <=> $order{$b}} @$oData);
         }
       }
+      elsif ($sType eq '=')
+      {
+        if (ref($phLookup->{$sKey}) eq 'SCALAR' and ref(\$oData) eq 'SCALAR')
+        {
+          return $oData
+            if ($oData =~ /$phLookup->{$sKey}/);
+        }
+      }
     }
   }
   else
   {
-    warn "Unknown function type or bad data.\n";
+    warn "No function.\n";
     return $oData;
   }
 }

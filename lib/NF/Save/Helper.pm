@@ -512,6 +512,7 @@ sub _str_map
       if ($hRequire{$sMapStr})
       {
         warn "[$sMapStr] required.\n";
+        return;
       }
       # Handle implied keys
       elsif ($sIsImp)

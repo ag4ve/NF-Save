@@ -731,7 +731,7 @@ sub _compile_ret
     push @aRet, $sData;
   }
 
-  return @aData;
+  return @aRet;
 }
 
 # Check a list of types against an array of data

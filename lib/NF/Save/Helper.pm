@@ -442,7 +442,7 @@ sub _str_map
     next if (not defined($oMapVal));
 
     # Options for typing and modification (ie, uc/lc)
-    my (@aFuncs, $sCanNot, $sIsImp, $sIsBool, $sMapStr) = ((), 0, 0, 0, undef);
+    my ($sCanNot, $sIsImp, $sIsBool, $sMapStr, @aFuncs) = (0, 0, 0, undef, ());
     {
       my @aMaps = split(' ', $sMapKey);
       next if (not exists($aMaps[0]));
@@ -461,12 +461,13 @@ sub _str_map
         elsif ($sStr =~ /^\+imp$/)
         {
           $sIsImp = 1;
+          $hRequire{$sMapStr} = 1;
         }
         elsif ($sStr =~ /^\+bool$/)
         {
           $sIsBool = 1;
         }
-        elsif ($sStr =~ /^(lc|uc|qq|ip|[@%=].*)$/)
+        elsif ($sStr =~ /^(lc|uc|qq|ip|[\@\%\=].+)$/)
         {
           push @aFuncs, $sStr;
         }
@@ -508,7 +509,7 @@ sub _str_map
     # Key was not passed in params
     if (not defined($sActualKey))
     {
-      if ($hRequire{$sWhichKey})
+      if ($hRequire{$sMapStr})
       {
         warn "[$sMapStr] required.\n";
       }
@@ -521,7 +522,7 @@ sub _str_map
           return;
         }
         push @aRet, $oSelf->_compile_ret([$sCanNot, $sGlobalNot], $oMapVal);
-        $hRequire{$sWhichKey} = 0;
+        $hRequire{$sMapStr} = 0;
         next;
       }
       else
@@ -643,61 +644,61 @@ sub _str_map_transform
       {
         return $oSelf->_cidr_ip($oData);
       }
+      # Key to lookup from
+      elsif ($sMapFunc =~ /^([%@=])(.*)/)
+      {
+        my ($sType, $sKey) = ($1, $2);
+        if (not defined($phLookup) or not exists($phLookup->{$sKey}))
+        {
+          # Try to use data in the instance before failing
+          if (exists($oSelf->{$sKey}))
+          {
+            $phLookup = $oSelf;
+          }
+          else
+          {
+            warn "A lookup hash was wanted but not defined.\n";
+            return;
+          }
+        }
+  
+        if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
+        {
+          if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
+          {
+            return $phLookup->{$sKey}{$oData};
+          }
+          else
+          {
+            warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
+            return $oData;
+          }
+        }
+        elsif ($sType eq '@')
+        {
+          if (ref($phLookup->{$sKey}) eq 'ARRAY' and ref($oData) eq 'ARRAY')
+          {
+            my %order;
+            for my $i (0 .. $#{$phLookup->{$sKey}})
+            {
+              $order{$phLookup->{$sKey}[$i]} = $i;
+            }
+            return join(",", sort {$order{$a} <=> $order{$b}} @$oData);
+          }
+        }
+        elsif ($sType eq '=')
+        {
+          if (ref($phLookup->{$sKey}) eq 'SCALAR' and ref(\$oData) eq 'SCALAR')
+          {
+            return $oData
+              if ($oData =~ /$phLookup->{$sKey}/);
+          }
+        }
+      }
       else
       {
         warn "Unknown option [$sMapFunc].\n";
         return $oData;
-      }
-    }
-    # Key to lookup from
-    if ($sMapFunc =~ /^([%@=])(.*)/)
-    {
-      my ($sType, $sKey) = ($1, $2);
-      if (not defined($phLookup) or not exists($phLookup->{$sKey}))
-      {
-        # Try to use data in the instance before failing
-        if (exists($oSelf->{$sKey}))
-        {
-          $phLookup = $oSelf;
-        }
-        else
-        {
-          warn "A lookup hash was wanted but not defined.\n";
-          return;
-        }
-      }
-
-      if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
-      {
-        if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
-        {
-          return $phLookup->{$sKey}{$oData};
-        }
-        else
-        {
-          warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
-          return $oData;
-        }
-      }
-      elsif ($sType eq '@')
-      {
-        if (ref($phLookup->{$sKey}) eq 'ARRAY' and ref($oData) eq 'ARRAY')
-        {
-          my %order;
-          for my $i (0 .. $#{$phLookup->{$sKey}})
-          {
-            $order{$phLookup->{$sKey}[$i]} = $i;
-          }
-          return join(",", sort {$order{$a} <=> $order{$b}} @$oData);
-        }
-      }
-      elsif ($sType eq '=')
-      {
-        if (ref($phLookup->{$sKey}) eq 'SCALAR' and ref(\$oData) eq 'SCALAR')
-        {
-          return $oData
-            if ($oData =~ /$phLookup->{$sKey}/);
-        }
       }
     }
   }

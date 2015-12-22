@@ -21,13 +21,18 @@ sub Init
 sub _limit
 {
   my ($oSelf, $phParams) = @_;
-  my @aStr;
-  push @aStr, "-m limit";
-  (push @aStr, "--limit " . $phParams->{limit}) 
-    if ($phParams->{limit} and 
-      $phParams->{limit} =~ /^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)/);
-  (push @aStr, "--limit-burst " . $phParams->{burst}) if($phParams->{burst});
-  return [join(" ", @aStr)];
+
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'name +imp'         => "-m limit",
+        'limit +req =limit' => "--limit",
+        'burst'             => "--limit-burst",
+      ],
+      'lookup' => {
+        'limit' => '^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)'
+      }
+    }
+  )];
 }
 
 

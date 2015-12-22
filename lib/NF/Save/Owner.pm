@@ -23,17 +23,15 @@ sub _owner
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'name'          => "-m owner",
-        'owner %uids'   => "--uid-owner",
+        'name +imp'               => "-m owner",
+        'owner +req +not %owner'  => "--uid-owner",
       ], 
       'alt' => {
         'owner' => "name",
       }, 
-      'req' => [qw/owner/], 
       'lookup' => {
         'owner' => $oSelf->{uids}
       },
-      'not' => [qw/owner/],
     }
   )];
 }

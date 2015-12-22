@@ -21,9 +21,12 @@ sub _match
 {
   my ($oSelf, $phParams) = @_;
 
-  return [$oSelf->_str_map($phParams, [
-    'name lc' => "-m",
-  ])];
+  return [$oSelf->_str_map($phParams, {
+      'map' => [
+        'name +req lc' => "-m",
+      ],
+    },
+  )];
 }
 
  

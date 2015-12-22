@@ -23,15 +23,13 @@ sub _icmp
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'name lc' => "-p",
-        'name lc' => "-m",
-        'type' => '--icmp-type',
+        'name +req lc' => "-p",
+        'name +req lc' => "-m",
+        'type +not' => '--icmp-type',
       ], 
       'alt' => {
         'name' => "key"
       }, 
-      'req' => [qw/name/],
-      'not' => [qw/type/],
     }
   )];
 }

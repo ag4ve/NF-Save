@@ -26,17 +26,15 @@ sub _ct
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'name'            => "-m conntrack",
-        'state @ctorder'  => "--ctstate",
+        'name +imp'           => "-m conntrack",
+        'state +req @ctorder' => "--ctstate",
       ], 
       'alt' => {
         'state' => "name",
       }, 
-      'req' => [qw/state/], 
       'lookup' => {
         'state' => $oSelf->{ctorder}
       },
-      'not' => [qw/state/],
     }
   )];
 }

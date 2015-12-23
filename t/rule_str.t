@@ -161,19 +161,6 @@ my $paTests =
   [
     $oIPT->_tcp_udp(
       {
-        '!name' => "TCP", 
-        'dport' => 80, 
-        'sport' => "1024:65536"
-      }
-    ),
-    [
-      '-p tcp -m tcp ! --sport 1024:65536 ! --dport 80'
-    ],
-    "TCP not all keys options",
-  ],
-  [
-    $oIPT->_tcp_udp(
-      {
         'not' => 1,
         'name' => "TCP", 
         'dport' => 80, 

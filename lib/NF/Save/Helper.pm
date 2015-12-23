@@ -434,7 +434,7 @@ sub _str_map
   # Ret are elements of a string to be returned
   # Done are the keys that have been processed
   # Require are fields that are required - set 0 after processing
-  my (@aRet, @aDone, %hRequire);
+  my (@aRet, %hRequire);
   # Evaluate map - look at actual data later
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
@@ -544,11 +544,6 @@ sub _str_map
     }
     # Apply global not if needed
     $sNot = $sGlobalNot if (not defined($sNot) and $sCanNot);
-
-    # First check for keys that have already been processed - still need
-    # to make sure the key is not an alias
-    next if (grep {/^$sFuncStr$/} @aDone);
-    push @aDone, $sFuncStr;
 
     # User input is processed by one of these blocks or not at all
     if (ref($oMapVal) eq 'HASH')

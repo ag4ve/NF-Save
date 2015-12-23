@@ -509,13 +509,8 @@ sub _str_map
     # Key was not passed in params
     if (not defined($sActualKey))
     {
-      if ($hRequire{$sMapStr})
-      {
-        warn "[$sMapStr] required.\n";
-        return;
-      }
       # Handle implied keys
-      elsif ($sIsImp)
+      if ($sIsImp)
       {
         if (ref(\$oMapVal) ne 'SCALAR')
         {
@@ -525,6 +520,11 @@ sub _str_map
         push @aRet, $oSelf->_compile_ret([$sCanNot, $sGlobalNot], $oMapVal);
         $hRequire{$sMapStr} = 0;
         next;
+      }
+      elsif ($hRequire{$sMapStr})
+      {
+        warn "[$sMapStr] required.\n";
+        return;
       }
       else
       {
@@ -564,6 +564,7 @@ sub _str_map
         if ($sOrKey =~ /$phParams->{$sActualKey}/)
         {
           push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal->{$sOrKey});
+          $hRequire{$sMapStr} = 0;
         }
       }
     }
@@ -587,6 +588,7 @@ sub _str_map
         elsif ($oTempRet)
         {
           push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal);
+          $hRequire{$sMapStr} = 0;
         }
         next;
       }
@@ -602,17 +604,18 @@ sub _str_map
         return;
       }
       push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal, $oTempRet);
+      $hRequire{$sMapStr} = 0;
     }
   }
 
-  if (not grep {$_ == 0} values(%hRequire))
+  if (grep {$_ == 0} values(%hRequire))
   {
     return join(' ', grep {defined($_) and length($_) > 0} @aRet) if (scalar(@aRet));
   }
   else
   {
     warn "Required fields not defined: [" .
-      join("] [", grep {$hRequire{$_} == 0} keys(%hRequire)) . "] " .
+      join("] [", grep {$hRequire{$_} == 1} keys(%hRequire)) . "] " .
       Dumper($phParams) . "\n";
     return;
   }

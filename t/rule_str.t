@@ -154,7 +154,7 @@ my $paTests =
       }
     ),
     [
-      '-p tcp -m tcp ! --sport 1024:65536 --dport 80'
+      '-p tcp -m tcp --sport 1024:65536 ! --dport 80'
     ],
     "TCP not one key options",
   ],

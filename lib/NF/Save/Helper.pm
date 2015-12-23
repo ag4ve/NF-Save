@@ -467,7 +467,7 @@ sub _str_map
         {
           $sIsBool = 1;
         }
-        elsif ($sStr =~ /^(lc|uc|qq|ip|[\@\%\=].+)$/)
+        elsif ($sStr =~ /^(lc|uc|qq|ip|[\@\&\=].+)$/)
         {
           push @aFuncs, $sStr;
         }
@@ -644,7 +644,7 @@ sub _str_map_transform
         return $oSelf->_cidr_ip($oData);
       }
       # Key to lookup from
-      elsif ($sMapFunc =~ /^([%@=])(.*)/)
+      elsif ($sMapFunc =~ /^([%&=])(.*)/)
       {
         my ($sType, $sKey) = ($1, $2);
         if (not defined($phLookup) or not exists($phLookup->{$sKey}))
@@ -661,6 +661,7 @@ sub _str_map_transform
           }
         }
   
+        # Lookup replace
         if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
         {
           if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
@@ -673,30 +674,37 @@ sub _str_map_transform
             return $oData;
           }
         }
-        elsif ($sType eq '@')
+        # Process from a dispatch table
+        elsif ($sType eq '&')
         {
-          if (ref($phLookup->{$sKey}) eq 'ARRAY' and ref($oData) eq 'ARRAY')
+          if (ref($phLookup->{$sKey}) eq 'CODE')
           {
-            my %order;
-            for my $i (0 .. $#{$phLookup->{$sKey}})
-            {
-              $order{$phLookup->{$sKey}[$i]} = $i;
-            }
-            return join(",", sort {$order{$a} <=> $order{$b}} @$oData);
+            return $phLookup->{$sKey}->($oData, $sKey);
           }
+          else
+          {
+            warn "No dispatch for [$sKey].\n";
+            return;
         }
-        elsif ($sType eq '=')
+        # Regex match filter
+        elsif ($sType eq '=' and ref(\$oData) eq 'SCALAR')
         {
-          if (ref($phLookup->{$sKey}) eq 'SCALAR' and ref(\$oData) eq 'SCALAR')
+          if (ref($phLookup->{$sKey}) eq 'SCALAR')
           {
             return $oData
               if ($oData =~ /$phLookup->{$sKey}/);
+          }
+          else
+          {
+            warn "No regex key for [$sKey].\n";
+            return;
           }
         }
       }
       else
       {
-        warn "Unknown option [$sMapFunc].\n";
+        warn "Unknown option [$sMapFunc] or bad data type for: " .
+          Dumper($oData) . "\n";
         return $oData;
       }
     }

@@ -591,6 +591,7 @@ sub _str_map
       foreach my $sPossibleFunc (@aFuncs)
       {
         $oTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
+        return if (not defined($oTempRet) or not length($oTempRet));
       }
       if (ref(\$oTempRet) ne 'SCALAR')
       {
@@ -659,7 +660,7 @@ sub _str_map_transform
       # Regex match filter
       elsif ($sType eq '=' and ref(\$oData) eq 'SCALAR')
       {
-        if (ref($phLookup->{$sKey}) eq 'SCALAR')
+        if (ref(\$phLookup->{$sKey}) eq 'SCALAR')
         {
           return $oData
             if ($oData =~ /$phLookup->{$sKey}/);

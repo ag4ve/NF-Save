@@ -26,10 +26,11 @@ sub _limit
       'map' => [
         'name +imp'         => "-m limit",
         'limit +req =limit' => "--limit",
-        'burst'             => "--limit-burst",
+        'burst =burst'             => "--limit-burst",
       ],
       'lookup' => {
-        'limit' => '^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)'
+        'limit' => '^[0-9]+\/(sec(ond)?|min(ute)?|hour|day)s?$',
+        'burst' => '^[0-9]+$',
       }
     }
   )];

@@ -34,7 +34,7 @@ sub _ct
           my ($oData, $sKey) = @_;
           my @aData;
 
-          if (ref(\$oData) ne 'SCALAR')
+          if (ref(\$oData) eq 'SCALAR')
           {
             @aData = split(',', uc($oData));
           }
@@ -43,11 +43,11 @@ sub _ct
             @aData = map {uc($_)} @$oData;
           }
 
-          my %order = {
+          my %order = (
             'NEW'         => 0,
             'RELATED'     => 1,
             'ESTABLISHED' => 2,
-          };
+          );
           return join(",",
             sort {$order{$a} <=> $order{$b}}
             @aData

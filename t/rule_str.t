@@ -291,9 +291,7 @@ my $paTests =
         'burst' => 0
       }
     ),
-    [
-      '-m limit'
-    ],
+    [],
     "Rate limit (Invalid limit and no burst).",
   ],
   [

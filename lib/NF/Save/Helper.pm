@@ -625,7 +625,66 @@ sub _str_map_transform
 
   if (defined($sMapFunc) and length($sMapFunc))
   {
-    if (ref(\$oData) eq 'SCALAR')
+    # Key to lookup from
+    if ($sMapFunc =~ /^([%&=])(.*)/)
+    {
+      my ($sType, $sKey) = ($1, $2);
+      if (not defined($phLookup) or not exists($phLookup->{$sKey}))
+      {
+        # Try to use data in the instance before failing
+        if (exists($oSelf->{$sKey}))
+        {
+          $phLookup = $oSelf;
+        }
+        else
+        {
+          warn "A lookup hash was wanted but not defined.\n";
+          return;
+        }
+      }
+
+      # Lookup replace
+      if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
+      {
+        if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
+        {
+          return $phLookup->{$sKey}{$oData};
+        }
+        else
+        {
+          warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
+          return $oData;
+        }
+      }
+      # Regex match filter
+      elsif ($sType eq '=' and ref(\$oData) eq 'SCALAR')
+      {
+        if (ref($phLookup->{$sKey}) eq 'SCALAR')
+        {
+          return $oData
+            if ($oData =~ /$phLookup->{$sKey}/);
+        }
+        else
+        {
+          warn "No regex key for [$sKey].\n";
+          return;
+        }
+      }
+      # Process from a dispatch table
+      elsif ($sType eq '&')
+      {
+        if (ref($phLookup->{$sKey}) eq 'CODE')
+        {
+          return $phLookup->{$sKey}->($oData, $sKey);
+        }
+        else
+        {
+          warn "No dispatch for [$sKey].\n";
+          return;
+        }
+      }
+    }
+    elsif (ref(\$oData) eq 'SCALAR')
     {
       if ($sMapFunc eq 'lc')
       {
@@ -642,65 +701,6 @@ sub _str_map_transform
       elsif ($sMapFunc eq 'ip')
       {
         return $oSelf->_cidr_ip($oData);
-      }
-      # Key to lookup from
-      elsif ($sMapFunc =~ /^([%&=])(.*)/)
-      {
-        my ($sType, $sKey) = ($1, $2);
-        if (not defined($phLookup) or not exists($phLookup->{$sKey}))
-        {
-          # Try to use data in the instance before failing
-          if (exists($oSelf->{$sKey}))
-          {
-            $phLookup = $oSelf;
-          }
-          else
-          {
-            warn "A lookup hash was wanted but not defined.\n";
-            return;
-          }
-        }
-  
-        # Lookup replace
-        if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
-        {
-          if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
-          {
-            return $phLookup->{$sKey}{$oData};
-          }
-          else
-          {
-            warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
-            return $oData;
-          }
-        }
-        # Process from a dispatch table
-        elsif ($sType eq '&')
-        {
-          if (ref($phLookup->{$sKey}) eq 'CODE')
-          {
-            return $phLookup->{$sKey}->($oData, $sKey);
-          }
-          else
-          {
-            warn "No dispatch for [$sKey].\n";
-            return;
-          }
-        }
-        # Regex match filter
-        elsif ($sType eq '=' and ref(\$oData) eq 'SCALAR')
-        {
-          if (ref($phLookup->{$sKey}) eq 'SCALAR')
-          {
-            return $oData
-              if ($oData =~ /$phLookup->{$sKey}/);
-          }
-          else
-          {
-            warn "No regex key for [$sKey].\n";
-            return;
-          }
-        }
       }
       else
       {

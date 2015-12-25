@@ -467,7 +467,7 @@ sub _str_map
         {
           $sIsBool = 1;
         }
-        elsif ($sStr =~ /^(lc|uc|qq|ip|[\@\%\=].+)$/)
+        elsif ($sStr =~ /^(lc|uc|qq|ip|[\%\&\=].+)$/)
         {
           push @aFuncs, $sStr;
         }
@@ -591,6 +591,7 @@ sub _str_map
       foreach my $sPossibleFunc (@aFuncs)
       {
         $oTempRet = $oSelf->_str_map_transform($oTempRet, $sPossibleFunc, $phLookup);
+        return if (not defined($oTempRet) or not length($oTempRet));
       }
       if (ref(\$oTempRet) ne 'SCALAR')
       {
@@ -625,7 +626,66 @@ sub _str_map_transform
 
   if (defined($sMapFunc) and length($sMapFunc))
   {
-    if (ref(\$oData) eq 'SCALAR')
+    # Key to lookup from
+    if ($sMapFunc =~ /^([%&=])(.*)/)
+    {
+      my ($sType, $sKey) = ($1, $2);
+      if (not defined($phLookup) or not exists($phLookup->{$sKey}))
+      {
+        # Try to use data in the instance before failing
+        if (exists($oSelf->{$sKey}))
+        {
+          $phLookup = $oSelf;
+        }
+        else
+        {
+          warn "A lookup hash was wanted but not defined.\n";
+          return;
+        }
+      }
+
+      # Lookup replace
+      if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
+      {
+        if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
+        {
+          return $phLookup->{$sKey}{$oData};
+        }
+        else
+        {
+          warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
+          return $oData;
+        }
+      }
+      # Regex match filter
+      elsif ($sType eq '=' and ref(\$oData) eq 'SCALAR')
+      {
+        if (ref(\$phLookup->{$sKey}) eq 'SCALAR')
+        {
+          return $oData
+            if ($oData =~ /$phLookup->{$sKey}/);
+        }
+        else
+        {
+          warn "No regex key for [$sKey].\n";
+          return;
+        }
+      }
+      # Process from a dispatch table
+      elsif ($sType eq '&')
+      {
+        if (ref($phLookup->{$sKey}) eq 'CODE')
+        {
+          return $phLookup->{$sKey}->($oData, $sKey);
+        }
+        else
+        {
+          warn "No dispatch for [$sKey].\n";
+          return;
+        }
+      }
+    }
+    elsif (ref(\$oData) eq 'SCALAR')
     {
       if ($sMapFunc eq 'lc')
       {
@@ -643,60 +703,10 @@ sub _str_map_transform
       {
         return $oSelf->_cidr_ip($oData);
       }
-      # Key to lookup from
-      elsif ($sMapFunc =~ /^([%@=])(.*)/)
-      {
-        my ($sType, $sKey) = ($1, $2);
-        if (not defined($phLookup) or not exists($phLookup->{$sKey}))
-        {
-          # Try to use data in the instance before failing
-          if (exists($oSelf->{$sKey}))
-          {
-            $phLookup = $oSelf;
-          }
-          else
-          {
-            warn "A lookup hash was wanted but not defined.\n";
-            return;
-          }
-        }
-  
-        if ($sType eq '%' and ref(\$oData) eq 'SCALAR')
-        {
-          if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
-          {
-            return $phLookup->{$sKey}{$oData};
-          }
-          else
-          {
-            warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
-            return $oData;
-          }
-        }
-        elsif ($sType eq '@')
-        {
-          if (ref($phLookup->{$sKey}) eq 'ARRAY' and ref($oData) eq 'ARRAY')
-          {
-            my %order;
-            for my $i (0 .. $#{$phLookup->{$sKey}})
-            {
-              $order{$phLookup->{$sKey}[$i]} = $i;
-            }
-            return join(",", sort {$order{$a} <=> $order{$b}} @$oData);
-          }
-        }
-        elsif ($sType eq '=')
-        {
-          if (ref($phLookup->{$sKey}) eq 'SCALAR' and ref(\$oData) eq 'SCALAR')
-          {
-            return $oData
-              if ($oData =~ /$phLookup->{$sKey}/);
-          }
-        }
-      }
       else
       {
-        warn "Unknown option [$sMapFunc].\n";
+        warn "Unknown option [$sMapFunc] or bad data type for: " .
+          Dumper($oData) . "\n";
         return $oData;
       }
     }

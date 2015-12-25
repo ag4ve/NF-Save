@@ -13,9 +13,6 @@ sub Init
   my $paPre = [qw/proto owner match list tcp udp icmp/];
   my $paPost = [qw/limit comment jump/];
 
-  # Define the order connection types should be listed in
-  $oSelf->{ctorder} = [qw/NEW RELATED ESTABLISHED INVALID/] if (not exists($oSelf->{ctorder}));
-
   return @aMixinSubs if ($oSelf->_add_module($paLookup, $paPre, $paPost));
 }
  
@@ -26,14 +23,36 @@ sub _ct
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'name +imp'           => "-m conntrack",
-        'state +req @ctorder' => "--ctstate",
+        'ct +imp'                  => "-m conntrack",
+        'state +req +not &ctorder' => "--ctstate",
       ], 
       'alt' => {
         'state' => "name",
       }, 
       'lookup' => {
-        'state' => $oSelf->{ctorder}
+        'ctorder' => sub {
+          my ($oData, $sKey) = @_;
+          my @aData;
+
+          if (ref(\$oData) eq 'SCALAR')
+          {
+            @aData = split(',', uc($oData));
+          }
+          elsif (ref($oData) eq 'ARRAY')
+          {
+            @aData = map {uc($_)} @$oData;
+          }
+
+          my %order = (
+            'NEW'         => 0,
+            'RELATED'     => 1,
+            'ESTABLISHED' => 2,
+          );
+          return join(",",
+            sort {$order{$a} <=> $order{$b}}
+            @aData
+          );
+        },
       },
     }
   )];

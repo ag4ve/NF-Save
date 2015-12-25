@@ -685,6 +685,7 @@ sub _str_map_transform
           {
             warn "No dispatch for [$sKey].\n";
             return;
+          }
         }
         # Regex match filter
         elsif ($sType eq '=' and ref(\$oData) eq 'SCALAR')

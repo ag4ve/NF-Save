@@ -467,7 +467,7 @@ sub _str_map
         {
           $sIsBool = 1;
         }
-        elsif ($sStr =~ /^(lc|uc|qq|ip|[\@\&\=].+)$/)
+        elsif ($sStr =~ /^(lc|uc|qq|ip|[\%\&\=].+)$/)
         {
           push @aFuncs, $sStr;
         }

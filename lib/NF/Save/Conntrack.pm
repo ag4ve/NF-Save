@@ -23,16 +23,25 @@ sub _ct
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'ct +imp'                 => "-m conntrack",
-        'state +req &ctorder'  => "--ctstate",
+        'ct +imp'             => "-m conntrack",
+        'state +req &ctorder' => "--ctstate",
       ], 
       'alt' => {
         'state' => "name",
       }, 
       'lookup' => {
         'ctorder' => sub {
-          my ($sData, $sKey) = @_;
-          return if (ref(\$sData) ne 'SCALAR')
+          my ($oData, $sKey) = @_;
+          my @aData;
+
+          if (ref(\$oData) ne 'SCALAR')
+          {
+            @aData = split(',', uc($oData));
+          }
+          elsif (ref($oData) eq 'ARRAY')
+          {
+            @aData = map {uc($_)} @$oData;
+          }
 
           my %order = {
             'NEW'         => 0,
@@ -41,7 +50,7 @@ sub _ct
           };
           return join(",",
             sort {$order{$a} <=> $order{$b}}
-            split(',', uc($sData))
+            @aData
           );
         },
       },

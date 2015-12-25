@@ -23,8 +23,8 @@ sub _ct
 
   return [$oSelf->_str_map($phParams, {
       'map' => [
-        'ct +imp'             => "-m conntrack",
-        'state +req &ctorder' => "--ctstate",
+        'ct +imp'                  => "-m conntrack",
+        'state +req +not &ctorder' => "--ctstate",
       ], 
       'alt' => {
         'state' => "name",

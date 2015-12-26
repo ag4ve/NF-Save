@@ -424,6 +424,8 @@ sub _str_map
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
     if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
 
+  # Set high when a parameter is found to allow a not
+  my $sAllowNot = 0;
   my $sGlobalNot = 0;
   $sGlobalNot = 1
     if (exists($phParams->{'not'}) and $phParams->{'not'});
@@ -456,6 +458,7 @@ sub _str_map
         }
         elsif ($sStr =~ /^\+not$/)
         {
+          $sAllowNot = 1;
           $sCanNot = 1;
         }
         elsif ($sStr =~ /^\+imp$/)
@@ -604,16 +607,22 @@ sub _str_map
     }
   }
 
-  if (grep {$_ == 0} values(%hRequire))
-  {
-    return join(' ', grep {defined($_) and length($_) > 0} @aRet) if (scalar(@aRet));
-  }
-  else
+  if (grep {$_ != 0} values(%hRequire))
   {
     warn "Required fields not defined: [" .
       join("] [", grep {$hRequire{$_} == 1} keys(%hRequire)) . "] " .
       Dumper($phParams) . "\n";
     return;
+  }
+  elsif (not $sAllowNot and $sGlobalNot)
+  {
+    warn "Not set globally and it is not allowed in: " .
+      Dumper($phParams) . ".\n";
+   return;
+  }
+  else
+  {
+    return join(' ', grep {defined($_) and length($_) > 0} @aRet) if (scalar(@aRet));
   }
 }
 

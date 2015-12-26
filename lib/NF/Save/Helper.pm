@@ -504,7 +504,6 @@ sub _str_map
           # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
           $sWhichKey = $sKey;
           $hRequire{$sKey} = 1;
-          last;
         }
       }
     }
@@ -563,6 +562,8 @@ sub _str_map
         {
           push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal->{$sOrKey});
           $hRequire{$sMapStr} = 0;
+          $hRequire{$phAlt->{$sMapStr}} = 0
+            if (defined($phAlt) and defined($phAlt->{$sMapStr}));
         }
       }
     }
@@ -587,6 +588,8 @@ sub _str_map
         {
           push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal);
           $hRequire{$sMapStr} = 0;
+          $hRequire{$phAlt->{$sMapStr}} = 0
+            if (defined($phAlt) and defined($phAlt->{$sMapStr}));
         }
         next;
       }
@@ -604,6 +607,8 @@ sub _str_map
       }
       push @aRet, $oSelf->_compile_ret([$sNot], $oMapVal, $oTempRet);
       $hRequire{$sMapStr} = 0;
+      $hRequire{$phAlt->{$sMapStr}} = 0
+        if (defined($phAlt) and defined($phAlt->{$sMapStr}));
     }
   }
 
@@ -614,7 +619,7 @@ sub _str_map
       Dumper($phParams) . "\n";
     return;
   }
-  elsif (not $sAllowNot and $sGlobalNot)
+  elsif ($sGlobalNot and not $sAllowNot)
   {
     warn "Not set globally and it is not allowed in: " .
       Dumper($phParams) . ".\n";

@@ -32,7 +32,9 @@ sub _tcp_udp
         'dport +not'        => "--dport",
         'flags +not %flags' => "--tcp-flags",
       ], 
-      'alt' => {}, 
+      'alt' => {
+        "name" => 'key',
+      }, 
       'lookup' => {
         'flags' => $oSelf->{flags}
       },

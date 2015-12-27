@@ -98,7 +98,7 @@ $oIPT->rule(
   {
     'in' => "eth0",
     'out' => "eth1",
-    'match' => 
+    'proto' => 
     {
       '!name' => 'TCP',
     },
@@ -149,7 +149,7 @@ my $paTests =
       ':INPUT DROP [0:0]',
       ':FORWARD DROP [0:0]',
       ':OUTPUT DROP [0:0]',
-      '-A FORWARD -i eth0 -o eth1 ! -m tcp -m comment --comment "VM data" -j RETURN',
+      '-A FORWARD -i eth0 -o eth1 ! -p tcp -m comment --comment "VM data" -j RETURN',
       '-A OUTPUT -d 5.6.7.8/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT',
       '-A OUTPUT -m set --match-set scan_targets src -p tcp -m tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
       'COMMIT',
@@ -183,7 +183,7 @@ my $paTests =
       ':INPUT DROP [0:0]',
       ':FORWARD DROP [0:0]',
       ':OUTPUT DROP [0:0]',
-      '-A FORWARD -i eth0 -o eth1 ! -m tcp -m comment --comment "VM data" -j RETURN',
+      '-A FORWARD -i eth0 -o eth1 ! -p tcp -m comment --comment "VM data" -j RETURN',
       '-A OUTPUT -d 5.6.7.8/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT',
       '-A OUTPUT -s 1.2.3.4/32 -p tcp -m tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
       '-A OUTPUT -s 5.6.7.8/32 -p tcp -m tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',

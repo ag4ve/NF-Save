@@ -35,28 +35,30 @@ sub _owner
 
 =head2 get_uids()
 
-Populate the module's UID hash with user => uid
+Scrape a Unix password file and return a hash with user => uid
 
 =cut
 
 sub get_uids
 {
-  my ($oSelf) = @_;
+  my ($oSelf, $sFile) = @_;
+  $sFile //= '/etc/passwd';
 
-  my $fh;
-  if (open(my $fh, '<', '/etc/passwd'))
+  my ($fh, $phRet);
+  if (open(my $fh, '<', $sFile))
   {
     while (my $line = <$fh>)
     {
       my @parts = split(':', $line);
-      $oSelf->{uids}{$parts[0]} = $parts[2];
+      $phRet->{$parts[0]} = $parts[2];
     }
     close($fh);
-    return 1;
+    return $phRet;
   }
   else
   {
     warn "Could not read password file.\n";
+    return;
   }
 }
 

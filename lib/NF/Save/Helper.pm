@@ -504,6 +504,7 @@ sub _str_map
           # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
           $sWhichKey = $sKey;
           $hRequire{$sKey} = 1;
+          last;
         }
       }
     }

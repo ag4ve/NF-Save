@@ -51,7 +51,12 @@ my $paTests =
     [$oIPT->_check_type([qw/HASH ARRAY/], undef, undef, 0, (undef, []))],
     [1],
     "Check allow undef."
-  ]
+  ],
+  [
+    [$oIPT->get_uids('t/passwd')],
+    [{'testuser' => 359}],
+    "Data from passwd file."
+  ],
 ];
 
 

@@ -36,6 +36,8 @@ ipset data.
     }
   );
 
+  $oIPT->{uids} = $oIPT->get_uids('/etc/passwd');
+
   my $paStruct = 
   [
     {
@@ -350,7 +352,7 @@ The chain name and whether to check the ruleset are optional.
 
 =head2 get_uids()
 
-Populate the module's UID hash with user => uid
+Scrape a Unix password file and return a hash with user => uid
 
 =head1 DOCUMENTATION SYNTAX
 

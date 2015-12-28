@@ -63,34 +63,39 @@ $oIPT->rule('OUTPUT', $phStruct);
 my $paTests = 
 [
   [
+    [$oIPT->rule('OUTPUT', $phStruct, undef, 'foo')],
+    [],
+    "Bad function for rule().",
+  ],
+  [
     $oIPT->is_table('filter'), 
     [1], 
-    "Table filter exists."
+    "Table filter exists.",
   ],
   [
     $oIPT->is_table('foobar'), 
     [0], 
-    "Table foobar does not exist."
+    "Table foobar does not exist.",
   ],
   [
     $oIPT->is_chain('OUTPUT'), 
     [1], 
-    "Chain OUTPUT exists."
+    "Chain OUTPUT exists.",
   ],
   [
     $oIPT->is_chain('OUTPUT', 'filter'), 
     [1], 
-    "Chain OUTPUT in table filter exists."
+    "Chain OUTPUT in table filter exists.",
   ],
   [
     $oIPT->is_chain('OUTPUT', 'foobar'), 
     [0], 
-    "Chain OUTPUT in table foobar does not exist."
+    "Chain OUTPUT in table foobar does not exist.",
   ],
   [
     $oIPT->is_chain('foobar', 'filter'), 
     [0], 
-    "Chain foobar in table filter exists."
+    "Chain foobar in table filter exists.",
   ],
   [
     [$oIPT->get_chains('filter')], 
@@ -104,57 +109,57 @@ my $paTests =
   [
     $oIPT->get_rules('OUTPUT'), 
     $phStruct, 
-    "Get stored rules from OUTPUT."
+    "Get stored rules from OUTPUT.",
   ],
   [
     $oIPT->get_rules('OUTPUT', 'filter'), 
     $phStruct, 
-    "Get stored rules from OUTPUT chain in filter table."
+    "Get stored rules from OUTPUT chain in filter table.",
   ],
   [
     [$oIPT->get_rules('INPUT', 'filter')], 
     [], 
-    "Get stored rules from INPUT chain in filter table (undef)."
+    "Get stored rules from INPUT chain in filter table (undef).",
   ],
   [
     $oIPT->get_policy('INPUT'), 
     'DROP', 
-    "Policy for INPUT in an (unspecified) filter table."
+    "Policy for INPUT in an (unspecified) filter table.",
   ],
   [
     $oIPT->get_policy('OUTPUT', 'filter'), 
     'DROP', 
-    "Policy for OUTPUT in the filter table."
+    "Policy for OUTPUT in the filter table.",
   ],
   [
     $oIPT->get_policy('OUTPUT', 'mangle'), 
     'ACCEPT', 
-    "Policy for OUTPUT in the mangle table."
+    "Policy for OUTPUT in the mangle table.",
   ],
   [
     [$oIPT->get_policy('foobar', 'mangle')], 
     [], 
-    "Policy for foobar in the mangle table (undef)."
+    "Policy for foobar in the mangle table (undef).",
   ],
   [
     $oIPT->get_header('OUTPUT'), 
     ':OUTPUT DROP [0:0]', 
-    "Header for OUTPUT in an (unspecified) filter table."
+    "Header for OUTPUT in an (unspecified) filter table.",
   ],
   [
     $oIPT->get_header('OUTPUT', 'filter'), 
     ':OUTPUT DROP [0:0]', 
-    "Header for OUTPUT in the filter table."
+    "Header for OUTPUT in the filter table.",
   ],
   [
     $oIPT->get_header('OUTPUT', 'mangle'), 
     ':OUTPUT ACCEPT [0:0]', 
-    "Header for OUTPUT in the mangle table."
+    "Header for OUTPUT in the mangle table.",
   ],
   [
     $oIPT->get_header('foobar'), 
     ':foobar - [0:0]', 
-    "Header for the foobar chain."
+    "Header for the foobar chain.",
   ],
   [
     $oIPT->is_user('testuser'),
@@ -191,7 +196,7 @@ my $paTests =
   [
     $oIPT->assemble($phStruct), 
     $paAssembled, 
-    "Assemble rule."
+    "Assemble rule.",
   ],
   [
     $oIPT->save_chain('OUTPUT'), 

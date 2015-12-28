@@ -107,6 +107,11 @@ my $paTests =
     [$oIPT->_comp('comp')],
     [],
     "_comp() no data is defined.",
+  ],
+  [
+    [$oIPT->_comp('proto', {'proto' => "UDP"})],
+    ['-p udp'],
+    "_comp() proto.",
   ]
 ];
 

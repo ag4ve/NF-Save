@@ -626,9 +626,13 @@ sub _str_map
       Dumper($phParams) . ".\n";
    return;
   }
+  elsif (scalar(@aRet))
+  {
+    return join(' ', grep {defined($_) and length($_) > 0} @aRet);
+  }
   else
   {
-    return join(' ', grep {defined($_) and length($_) > 0} @aRet) if (scalar(@aRet));
+    return;
   }
 }
 

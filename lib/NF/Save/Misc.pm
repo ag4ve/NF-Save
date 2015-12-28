@@ -195,19 +195,18 @@ sub rule
 
   $sTable //= 'filter';
   $sFunc //= 'APPEND';
-  my $sDo;
+  my ($sDo, $sNum);
   # Get function ('I', 'A', 'D', or 'R') from function word
-  if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)$/i)
+  if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)(?: ([0-9]+))?/i)
   {
     $sDo = uc(substr($1, 0, 1));
+    $sNum = (defined($2) ? $2 : '1');
   }
   else
   {
     warn "Unknown function [$sFunc].\n";
     return;
   }
-
-  my $sNum = (($sFunc =~ /\S+ ([0-9]+)/) ? $1 : '1');
 
   # Make sure the hash is immutable
   $sRule = dclone($sRule);

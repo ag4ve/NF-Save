@@ -36,6 +36,26 @@ my $paTests =
     ], 
     "Basic str_map"
   ],
+  [
+    [
+      $oIPT->_str_map(
+        {
+          'foo' => "aaa",
+          'bar' => "bbb",
+        },
+        {
+          'map' => [
+            'foo +req' => '-f',
+          ],
+          'alt' => {
+            'foo' => "bar",
+          }
+        },
+      ),
+    ],
+    [],
+    "Duplicate key from alt - fail."
+  ],
 ];
 
 test($paTests);

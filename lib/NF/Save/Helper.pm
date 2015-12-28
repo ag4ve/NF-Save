@@ -494,17 +494,23 @@ sub _str_map
       push @aPossibleKeys, $phAlt->{$sMapStr}
         if (defined($phAlt) and defined($phAlt->{$sMapStr}));
 
+      my $sFoundKey = 0;
       for my $sKey (@aPossibleKeys)
       {
         # Only possible alteration from the given key should be a not (!)
         my @aKey = grep {/^!?$sKey$/} keys %$phParams;
         if (scalar(@aKey) and defined($aKey[0]))
         {
+          if ($sFoundKey)
+          {
+            warn "Actual key [$sMapStr] and an alias to it can not both be used.\n";
+            return;
+          }
           $sActualKey = $aKey[0];
           # A key is found (actual or alias of it) so it should be added to 'required' for a sanity check
           $sWhichKey = $sKey;
           $hRequire{$sKey} = 1;
-          last;
+          $sFoundKey = 1;
         }
       }
     }

@@ -197,7 +197,7 @@ sub rule
   $sFunc //= 'APPEND';
   my $sDo;
   # Get function ('I', 'A', 'D', or 'R') from function word
-  if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)\b/i)
+  if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)$/i)
   {
     $sDo = uc(substr($1, 0, 1));
   }

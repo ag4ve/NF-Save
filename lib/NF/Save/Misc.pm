@@ -194,12 +194,18 @@ sub rule
   my ($oSelf, $sChain, $sRule, $sTable, $sFunc) = @_;
 
   $sTable //= 'filter';
-  $sFunc //= 'A';
+  $sFunc //= 'APPEND';
   my $sDo;
-  $sDo = uc(substr($1, 0, 1))
-    if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)\b/i);
-
-  return if (not defined($sDo));
+  # Get function ('I', 'A', 'D', or 'R') from function word
+  if ($sFunc =~ /^(I(NSERT)?|A(PPEND)?|D(ELETE)?|R(EPLACE)?)\b/i)
+  {
+    $sDo = uc(substr($1, 0, 1));
+  }
+  else
+  {
+    warn "Unknown function [$sFunc].\n";
+    return;
+  }
 
   my $sNum = (($sFunc =~ /\S+ ([0-9]+)/) ? $1 : '1');
 

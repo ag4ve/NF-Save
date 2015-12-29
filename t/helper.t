@@ -138,6 +138,41 @@ my $paTests =
     [qw/! foo bar/],
     "_compile_ret() all not true.",
   ],
+  [
+    [$oIPT->_check_type([qw/HASH ARRAY/], '>', undef, 1, ({}))],
+    [1],
+    "Check hash type."
+  ], 
+  [
+    [$oIPT->_check_type([qw/ARRAY ARRAY/], '>', undef, 1, ([]))],
+    [1],
+    "Check array type."
+  ], 
+  [
+    [$oIPT->_check_type([qw/HASH ARRAY/], '>', undef, 1, ({}, [], []))],
+    [],
+    "Check more data than types."
+  ], 
+  [
+    [$oIPT->_check_type([qw/HASH ARRAY/], '<', undef, 1, ({}))],
+    [],
+    "Check more types than data."
+  ], 
+  [
+    [$oIPT->_check_type([qw/HASH ARRAY/], '=', undef, 1, ({}))],
+    [],
+    "Check types not equal to data."
+  ], 
+  [
+    [$oIPT->_check_type([qw/HASH ARRAY/], undef, undef, 1, ({}, []))],
+    [1],
+    "Check types equal to data."
+  ], 
+  [
+    [$oIPT->_check_type([qw/HASH ARRAY/], undef, undef, 0, (undef, []))],
+    [1],
+    "Check allow undef."
+  ],
 ];
 
 test($paTests);

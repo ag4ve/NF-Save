@@ -13,6 +13,61 @@ my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}});
 my $paTests = 
 [
   [
+    [$oIPT->_str_map_transform('test', '%foo', {
+      'foo' => {
+        'test' => "aaa",
+      },
+    })],
+    ['aaa'],
+    "_str_map_transform hash.",
+  ],
+  [
+    [$oIPT->_str_map_transform('test foo', '=foo', {
+      'foo' => '^test foo$',
+    })],
+    ['test foo'],
+    "_str_map_transform regex.",
+  ],
+  [
+    [$oIPT->_str_map_transform('test', '&foo', {
+      'foo' => sub {
+        return "$_[0] foo";
+      },
+    })],
+    ['test foo'],
+    "_str_map_transform sub.",
+  ],
+  [
+    [$oIPT->_str_map_transform('TEST', 'lc')],
+    ['test'],
+    "_str_map_transform lc.",
+  ],
+  [
+    [$oIPT->_str_map_transform('test', 'uc')],
+    ['TEST'],
+    "_str_map_transform uc.",
+  ],
+  [
+    [$oIPT->_str_map_transform('test', 'qq')],
+    ['"test"'],
+    "_str_map_transform uc.",
+  ],
+  [
+    [$oIPT->_str_map_transform('1.2.3.4', 'ip')],
+    ['1.2.3.4/32'],
+    "_str_map_transform ip.",
+  ],
+  [
+    [$oIPT->_str_map_transform('test', 'foo')],
+    ['test'],
+    "_str_map_transform unknown function.",
+  ],
+  [
+    [$oIPT->_str_map_transform('test')],
+    ['test'],
+    "_str_map_transform no mapfunc.",
+  ],
+  [
     [
       $oIPT->_str_map(
         {

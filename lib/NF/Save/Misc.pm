@@ -166,9 +166,6 @@ sub get_header
 
 An interface designed to look fairly similar to the iptables CLI.
 
-The tcp '--syn' and '! --syn' options add masks described in the 
-$rhFlags hashref. Flag being the key of rhFlags.
-
 The big difference is that the chain is seperate from the action.
 
 =over 4

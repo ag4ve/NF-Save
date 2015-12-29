@@ -58,6 +58,11 @@ my $paTests =
     "_str_map_transform ip.",
   ],
   [
+    [$oIPT->_str_map_transform(undef, 'lc')],
+    [],
+    "_str_map_transform no data.",
+  ],
+  [
     [$oIPT->_str_map_transform('test', 'foo')],
     ['test'],
     "_str_map_transform unknown function.",

@@ -96,10 +96,13 @@ sub _return_valid_param
   }
 }
 
-# Return part of the rule when passed the name of the private method and a hash.
+# Normalize data, define 'key' as the name of the key and return the rule 
+# part when passed the name of the private method and a hash
 sub _param_str
 {
   my ($oSelf, $sKey, $oVal) = @_;
+
+  return if (not defined($sKey) or ref(\$sKey) ne 'SCALAR' or not defined($oVal));
 
   my $phData;
   if (ref(\$oVal) eq 'SCALAR')
@@ -122,6 +125,9 @@ sub _param_str
 sub _comp
 {
   my ($oSelf, $sComp, $phData) = @_;
+
+  return if (not $oSelf->_check_type([qw/SCALAR HASH/],
+    '>', 1, 1, @_[1 .. $#_]));
 
   $sComp = '_' . $sComp;
 
@@ -324,6 +330,7 @@ sub _jump
 # @$paPre should be a list of names that should come before this module and
 # @$paPost should be a list of names that should come after.
 # If post isn't defined/found, the entry will come after the last pre entry found
+# TODO figure out how to write tests for this
 sub _add_module
 {
   my ($oSelf, $paLookup, $paPre, $paPost) = @_;
@@ -748,9 +755,11 @@ sub _str_map_transform
 sub _compile_ret
 {
   my ($oSelf, $paCheckNot, @aData) = @_;
+  $paCheckNot //= ['0'];
+
   my @aRet;
 
-  # All CheckNot must be true
+  # CheckNot must all be true
   push @aRet, '!'
     if (not grep {not $_} @$paCheckNot);
 

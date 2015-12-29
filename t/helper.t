@@ -112,7 +112,32 @@ my $paTests =
     [$oIPT->_comp('proto', {'proto' => "UDP"})],
     ['-p udp'],
     "_comp() proto.",
-  ]
+  ],
+  [
+    [$oIPT->_compile_ret()],
+    [],
+    "_compile_ret() nothing defined.",
+  ],
+  [
+    [$oIPT->_compile_ret(undef, 'foo', 'bar')],
+    [qw/foo bar/],
+    "_compile_ret() no not defined.",
+  ],
+  [
+    [$oIPT->_compile_ret([1, 0], 'foo', 'bar')],
+    [qw/foo bar/],
+    "_compile_ret() one not untrue.",
+  ],
+  [
+    [$oIPT->_compile_ret([0, 0], 'foo', 'bar')],
+    [qw/foo bar/],
+    "_compile_ret() all not untrue.",
+  ],
+  [
+    [$oIPT->_compile_ret([1, 1], 'foo', 'bar')],
+    [qw/! foo bar/],
+    "_compile_ret() all not true.",
+  ],
 ];
 
 test($paTests);

@@ -13,6 +13,41 @@ my $oIPT = NF::Save->new({'UIDs' => {'testuser' => 359}});
 my $paTests = 
 [
   [
+    [$oIPT->_transform_params()],
+    [],
+    "_transform_params no change - empty.",
+  ],
+  [
+    [$oIPT->_transform_params([qw/1 2/])],
+    [[qw/1 2/]],
+    "_transform_params no change - array.",
+  ],
+  [
+    [$oIPT->_transform_params({'io' => "eth0"})],
+    [{'io' => "eth0"}],
+    "_transform_params no change - plain hash.",
+  ],
+  [
+    [$oIPT->_transform_params({'comment' => [qw/foo bar/]})],
+    [{'comment' => [qw/foo bar/]}],
+    "_transform_params no change - nested array.",
+  ],
+  [
+    [$oIPT->_transform_params({'io' => {'key' => "eth0"}})],
+    [{'io' => "eth0"}],
+    "_transform_params un-nested.",
+  ],
+  [
+    [$oIPT->_transform_params({'io' => {'not' => 1, 'key' => "eth0"}})],
+    [{'!io' => "eth0"}],
+    "_transform_params hash not.",
+  ],
+  [
+    [$oIPT->_transform_params({'!io' => {'not' => 1, 'key' => "eth0"}})],
+    [{'!io' => "eth0"}],
+    "_transform_params double not.",
+  ],
+  [
     [$oIPT->_str_map_transform('test', '%foo', {
       'foo' => {
         'test' => "aaa",

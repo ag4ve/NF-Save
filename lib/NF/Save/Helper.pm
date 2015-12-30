@@ -7,6 +7,7 @@ use Exporter;
 our @ISA = qw(Exporter);
 
 my @aInternal = qw/
+  _transform_params
   _str_map_transform
   _compile_ret
 /;
@@ -50,6 +51,7 @@ our %EXPORT_TAGS = (
 );
 
 use Socket;
+use Storable qw(dclone);
 use Data::Dumper;
 
 =encoding utf8
@@ -427,6 +429,9 @@ sub _str_map
   my ($paMap, $phAlt, $phLookup) =
     @{$phData}{qw/map alt lookup/};
 
+  # Transform params (more wordy/verbose - mainly so that it looks good in yaml)
+  $phParams = $oSelf->_transform_params($phParams);
+
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
     if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
@@ -647,6 +652,46 @@ sub _str_map
   {
     return;
   }
+}
+
+# ETL function to make data appropriate for processing
+sub _transform_params
+{
+  my ($oSelf, $phParams) = @_;
+
+  if (not defined($phParams))
+  {
+    return;
+  }
+  elsif (ref($phParams) ne 'HASH')
+  {
+    return $phParams;
+  }
+
+  my $phRet = {};
+
+  while (my ($sKey, $oVal) = each %$phParams)
+  {
+    # The hash could be something else if it doesn't look right - ie 
+    # doesn't contain a 'key'
+    if (ref($oVal) ne 'HASH' or not defined($oVal->{key}))
+    {
+      $phRet->{$sKey} = $oVal;
+    }
+    else
+    {
+      my $oRetKey = $oVal->{key};
+      # Try to recurse
+      $oRetKey = $oSelf->_transform_params($oRetKey)
+        if (ref($oRetKey) eq 'HASH');
+      my @aKeyOpts;
+      push @aKeyOpts, '!' if (defined($oVal->{not}) and $oVal->{not});
+      push @aKeyOpts, $sKey;
+      $phRet->{join('', @aKeyOpts)} = $oRetKey;
+    }
+  }
+
+  return $phRet;
 }
 
 # Transform data based on mapfunc

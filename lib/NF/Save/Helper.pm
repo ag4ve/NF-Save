@@ -680,14 +680,16 @@ sub _transform_params
     }
     else
     {
-      my $oRetKey = $oVal->{key};
+      my $oRetVal = $oVal->{key};
+      # Remove ! from key so !!key is not possible
+      my ($sNot, $sRetKey) = ($sKey =~ /^(!)?(.+)$/);
       # Try to recurse
-      $oRetKey = $oSelf->_transform_params($oRetKey)
-        if (ref($oRetKey) eq 'HASH');
+      $oRetVal = $oSelf->_transform_params($oRetVal)
+        if (ref($oRetVal) eq 'HASH');
       my @aKeyOpts;
-      push @aKeyOpts, '!' if (defined($oVal->{not}) and $oVal->{not});
-      push @aKeyOpts, $sKey;
-      $phRet->{join('', @aKeyOpts)} = $oRetKey;
+      push @aKeyOpts, '!' if ($sNot or (defined($oVal->{not}) and $oVal->{not}));
+      push @aKeyOpts, $sRetKey;
+      $phRet->{join('', @aKeyOpts)} = $oRetVal;
     }
   }
 

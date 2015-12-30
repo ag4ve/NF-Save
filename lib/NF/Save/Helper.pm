@@ -544,7 +544,7 @@ sub _str_map
       }
       elsif ($hRequire{$sMapStr})
       {
-        warn "[$sMapStr] required.\n";
+        warn "[$sMapStr] required in " . Dumper($phParams) . "\n";
         return;
       }
       else

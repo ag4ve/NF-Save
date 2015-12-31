@@ -539,7 +539,8 @@ sub assemble
     my $sKey = $oSelf->_return_valid_param($sListKey, $phParams);
     next if (not defined($sKey));
 
-    my $phData = $oSelf->_param_str($sKey, $phParams->{$sKey});
+    my ($sNot, $sTempKey) = ($sKey =~ /^(!)?(.+)$/);
+    my $phData = $oSelf->_param_str($sTempKey, $phParams->{$sKey}, $sNot);
     my $paRet = $oSelf->_comp($sComp, $phData);
 
     if (defined($paRet) and ref($paRet) eq 'ARRAY')

@@ -434,7 +434,6 @@ sub _str_map
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
     if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
 
-warn Dumper($phParams);
   # Set high when a parameter is found to allow a not
   my $sAllowNot = 0;
   my $sGlobalNot = 0;

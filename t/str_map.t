@@ -34,17 +34,17 @@ my $paTests =
   ],
   [
     [$oIPT->_transform_params({'io' => {'key' => "eth0"}})],
-    [{'io' => "eth0"}],
-    "_transform_params un-nested.",
+    [{'io' => {'key' => "eth0"}}],
+    "_transform_params no change - hash.",
   ],
   [
     [$oIPT->_transform_params({'io' => {'not' => 1, 'key' => "eth0"}})],
-    [{'!io' => "eth0"}],
+    [{'!io' => {'key' => "eth0"}}],
     "_transform_params hash not.",
   ],
   [
     [$oIPT->_transform_params({'!io' => {'not' => 1, 'key' => "eth0"}})],
-    [{'!io' => "eth0"}],
+    [{'!io' => {'key' => "eth0"}}],
     "_transform_params double not.",
   ],
   [

@@ -50,9 +50,9 @@ our %EXPORT_TAGS = (
   'ipcheck'   => \@aIPCheck,
 );
 
-use Socket;
-use Storable qw(dclone);
 use Data::Dumper;
+use Storable qw(dclone);
+use Socket;
 
 =encoding utf8
 
@@ -429,9 +429,6 @@ sub _str_map
   my ($paMap, $phAlt, $phLookup) =
     @{$phData}{qw/map alt lookup/};
 
-  # Transform params (more wordy/verbose - mainly so that it looks good in yaml)
-  $phParams = $oSelf->_transform_params($phParams);
-
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
     if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
@@ -440,7 +437,7 @@ sub _str_map
   my $sAllowNot = 0;
   my $sGlobalNot = 0;
   $sGlobalNot = 1
-    if (exists($phParams->{'not'}) and $phParams->{'not'});
+    if (exists($phParams->{not}) and $phParams->{not});
 
   # Make sure results are oldered from the even map array
   $oSelf->_each_kv($paMap, 'str_map');
@@ -657,7 +654,8 @@ sub _str_map
 # ETL function to make data appropriate for processing
 sub _transform_params
 {
-  my ($oSelf, $phParams) = @_;
+  my ($oSelf, $phParams, $sLevel) = @_;
+  $sLevel //= 0;
 
   if (not defined($phParams))
   {
@@ -669,31 +667,45 @@ sub _transform_params
   }
 
   my $phRet = {};
+  my $sGlobalNot = 0;
 
+  $phParams = dclone($phParams);
   while (my ($sKey, $oVal) = each %$phParams)
   {
+    my ($sRENot, $sNot, $sRetKey, $oRetVal);
     # The hash could be something else if it doesn't look right - ie 
     # doesn't contain a 'key'
-    if (ref($oVal) ne 'HASH' or not defined($oVal->{key}))
+    if (ref($oVal) eq 'HASH')
     {
-      $phRet->{$sKey} = $oVal;
+      # Try to recurse
+      ($sNot, $oRetVal) = $oSelf->_transform_params(dclone($oVal), $sLevel +1);
+    }
+    elsif ($sKey eq 'not' and $oVal)
+    {
+      $sGlobalNot = 1;
+      next;
     }
     else
     {
-      my $oRetVal = $oVal->{key};
-      # Remove ! from key so !!key is not possible
-      my ($sNot, $sRetKey) = ($sKey =~ /^(!)?(.+)$/);
-      # Try to recurse
-      $oRetVal = $oSelf->_transform_params($oRetVal)
-        if (ref($oRetVal) eq 'HASH');
-      my @aKeyOpts;
-      push @aKeyOpts, '!' if ($sNot or (defined($oVal->{not}) and $oVal->{not}));
-      push @aKeyOpts, $sRetKey;
-      $phRet->{join('', @aKeyOpts)} = $oRetVal;
+      $oRetVal = $oVal;
     }
+    # Remove ! from key so !!key is not possible
+    ($sRENot, $sRetKey) = ($sKey =~ /^(!)?(.+)$/);
+    $sNot = 1 if ($sNot or $sRENot);
+    my @aKeyOpts;
+    push @aKeyOpts, '!' if ($sNot);
+    push @aKeyOpts, $sRetKey;
+    $phRet->{join('', @aKeyOpts)} = $oRetVal;
   }
 
-  return $phRet;
+  if ($sLevel == 0)
+  {
+    return $phRet;
+  }
+  else
+  {
+    return $sGlobalNot, $phRet;
+  }
 }
 
 # Transform data based on mapfunc

@@ -62,7 +62,10 @@ $oIPT->rule(
   'POSTROUTING', 
   {
     'out' => "eth0",
-    'src' => "172.31.0.0/24",
+    'src' => {
+      'name' => "172.31.0.0/24",
+      'not' => 1,
+    },
     'comment' => ["VM data"],
     'jump' => 
     {
@@ -72,14 +75,14 @@ $oIPT->rule(
   }, 
   'nat'
 );
-# -A POSTROUTING -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "
+# -A POSTROUTING ! -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "
 
 $oIPT->rule(
   'OUTPUT', 
   {
     'tcp' => 
     {
-      'sport' => 20,
+      '!sport' => 20,
       'dport' => "1024:65535",,
     },
     'list' => 
@@ -91,7 +94,7 @@ $oIPT->rule(
     'jump' => "ACCEPT",
   }
 );
-# -A OUTPUT -m set --match-set scan_targets src -m tcp -p tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT
+# -A OUTPUT -m set --match-set scan_targets src -m tcp -p tcp ! --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT
 
 $oIPT->rule(
   'FORWARD', 
@@ -143,7 +146,7 @@ my $paTests =
       ':INPUT ACCEPT [0:0]',
       ':OUTPUT ACCEPT [0:0]',
       ':POSTROUTING ACCEPT [0:0]',
-      '-A POSTROUTING -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "',
+      '-A POSTROUTING ! -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "',
       'COMMIT',
       '*filter',
       ':INPUT DROP [0:0]',
@@ -151,7 +154,7 @@ my $paTests =
       ':OUTPUT DROP [0:0]',
       '-A FORWARD -i eth0 -o eth1 ! -p tcp -m comment --comment "VM data" -j RETURN',
       '-A OUTPUT -d 5.6.7.8/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT',
-      '-A OUTPUT -m set --match-set scan_targets src -p tcp -m tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
+      '-A OUTPUT -m set --match-set scan_targets src -p tcp -m tcp ! --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
       'COMMIT',
       '# Some comment',
     ],
@@ -177,7 +180,7 @@ my $paTests =
       ':INPUT ACCEPT [0:0]',
       ':OUTPUT ACCEPT [0:0]',
       ':POSTROUTING ACCEPT [0:0]',
-      '-A POSTROUTING -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "',
+      '-A POSTROUTING ! -s 172.31.0.0/24 -o eth0 -m comment --comment "VM data" -j LOG --log-prefix "FW: masq ACCEPT "',
       'COMMIT',
       '*filter',
       ':INPUT DROP [0:0]',
@@ -185,8 +188,8 @@ my $paTests =
       ':OUTPUT DROP [0:0]',
       '-A FORWARD -i eth0 -o eth1 ! -p tcp -m comment --comment "VM data" -j RETURN',
       '-A OUTPUT -d 5.6.7.8/32 -p udp -m udp --sport 1024:65535 --dport 53 -m comment --comment "nameserver" -j ACCEPT',
-      '-A OUTPUT -s 1.2.3.4/32 -p tcp -m tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
-      '-A OUTPUT -s 5.6.7.8/32 -p tcp -m tcp --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
+      '-A OUTPUT -s 1.2.3.4/32 -p tcp -m tcp ! --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
+      '-A OUTPUT -s 5.6.7.8/32 -p tcp -m tcp ! --sport 20 --dport 1024:65535 -m comment --comment "scan_targets_add" -j ACCEPT',
       'COMMIT',
       '# Some comment',
     ],

@@ -529,6 +529,9 @@ sub assemble
 
   my @iptparts;
   $oSelf->_each_kv($oSelf->{lookup}, 'lookup');
+  # Transform params (more wordy/verbose - mainly so that it looks good in yaml)
+  my $sGlobalNot;
+  $phParams = $oSelf->_transform_params($phParams);
 
   my $phUsed = {map {$_ => 0} keys %$phParams};
   while (my ($sListKey, $sComp) = $oSelf->_each_kv(undef, 'lookup'))

@@ -102,7 +102,8 @@ sub _return_valid_param
 # part when passed the name of the private method and a hash
 sub _param_str
 {
-  my ($oSelf, $sKey, $oVal) = @_;
+  my ($oSelf, $sKey, $oVal, $sNot) = @_;
+  $sNot = ($sNot ? '!' : '');
 
   return if (not defined($sKey) or ref(\$sKey) ne 'SCALAR' or not defined($oVal));
 
@@ -119,7 +120,7 @@ sub _param_str
   {
     $phData = $oVal;
   }
-  $phData->{key} = $sKey if (not defined($phData->{key}));
+  $phData->{$sNot . 'key'} = $sKey if (not defined($phData->{key}));
 
   return $phData;
 }
@@ -433,6 +434,7 @@ sub _str_map
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
     if (exists($phParams->{'not'}) and not grep {$_ eq $phParams->{'not'}} ('0', '1'));
 
+warn Dumper($phParams);
   # Set high when a parameter is found to allow a not
   my $sAllowNot = 0;
   my $sGlobalNot = 0;

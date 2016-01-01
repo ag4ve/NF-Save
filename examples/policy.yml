@@ -1,19 +1,374 @@
+policy:
+  filter:
+    INPUT: DROP
+    OUTPUT: DROP
+    FORWARD: DROP
+
 firewall:
   filter:
+    allow_in_log:
+      template: inlog
+    allow_fwd_log:
+      template: fwdlog
+    allow_out_log:
+      template: outlog
+    drop_in_log:
+      template: dropinlog
+    reject_in_log:
+      template: rejectinlog
+    reject_out_log:
+      template: rejectoutlog
+    check_tcp_packets:
+      template: chktcp
+      modify:
+        -
+          jump: reject_in_log
+        -
+          jump: reject_in_log
+        -
+          jump: reject_in_log
+        -
+          jump: reject_in_log
+        -
+          jump: reject_in_log
+        -
+          jump: reject_in_log
+        -
+          jump: reject_in_log
+    INPUT:
+      -
+        template: ct
+      -
+        template: syslog
+        list:
+          name: log_hosts
+          direction: src
+        jump: ACCEPT
+      -
+        proto: tcp
+        jump: check_tcp_packets
+      -
+        proto: 
+          name: tcp
+          flags: syn
+        ct:
+          state: new
+        jump: reject_in_log
+      -
+        proto: icmp
+        jump: check_icmp_in
+      -
+        template: dhcp
+        jump: allow_in_log
+      -
+        template: ntp
+      -
+        template: sshin
+    FORWARD:
+      -
+        template: ct
+      -
+        jump: drop_fwd_log
     OUTPUT:
       -
-        tcp:
-          sport: 20,
-          dport: 1024:65535
-        list:
-          name: scan_targets
-          direction:
-            - src
-        comment:
-          - scan_targets_add
-        jump: ACCEPT
+        template: ct
+      -
+        template: dns
+        dst: 8.8.8.8
+      -
+        template: dhcpout
+
 lists:
   scan_targets:
     - 1.2.3.4
     - 5.6.7.8
+  log_hosts:
+    - 10.0.0.1
+
+template:
+  empty:
+  log:
+    limit:  
+      limit: 5/sec
+      burst: 10
+    comment: Log limit
+    jump: 
+      name: log
+  tcplog:
+    template: log
+    proto: tcp
+    jump:
+      tcp: 1
+  iplog:
+    template: log
+    proto:
+      name: tcp
+      not: 1
+  conlog:
+    proto:
+      name: tcp
+      flags: syn
+    jump: ACCEPT
+  udp:
+    proto: udp
+    jump: ACCEPT
+  icmp:
+    proto: icmp
+    jump: ACCEPT
+  inlog:
+    template:
+      - tcplog
+      - iplog
+      - conlog
+      - udp
+      - icmp
+    modify:
+      -
+        jump:
+          prefix: "FW input ACCEPT"
+      -
+        jump:
+          prefix: "FW input ACCEPT"
+  fwdlog:
+    template:
+      - tcplog
+      - iplog
+      - conlog
+      - udp
+      - icmp
+    modify:
+      -
+        jump:
+          prefix: "FW forward ACCEPT"
+      -
+        jump:
+          prefix: "FW forward ACCEPT"
+  outlog:
+    template:
+      - tcplog
+      - iplog
+      - conlog
+      - udp
+      - icmp
+    modify;
+      -
+        jump:
+          uid: 1
+          prefix: "FW forward ACCEPT"
+      -
+        jump:
+          uid: 1
+          prefix: "FW forward ACCEPT"
+  dropinlog:
+    template:
+      - tcplog
+      - iplog
+    modify:
+      -
+      -
+      -
+        jump: DROP
+  rejectnlog:
+    template:
+      - tcplog
+      - iplog
+    modify:
+      -
+      -
+      -
+        jump: 
+          name: REJECT
+          with: 1
+  rejectoutlog:
+    template:
+      - tcplog
+      - iplog
+    modify;
+      -
+        jump:
+          uid: 1
+      -
+        jump:
+          uid: 1
+      -
+        jump: 
+          name: REJECT
+          with: 1
+  chkicmpin:
+    -
+      proto:
+        name: icmp
+        type: 0
+    -
+      proto:
+        name: icmp
+        type: 3
+    -
+      proto:
+        name: icmp
+        type: 4
+    -
+      proto:
+        name: icmp
+        type: 11
+  chkicmpout:
+    -
+      proto:
+        name: icmp
+        type: 0
+    -
+      proto:
+        name: icmp
+        type: 4
+    -
+      proto:
+        name: icmp
+        type: 8
+  chktcp:
+    -
+      proto:
+        name: tcp
+        flags: FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,PSH,ACK,URG
+    -
+      proto:
+        name: tcp
+        flags: FIN,SYN,RST,PSH,ACK,URG FIN,PSH,URG
+    -
+      proto:
+        name: tcp
+        flags: FIN,SYN,RST,PSH,ACK,URG NONE
+    -
+      proto:
+        name: tcp
+        flags: SYN,RST,ACK NONE
+    -
+      proto:
+        name: tcp
+        flags: SYN,RST SYN,RST
+    -
+      proto:
+        name: tcp
+        flags: FIN,SYN FIN,SYN
+    -
+      proto:
+        name: tcp
+        flags: FIN,RST FIN,RST
+  allowin:
+    template:
+      - connlog
+      - udp
+      - icmp
+  allowfwd:
+    template: allowin
+  allowout:
+    template: allowin
+  conntrack:
+    ct:
+      state:
+        - RELATED
+        - ESTABLISHED
+    jump: ACCEPT
+  tcpout:
+    proto:
+      name: tcp
+        sport: 1024:65535
+    jump: ACCEPT
+      proto:
+        name: udp
+        sport: 1024:65535
+      jump: ACCEPT
+  udpout:
+    proto:
+      name: udp
+        sport: 1024:65535
+      jump: ACCEPT
+  http:
+    template: tcpout
+    proto:
+      name: tcp
+        dport: 80
+  https:
+    template: tcpout
+    proto:
+      name: tcp
+        dport: 443
+  dns:
+    template:
+      - tcpout
+      - udpout
+    modify:
+      -
+        proto:
+          dport: 53
+      -
+        proto:
+          dport: 53
+  dhcpin: # for a dhcp server
+    proto:
+      name: udp
+      sport: 68
+      dport: 67
+    jump: allow_in_log
+  dhcpout:
+    proto:
+      name: udp
+      sport: 67
+      dport: 68
+    jump: allow_out_log
+  whois:
+    template: 
+      - tcpout
+      - tcpout
+    modify:
+      -
+        proto:
+          dport: 43
+      -
+        proto:
+          dport: 4321
+  ssh:
+    template: tcpout
+    proto:
+      dport: 22
+  smtpout:
+    template: tcpout
+    proto:
+      dport: 25
+  imapsout:
+    template: tcpout
+    proto:
+      dport: 465
+  syslog:
+    template: udpout
+    modify:
+      -
+        proto:
+          dport: 514
+      -
+        proto:
+          name: udp
+          sport: 514
+          dport: 514
+        jump: ACCEPT
+  rdesk:
+    template: tcpout
+    proto:
+      dport: 3389
+  vnc:
+    template: tcpout
+    proto:
+      dport: 5900
+  rsync:
+    template: tcpout
+    proto:
+      dport: 873
+  svn:
+    template: tcpout
+    proto:
+      dport: 3690
+  ipmi:
+    template: udpout
+    proto:
+      name: udp
+        dport:623
 

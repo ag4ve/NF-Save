@@ -262,11 +262,11 @@ sub _jump
   warn "Assuming wrong case for [$sJump] - matching against [" . uc($sJump) . "].\n"
     if ($sJump =~ /[a-z]/ and $sJump =~ /^(LOG|REJECT|CT|SNAT|DNAT)$/i);
 
-  if (uc($sJump) eq 'LOG')
+  if ($sJump eq 'LOG')
   {
     return [$oSelf->_str_map($phParams, {
         'map' => [
-          'name +req uc' => "-j",
+          'name +req' => "-j",
           'prefix qq' => "--log-prefix",
           'tcp +bool' => "--log-tcp-options",
           'ip +bool' => "--log-ip-options",
@@ -275,43 +275,57 @@ sub _jump
       },
     )];
   }
-  elsif (uc($sJump) eq 'REJECT')
+  elsif ($sJump eq 'REJECT')
   {
     return [$oSelf->_str_map($phParams, {
         'map' => [
-          'name +req uc' => "-j",
+          'name +req' => "-j",
           'with +bool' => "--reject-with icmp-port-unreachable",
         ],
       },
     )];
   }
-  elsif (uc($sJump) eq 'CT')
+  elsif ($sJump eq 'CT')
   {
     return [$oSelf->_str_map($phParams, {
         'map' => [
-          'name +req uc' => "-j",
+          'name +req' => "-j",
           'notrack +bool' => "--notrack",
         ],
       },
     )];
   }
-  elsif (uc($sJump) eq 'SNAT')
+  elsif ($sJump eq 'SNAT')
   {
     return [$oSelf->_str_map($phParams, {
         'map' => [
-          'name +req uc' => "-j",
+          'name +req' => "-j",
           'src ip' => "--to-source",
         ],
       },
     )];
   }
-  elsif (uc($sJump) eq 'DNAT')
+  elsif ($sJump eq 'DNAT')
   {
     return [$oSelf->_str_map($phParams, {
         'map' => [
-          'name +req uc' => "-j",
+          'name +req' => "-j",
           'dst ip' => "--to-destination",
         ],
+      },
+    )];
+  }
+  elsif ($sJump eq 'REDIRECT')
+  {
+    return [$oSelf->_str_map($phParams, {
+        'map' => [
+          'name +req' => "-j",
+          'rand +bool' => "--random",
+          'ports =ports' => "--to-ports",
+        ],
+        'lookup' => {
+          'ports' => '[0-9]+(-[0-9]+)?',
+        }
       },
     )];
   }

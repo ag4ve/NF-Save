@@ -86,7 +86,7 @@ lists:
     - 10.0.0.1
 
 template:
-  empty:
+  empty: # used if templates are used and data needs to be inserted before them
   log:
     limit:  
       limit: 5/sec
@@ -104,7 +104,7 @@ template:
     proto:
       name: tcp
       not: 1
-  conlog:
+  connlog:
     proto:
       name: tcp
       flags: syn
@@ -119,7 +119,7 @@ template:
     template:
       - tcplog
       - iplog
-      - conlog
+      - connlog
       - udp
       - icmp
     modify:
@@ -133,7 +133,7 @@ template:
     template:
       - tcplog
       - iplog
-      - conlog
+      - connlog
       - udp
       - icmp
     modify:
@@ -147,10 +147,10 @@ template:
     template:
       - tcplog
       - iplog
-      - conlog
+      - connlog
       - udp
       - icmp
-    modify;
+    modify:
       -
         jump:
           uid: 1
@@ -183,7 +183,7 @@ template:
     template:
       - tcplog
       - iplog
-    modify;
+    modify:
       -
         jump:
           uid: 1
@@ -271,27 +271,23 @@ template:
   tcpout:
     proto:
       name: tcp
-        sport: 1024:65535
+      sport: 1024:65535
     jump: ACCEPT
-      proto:
-        name: udp
-        sport: 1024:65535
-      jump: ACCEPT
   udpout:
     proto:
       name: udp
-        sport: 1024:65535
-      jump: ACCEPT
+      sport: 1024:65535
+    jump: ACCEPT
   http:
     template: tcpout
     proto:
       name: tcp
-        dport: 80
+      dport: 80
   https:
     template: tcpout
     proto:
       name: tcp
-        dport: 443
+      dport: 443
   dns:
     template:
       - tcpout

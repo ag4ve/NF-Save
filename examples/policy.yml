@@ -52,7 +52,7 @@ firewall:
           name: tcp
           flags: syn
         ct:
-          state: new
+          state: NEW
         jump: reject_in_log
       -
         proto: icmp
@@ -67,7 +67,6 @@ firewall:
     FORWARD:
       -
         template: ct
-      -
         jump: drop_fwd_log
     OUTPUT:
       -
@@ -168,7 +167,7 @@ template:
       -
       -
         jump: DROP
-  rejectnlog:
+  rejectinlog:
     template:
       - tcplog
       - iplog

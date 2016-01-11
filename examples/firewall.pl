@@ -82,86 +82,106 @@ sub tpl_expand
     {
       $phProc->{$sKey} = [];
     }
-    elsif (ref($oValue) ne 'HASH')
+    elsif (ref($oValue) eq 'HASH')
     {
-      next;
+      my ($sTmpSkip, $paTmp) = tpl_expand_part($oValue, $phTpl);
+      $sSkip++ if ($sTmpSkip);
+      $phProc->{$sKey} = $paTmp if (defined($paTmp));
     }
-
-    # No template defined
-    if (not defined($oValue->{template}))
+    elsif(ref($oValue) eq 'ARRAY')
     {
-      # Processed values are expected to be in an array
-      $phProc->{$sKey} = [$phProc->{$sKey}];
-      next;
+      my @aData;
+      foreach my $oTmpVal (@$oValue)
+      {
+        next if (ref($oTmpVal) ne 'HASH');
+        my ($sTmpSkip, $paTmp) = tpl_expand_part($oTmpVal, $phTpl);
+        $sSkip++ if ($sTmpSkip);
+        push @aData, @$paTmp if (defined($paTmp));
+      }
+      $phProc->{$sKey} = [@aData] if (scalar(@aData));
     }
-    # Handle templates - processed templates are arrays
     else
     {
-      my $paTmp;
-      my $oTpl = $oValue->{template};
-      # A single template valuea - an array value the length of the template
-      if (ref(\$oTpl) eq 'SCALAR')
-      {
-        if (not defined($phTpl->{$oTpl}))
-        {
-          warn "Template [$oTpl] not defined.\n";
-          next;
-        }
-        # Make sure templates do not contain templates
-        elsif (ref($phTpl->{$oTpl}) ne 'ARRAY')
-        {
-          $sSkip++;
-          next;
-        }
-
-        push @$paTmp, @{$phTpl->{$oTpl}};
-      }
-      # Multiple templates - an array value the length of all the templates given
-      elsif (ref($oTpl) eq 'ARRAY')
-      {
-        # Make sure templates do not contain templates
-        if (my @aTpl = grep {not defined($phTpl->{$_})} @$oTpl)
-        {
-          warn "Template [" . join('][', @aTpl) . "] not defined.\n";
-          next;
-        }
-        # Make sure templates do not contain templates
-        elsif (grep {ref($phTpl->{$_}) ne 'ARRAY'} @$oTpl)
-        {
-          $sSkip++;
-          next;
-        }
-
-        # Push all templates into one big list
-        foreach my $sTpl (@$oTpl)
-        {
-          push @$paTmp, @{$phTpl->{$sTpl}};
-        }
-      }
-
-      delete $oValue->{template};
-
-      # Handle modifications
-      # From a modify array
-      if (defined($oValue->{modify}) and ref($oValue->{modify}) eq 'ARRAY')
-      {
-        foreach my $i (0 .. $#{$oValue->{modify}})
-        {
-          $paTmp->[$i] //= {};
-          next if (not defined($oValue->{modify}[$i]));
-          $paTmp->[$i] = overlay($paTmp->[$i], $oValue->{modify}[$i]);
-        }
-      }
-      # From (not template) elements of the hash
-      elsif (keys %$oValue)
-      {
-        delete $oValue->{modify};
-        $paTmp = [overlay($paTmp->[0], $oValue), @{$paTmp}[1 .. $#{$paTmp}]];
-      }
-      $phProc->{$sKey} = dclone($paTmp);
+      $sSkip++;
     }
   }
 
   return $phProc, $sSkip;
 }
 
+# Return 1 increases skip count
+sub tpl_expand_part
+{
+  my ($oValue, $phTpl) = @_;
+
+  # No template defined
+  if (not defined($oValue->{template}))
+  {
+    # No template is defined - a single element array with the hash is given
+    return (undef, [$oValue]);
+  }
+  # Handle templates - processed templates are arrays
+  else
+  {
+    my $paTmp;
+    my $oTpl = $oValue->{template};
+    # A single template valuea - an array value the length of the template
+    if (ref(\$oTpl) eq 'SCALAR')
+    {
+      if (not defined($phTpl->{$oTpl}))
+      {
+        warn "Template [$oTpl] not defined.\n";
+        return;
+      }
+      # Make sure templates do not contain templates
+      elsif (ref($phTpl->{$oTpl}) ne 'ARRAY')
+      {
+        return 1;
+      }
+
+      push @$paTmp, @{$phTpl->{$oTpl}};
+    }
+    # Multiple templates - an array value the length of all the templates given
+    elsif (ref($oTpl) eq 'ARRAY')
+    {
+      # Make sure templates do not contain templates
+      if (my @aTpl = grep {not defined($phTpl->{$_})} @$oTpl)
+      {
+        warn "Template [" . join('][', @aTpl) . "] not defined.\n";
+        return;
+      }
+      # Make sure templates do not contain templates
+      elsif (grep {ref($phTpl->{$_}) ne 'ARRAY'} @$oTpl)
+      {
+        return 1;
+      }
+
+      # Push all templates into one big list
+      foreach my $sTpl (@$oTpl)
+      {
+        push @$paTmp, @{$phTpl->{$sTpl}};
+      }
+    }
+
+    delete $oValue->{template};
+
+    # Handle modifications
+    # From a modify array
+    if (defined($oValue->{modify}) and ref($oValue->{modify}) eq 'ARRAY')
+    {
+      foreach my $i (0 .. $#{$oValue->{modify}})
+      {
+        $paTmp->[$i] //= {};
+        next if (not defined($oValue->{modify}[$i]));
+        $paTmp->[$i] = overlay($paTmp->[$i], $oValue->{modify}[$i]);
+      }
+    }
+    # From (not template) elements of the hash
+    elsif (keys %$oValue)
+    {
+      delete $oValue->{modify};
+      $paTmp = [overlay($paTmp->[0], $oValue), @{$paTmp}[1 .. $#{$paTmp}]];
+    }
+    return (undef, dclone($paTmp));
+  }
+}

@@ -29,7 +29,6 @@ my $oIPT = NF::Save->new({
   },
   UseIPSET => 0,
 });
-# print Dumper($phConfig);
 
 
 {
@@ -38,27 +37,26 @@ my $oIPT = NF::Save->new({
   for (my $sCount = 0; $sCount < $sMaxLoop and $sSkip; $sCount++)
   {
     ($phTpl, $sSkip) = tpl_expand($phTpl, $phTpl);
-#    print "[$sCount] [$sSkip] " . Dumper($phTpl);
   }
-print "[$sSkip] " . Dumper($phTpl);
 
-#  foreach my $sTable (keys %{$phConfig->{firewall}})
-#  {
-#    my $phChains = $phConfig->{firewall}{$sTable};
-#    foreach my $sChain (keys %$phChains)
-#    {
-#      foreach my $phRule (@{$phChains->{$sChain}})
-#      {
-#        $oIPT->rule($sChain, $phRule);
-#      }
-#    }
-#  }
-#  foreach my $list (keys %{$phConfig->{lists}})
-#  {
-#    $oIPT->add_list($list, $phConfig->{lists}{$list});
-#  }
-#  
-#  print "$_\n" for ($oIPT->save());
+  foreach my $sTable (keys %{$phConfig->{firewall}})
+  {
+    my $phChains = $phConfig->{firewall}{$sTable};
+    ($phChains) = tpl_expand($phChains, $phTpl);
+    foreach my $sChain (keys %$phChains)
+    {
+      foreach my $phRule (@{$phChains->{$sChain}})
+      {
+        $oIPT->rule($sChain, $phRule);
+      }
+    }
+  }
+  foreach my $list (keys %{$phConfig->{lists}})
+  {
+    $oIPT->add_list($list, $phConfig->{lists}{$list});
+  }
+
+  print "$_\n" for ($oIPT->save());
 }
 
 # Templates may have templates and policies may have templates
@@ -185,3 +183,5 @@ sub tpl_expand_part
     return (undef, dclone($paTmp));
   }
 }
+
+

@@ -37,7 +37,7 @@ firewall:
           jump: reject_in_log
     INPUT:
       -
-        template: ct
+        template: conntrack
       -
         template: syslog
         list:
@@ -58,19 +58,19 @@ firewall:
         proto: icmp
         jump: check_icmp_in
       -
-        template: dhcp
+        template: dhcpin
         jump: allow_in_log
       -
         template: ntp
       -
-        template: sshin
+        template: ssh
     FORWARD:
       -
-        template: ct
+        template: conntrack
         jump: drop_fwd_log
     OUTPUT:
       -
-        template: ct
+        template: conntrack
       -
         template: dns
         dst: 8.8.8.8
@@ -92,7 +92,7 @@ template:
       burst: 10
     comment: Log limit
     jump: 
-      name: log
+      name: LOG
   tcplog:
     template: log
     proto: tcp

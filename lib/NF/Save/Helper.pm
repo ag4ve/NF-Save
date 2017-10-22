@@ -844,7 +844,7 @@ sub _compile_check
   warn "Check [$sKey => " . $phCheck->{$sKey} . 
     "] exists. Redefining value as [" . $sVal . "]\n"
     if (exists($phCheck->{$sKey}));
-  $phCheck{$sKey} = $sVal;
+  $phCheck->{$sKey} = $sVal;
 
   return $phCheck;
 }

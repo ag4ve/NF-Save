@@ -182,7 +182,67 @@ my $paTests =
     [
       '-p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN'
     ],
-    "TCP flags",
+    "TCP lookup flags",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'name' => "TCP",
+        'flags' => "ack,syn none",
+      }
+    ),
+    [
+      '-p tcp -m tcp --tcp-flags SYN,ACK NONE'
+    ],
+    "TCP string flags (reorder and uppercase)",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'name' => "TCP",
+        'flags' => "ack,syn",
+      }
+    ),
+    [
+      '-p tcp -m tcp --tcp-flags SYN,ACK ALL'
+    ],
+    "TCP string flags - no comp",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'name' => "TCP",
+        'flags' => [["syn,ack"],["none"]],
+      }
+    ),
+    [
+      '-p tcp -m tcp --tcp-flags SYN,ACK NONE'
+    ],
+    "TCP array of strings flags",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'name' => "TCP",
+        'flags' => "syn,ack none",
+      }
+    ),
+    [
+      '-p tcp -m tcp --tcp-flags SYN,ACK NONE'
+    ],
+    "TCP strings of flags",
+  ],
+  [
+    $oIPT->_tcp_udp(
+      {
+        'name' => "TCP",
+        'flags' => "syn ",
+      }
+    ),
+    [
+      '-p tcp -m tcp --tcp-flags SYN ALL'
+    ],
+    "TCP string of flags (syn - no comp)",
   ],
   [
     $oIPT->_tcp_udp(

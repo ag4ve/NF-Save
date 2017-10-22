@@ -440,9 +440,9 @@ sub _str_map
   # Check hash value types and assign them variables
   return
     if (not $oSelf->_check_type([qw/ARRAY HASH HASH/],
-      '<', 0, 0, @{$phData}{qw/map alt lookup/}));
-  my ($paMap, $phAlt, $phLookup) =
-    @{$phData}{qw/map alt lookup/};
+      '<', 0, 0, @{$phData}{qw/map alt check lookup/}));
+  my ($paMap, $phAlt, $paCheck, $phLookup) =
+    @{$phData}{qw/map alt check lookup/};
 
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
@@ -460,7 +460,7 @@ sub _str_map
   # Ret are elements of a string to be returned
   # Done are the keys that have been processed
   # Require are fields that are required - set 0 after processing
-  my (@aRet, %hRequire);
+  my (@aRet, %hRequire, $phCheck);
   # Evaluate map - look at actual data later
   while (my ($sMapKey, $oMapVal) = $oSelf->_each_kv(undef, 'str_map'))
   {
@@ -509,14 +509,16 @@ sub _str_map
       if ($sIsBool and scalar(@aFuncs));
 
     # Get the actual key from the params. Eg '!destination'
-    my ($sActualKey, $sWhichKey);
+    my ($sActualKey, $sWhichKey, $sCheckKey);
     {
       my @aPossibleKeys;
-      # Original possible key
+      # Original possible key - may contain transforms
       push @aPossibleKeys, $sMapStr if (defined($sMapStr) and length($sMapStr));
       # Values of alternative keys
       push @aPossibleKeys, $phAlt->{$sMapStr}
         if (defined($phAlt) and defined($phAlt->{$sMapStr}));
+      # The map value (with no transform data)
+      $sCheckKey = (split(' ', $aPossibleKeys[-1]))[0];
 
       my $sFoundKey = 0;
       for my $sKey (@aPossibleKeys)
@@ -598,11 +600,6 @@ sub _str_map
         }
       }
     }
-    elsif (ref($oMapVal) eq 'ARRAY')
-    {
-      warn "Map value can not be an array\n";
-      return;
-    }
     elsif (ref(\$oMapVal) eq 'SCALAR')
     {
       # Might be a hash or scalar
@@ -621,6 +618,7 @@ sub _str_map
           $hRequire{$sMapStr} = 0;
           $hRequire{$phAlt->{$sMapStr}} = 0
             if (defined($phAlt) and defined($phAlt->{$sMapStr}));
+          $phCheck = $oSelf->_compile_check($phCheck, $sCheckKey, $aRet[-1]);
         }
         next;
       }
@@ -641,6 +639,17 @@ sub _str_map
       $hRequire{$phAlt->{$sMapStr}} = 0
         if (defined($phAlt) and defined($phAlt->{$sMapStr}));
     }
+    else
+    {
+      warn "Map value for [$sMapKey] must be a hash or scalar\n";
+      return;
+    }
+    $phCheck = $oSelf->_compile_check($phCheck, $sCheckKey, $aRet[-1]);
+  }
+
+  my @aCheck;
+  if (defined($paCheck))
+  {
   }
 
   if (grep {$_ != 0} values(%hRequire))
@@ -649,6 +658,10 @@ sub _str_map
       join("] [", grep {$hRequire{$_} == 1} keys(%hRequire)) . "] " .
       Dumper($phParams) . "\n";
     return;
+  }
+  elsif (scalar(@aCheck))
+  {
+
   }
   elsif ($sGlobalNot and not $sAllowNot)
   {
@@ -667,6 +680,7 @@ sub _str_map
 }
 
 # ETL function to make data appropriate for processing
+# Only called from assemble()
 sub _transform_params
 {
   my ($oSelf, $phParams, $sLevel) = @_;
@@ -724,6 +738,7 @@ sub _transform_params
 }
 
 # Transform data based on mapfunc
+# Only called from _map_str()
 sub _str_map_transform
 {
   my ($oSelf, $oData, $sMapFunc, $phLookup) = @_;
@@ -733,7 +748,7 @@ sub _str_map_transform
   if (defined($sMapFunc) and length($sMapFunc))
   {
     # Key to lookup from
-    if ($sMapFunc =~ /^([%&=])(.*)/)
+    if ($sMapFunc =~ /^([\%\&\=])(.*)/)
     {
       my ($sType, $sKey) = ($1, $2);
       if (not defined($phLookup) or not exists($phLookup->{$sKey}))
@@ -746,7 +761,7 @@ sub _str_map_transform
         else
         {
           warn "A lookup hash was wanted but not defined.\n";
-          return;
+          return $oData;
         }
       }
 
@@ -755,12 +770,11 @@ sub _str_map_transform
       {
         if (exists($phLookup->{$sKey}{$oData}) and defined($phLookup->{$sKey}{$oData}))
         {
-          return $phLookup->{$sKey}{$oData};
+          $oData = $phLookup->{$sKey}{$oData};
         }
         else
         {
           warn "[$oData] does not exist in lookup.\n" if (defined($oSelf->{trace}));
-          return $oData;
         }
       }
       # Regex match filter
@@ -768,13 +782,12 @@ sub _str_map_transform
       {
         if (ref(\$phLookup->{$sKey}) eq 'SCALAR')
         {
-          return $oData
-            if ($oData =~ /$phLookup->{$sKey}/);
+          $oData = ''
+            if ($oData !~ /$phLookup->{$sKey}/);
         }
         else
         {
           warn "No regex key for [$sKey].\n";
-          return;
         }
       }
       # Process from a dispatch table
@@ -782,12 +795,11 @@ sub _str_map_transform
       {
         if (ref($phLookup->{$sKey}) eq 'CODE')
         {
-          return $phLookup->{$sKey}->($oData, $sKey);
+          $oData = $phLookup->{$sKey}->($oData, $sKey);
         }
         else
         {
           warn "No dispatch for [$sKey].\n";
-          return;
         }
       }
     }
@@ -795,33 +807,46 @@ sub _str_map_transform
     {
       if ($sMapFunc eq 'lc')
       {
-        return lc($oData);
+        $oData = lc($oData);
       }
       elsif ($sMapFunc eq 'uc')
       {
-        return uc($oData);
+        $oData = uc($oData);
       }
       elsif ($sMapFunc eq 'qq')
       {
-        return "\"" . $oData . "\"";
+        $oData = "\"" . $oData . "\"";
       }
       elsif ($sMapFunc eq 'ip')
       {
-        return $oSelf->_cidr_ip($oData);
+        $oData = $oSelf->_cidr_ip($oData);
       }
       else
       {
         warn "Unknown option [$sMapFunc] or bad data type for: " .
           Dumper($oData) . "\n";
-        return $oData;
       }
     }
   }
   else
   {
     warn "No function.\n";
-    return $oData;
   }
+
+  return $oData;
+}
+
+# Compile check hash
+sub _compile_check
+{
+  my ($phCheck, $sKey, $sVal) = @_;
+
+  warn "Check [$sKey => " . $phCheck->{$sKey} . 
+    "] exists. Redefining value as [" . $sVal . "]\n"
+    if (exists($phCheck->{$sKey}));
+  $phCheck{$sKey} = $sVal;
+
+  return $phCheck;
 }
 
 # Take an arrayref of values that must be true to prepend a not (!) and a

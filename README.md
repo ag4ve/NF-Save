@@ -47,6 +47,8 @@ ipset data.
 
     # Get a set of rules that could be used with: 
     # $ ./firewall.pl | iptables-restore
+
+    # And to get the ipset set
     print "$_\n" for ($oIPT->save());
 
 # DESCRIPTION
@@ -160,11 +162,16 @@ Would be defined as:
 
 # AUTHOR
 
-Shawn Wilson <swilson@korelogic.com>
+Shawn Wilson <ag4ve.us@gmail.com>
+
+# THANKS
+
+A special thanks to Korelogic for giving inspiration and funding for most
+of this work and allowing it to be open sourced.
 
 # COPYRIGHT
 
-Copyright 2014 - Shawn Wilson
+Copyright 2017 - Shawn Wilson
 
 # LICENSE
 

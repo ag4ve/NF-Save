@@ -10,6 +10,7 @@ my @aInternal = qw/
   _transform_params
   _str_map_transform
   _compile_ret
+  _compile_check
 /;
 
 my @aModuleInit = qw/
@@ -131,6 +132,8 @@ sub _comp
 
   return if (not $oSelf->_check_type([qw/SCALAR HASH/],
     '>', 1, 1, @_[1 .. $#_]));
+
+  return if (not length($sComp));
 
   $sComp = '_' . $sComp;
 
@@ -839,7 +842,7 @@ sub _str_map_transform
 # Compile check hash
 sub _compile_check
 {
-  my ($phCheck, $sKey, $sVal) = @_;
+  my ($oSelf, $phCheck, $sKey, $sVal) = @_;
 
   warn "Check [$sKey => " . $phCheck->{$sKey} . 
     "] exists. Redefining value as [" . $sVal . "]\n"

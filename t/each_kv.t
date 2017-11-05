@@ -21,7 +21,7 @@ my $paTests =
 [
   [
     [$oIPT->_each_kv([qw/a b c d/])], 
-    1, 
+    [1], 
     "Add array to iterator"
   ],
   [
@@ -51,7 +51,7 @@ my $paTests =
   ],
   [
     [$oIPT->_each_kv([qw/e f g/])], 
-    0, 
+    [0],
     "Add invalid array"
   ],
   [
@@ -66,7 +66,7 @@ my $paTests =
   ],
   [
     [$oIPT->_each_kv([qw/a b c d/], 'foo')], 
-    1, 
+    [1], 
     "Add array to named iterator"
   ],
   [

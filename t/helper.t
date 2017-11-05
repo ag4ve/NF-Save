@@ -110,7 +110,7 @@ my $paTests =
   ],
   [
     [$oIPT->_comp('proto', {'proto' => "UDP"})],
-    ['-p udp'],
+    [['-p udp']],
     "_comp() proto.",
   ],
   [

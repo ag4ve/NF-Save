@@ -68,32 +68,32 @@ my $paTests =
     "Bad function for rule().",
   ],
   [
-    $oIPT->is_table('filter'), 
+    [$oIPT->is_table('filter')], 
     [1], 
     "Table filter exists.",
   ],
   [
-    $oIPT->is_table('foobar'), 
+    [$oIPT->is_table('foobar')], 
     [0], 
     "Table foobar does not exist.",
   ],
   [
-    $oIPT->is_chain('OUTPUT'), 
+    [$oIPT->is_chain('OUTPUT')], 
     [1], 
     "Chain OUTPUT exists.",
   ],
   [
-    $oIPT->is_chain('OUTPUT', 'filter'), 
+    [$oIPT->is_chain('OUTPUT', 'filter')], 
     [1], 
     "Chain OUTPUT in table filter exists.",
   ],
   [
-    $oIPT->is_chain('OUTPUT', 'foobar'), 
+    [$oIPT->is_chain('OUTPUT', 'foobar')], 
     [0], 
     "Chain OUTPUT in table foobar does not exist.",
   ],
   [
-    $oIPT->is_chain('foobar', 'filter'), 
+    [$oIPT->is_chain('foobar', 'filter')], 
     [0], 
     "Chain foobar in table filter exists.",
   ],

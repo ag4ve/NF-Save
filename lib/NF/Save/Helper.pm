@@ -126,6 +126,7 @@ sub _param_str
   return $phData;
 }
 
+# Compute method dispatch function.
 sub _comp
 {
   my ($oSelf, $sComp, $phData) = @_;
@@ -443,9 +444,10 @@ sub _str_map
   # Check hash value types and assign them variables
   return
     if (not $oSelf->_check_type([qw/ARRAY HASH HASH/],
-      '<', 0, 0, @{$phData}{qw/map alt check lookup/}));
-  my ($paMap, $phAlt, $paCheck, $phLookup) =
-    @{$phData}{qw/map alt check lookup/};
+      '<', 0, 0, @{$phData}{qw/map alt lookup/}));
+
+  my ($paMap, $phAlt, $phLookup) =
+    @{$phData}{qw/map alt lookup/};
 
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
@@ -650,21 +652,13 @@ sub _str_map
     $phCheck = $oSelf->_compile_check($phCheck, $sCheckKey, $aRet[-1]);
   }
 
-  my @aCheck;
-  if (defined($paCheck))
-  {
-  }
-
+  # Return
   if (grep {$_ != 0} values(%hRequire))
   {
     warn "Required fields not defined: [" .
       join("] [", grep {$hRequire{$_} == 1} keys(%hRequire)) . "] " .
       Dumper($phParams) . "\n";
     return;
-  }
-  elsif (scalar(@aCheck))
-  {
-
   }
   elsif ($sGlobalNot and not $sAllowNot)
   {

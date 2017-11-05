@@ -62,8 +62,10 @@ firewall:
         jump: allow_in_log
       -
         template: ntp
+        jump: allow_in_log
       -
         template: ssh
+        jump: allow_in_log
     FORWARD:
       -
         template: conntrack
@@ -72,7 +74,7 @@ firewall:
       -
         template: conntrack
       -
-        template: dns
+        template: dnsout
         dst: 8.8.8.8
       -
         template: dhcpout
@@ -287,17 +289,30 @@ template:
     proto:
       name: tcp
       dport: 443
-  dns:
-    template:
-      - tcpout
-      - udpout
+  dnsout:
+    template: udpout
     modify:
       -
         proto:
           dport: 53
+  dnsin:
+    template: udpin
+    modify:
+      -
+        proto:
+          sport: 53
+  dnsmgmtout:
+    template: tcpout
+    modify:
       -
         proto:
           dport: 53
+  dnsmgmtin:
+    template: tcpin
+    modify:
+      -
+        proto:
+          sport: 53
   dhcpin: # for a dhcp server
     proto:
       name: udp
@@ -328,10 +343,14 @@ template:
       -
         proto:
           dport: 4321
-  ssh:
+  sshout:
     template: tcpout
     proto:
       dport: 22
+  sshin:
+    template: tcpin
+    proto:
+      sport: 22
   smtpout:
     template: tcpout
     proto:

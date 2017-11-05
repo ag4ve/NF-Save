@@ -310,6 +310,13 @@ template:
       sport: 67
       dport: 68
     jump: allow_out_log
+  ntp:
+    template: udpout
+    modify:
+      -
+        proto:
+          sport: 123
+          dport: 123
   whois:
     template: 
       - tcpout

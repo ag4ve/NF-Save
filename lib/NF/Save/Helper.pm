@@ -126,6 +126,7 @@ sub _param_str
   return $phData;
 }
 
+# Compute method dispatch function.
 sub _comp
 {
   my ($oSelf, $sComp, $phData) = @_;
@@ -480,7 +481,6 @@ sub _str_map
       for my $i (1 .. $#aMaps)
       {
         my $sStr = $aMaps[$i];
-warn "$sStr";
         if ($sStr =~ /^\+req$/)
         {
           $hRequire{$sMapStr} = 1;
@@ -610,10 +610,8 @@ warn "$sStr";
       # Might be a hash or scalar
       my $oTempRet = $phParams->{$sActualKey};
       # Use and short circuit if bool type
-warn "HERE 0";
       if ($sIsBool)
       {
-warn "HERE 1";
         if (ref(\$oTempRet) ne 'SCALAR' or not grep {$_ eq $oTempRet} (0, 1))
         {
           warn "[$sMapStr] value must be a 1 or 0.\n";

@@ -33,6 +33,8 @@ use Cwd;
 use File::Spec;
 use IPC::Run qw(run);
 
+use lib '../lib'
+
 use NF::Save;
 
 my $cmd = $0;

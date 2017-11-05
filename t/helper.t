@@ -114,6 +114,11 @@ my $paTests =
     "_comp() proto.",
   ],
   [
+    [$oIPT->_comp('proto', {'!proto' => "UDP"})],
+    ['! -p udp'],
+    "_comp() not proto.",
+  ],
+  [
     [$oIPT->_compile_ret()],
     [],
     "_compile_ret() nothing defined.",

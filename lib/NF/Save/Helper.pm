@@ -443,9 +443,10 @@ sub _str_map
   # Check hash value types and assign them variables
   return
     if (not $oSelf->_check_type([qw/ARRAY HASH HASH/],
-      '<', 0, 0, @{$phData}{qw/map alt check lookup/}));
-  my ($paMap, $phAlt, $paCheck, $phLookup) =
-    @{$phData}{qw/map alt check lookup/};
+      '<', 0, 0, @{$phData}{qw/map alt lookup/}));
+
+  my ($paMap, $phAlt, $phLookup) =
+    @{$phData}{qw/map alt lookup/};
 
   # Check that not is either 1 or 0
   warn "The not should be either '1' or '0' and is [" . $phParams->{'not'} . "]\n"
@@ -479,6 +480,7 @@ sub _str_map
       for my $i (1 .. $#aMaps)
       {
         my $sStr = $aMaps[$i];
+warn "$sStr";
         if ($sStr =~ /^\+req$/)
         {
           $hRequire{$sMapStr} = 1;
@@ -608,8 +610,10 @@ sub _str_map
       # Might be a hash or scalar
       my $oTempRet = $phParams->{$sActualKey};
       # Use and short circuit if bool type
+warn "HERE 0";
       if ($sIsBool)
       {
+warn "HERE 1";
         if (ref(\$oTempRet) ne 'SCALAR' or not grep {$_ eq $oTempRet} (0, 1))
         {
           warn "[$sMapStr] value must be a 1 or 0.\n";
@@ -650,21 +654,13 @@ sub _str_map
     $phCheck = $oSelf->_compile_check($phCheck, $sCheckKey, $aRet[-1]);
   }
 
-  my @aCheck;
-  if (defined($paCheck))
-  {
-  }
-
+  # Return
   if (grep {$_ != 0} values(%hRequire))
   {
     warn "Required fields not defined: [" .
       join("] [", grep {$hRequire{$_} == 1} keys(%hRequire)) . "] " .
       Dumper($phParams) . "\n";
     return;
-  }
-  elsif (scalar(@aCheck))
-  {
-
   }
   elsif ($sGlobalNot and not $sAllowNot)
   {

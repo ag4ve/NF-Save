@@ -64,8 +64,7 @@ firewall:
         template: ntp
         jump: allow_in_log
       -
-        template: ssh
-        jump: allow_in_log
+        template: sshin
     FORWARD:
       -
         template: conntrack
@@ -78,6 +77,8 @@ firewall:
         dst: 8.8.8.8
       -
         template: dhcpout
+      -
+        template: sshout
 
 lists:
   scan_targets:
@@ -110,6 +111,17 @@ template:
       name: tcp
       flags: syn
     jump: ACCEPT
+  tcp:
+    proto: tcp
+    jump: ACCEPT
+  tcpout:
+    template: tcp
+    proto:
+      sport: 1024:65535
+  tcpin:
+    template: tcp
+    proto:
+      dport: 1024:65535
   udp:
     proto: udp
     jump: ACCEPT
@@ -282,7 +294,6 @@ template:
   http:
     template: tcpout
     proto:
-      name: tcp
       dport: 80
   https:
     template: tcpout
@@ -290,13 +301,13 @@ template:
       name: tcp
       dport: 443
   dnsout:
-    template: udpout
+    template: udp
     modify:
       -
         proto:
           dport: 53
   dnsin:
-    template: udpin
+    template: udp
     modify:
       -
         proto:
@@ -347,10 +358,12 @@ template:
     template: tcpout
     proto:
       dport: 22
+    jump: allow_out_log
   sshin:
     template: tcpin
     proto:
       sport: 22
+    jump: allow_in_log
   smtpout:
     template: tcpout
     proto:
